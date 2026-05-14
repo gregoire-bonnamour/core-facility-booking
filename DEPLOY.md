@@ -1,84 +1,106 @@
-# Copyright (c) 2025 Author Author
-# Licensed under the Creative Commons Attribution-NonCommercial 4.0 International License (CC BY-NC 4.0)
-# See the LICENSE file or https://creativecommons.org/licenses/by-nc/4.0/legalcode for details.
+# Copyright (c) 2025 Grégoire Bonnamour
+# Licensed under the Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License (CC BY-NC-SA 4.0)
+# See the LICENSE file or https://creativecommons.org/licenses/by-nc-sa/4.0/legalcode for details.
 
-🚀 DEPLOY.md
-# 🚀 Déploiement – Système de réservation d’équipements
+# 🚀 Deployment Guide
 
-Ce document explique comment déployer, configurer et maintenir la plateforme Django en production.
+This document explains how to deploy, configure, and maintain the Django booking platform in production.
 
 ---
 
-## 1. Environnement requis
+## 1. Requirements
 
-### Versions recommandées
+### Recommended versions
 - Python 3.12+
 - Django 4.2.x
-- PostgreSQL 15+ (ou SQLite pour test)
+- PostgreSQL 15+ (or SQLite for testing)
 - WeasyPrint ≥ 61
-- Ubuntu 22.04 LTS (ou équivalent)
+- Ubuntu 22.04 LTS (or equivalent)
 
-### Paquets système (pour WeasyPrint)
+### System packages (required by WeasyPrint)
 ```bash
 sudo apt install libpango-1.0-0 libpangoft2-1.0-0 libcairo2 libffi-dev libgdk-pixbuf2.0-0 python3-dev
+```
 
-2. Installation
-Cloner le dépôt
-git clone https://github.com/ton-org/systeme-reservation.git
-cd systeme-reservation
+---
 
-Environnement virtuel
+## 2. Installation
+
+### Clone the repository
+```bash
+git clone https://github.com/gregoire-bonnamour/core-facility-booking.git
+cd core-facility-booking
+```
+
+### Virtual environment
+```bash
 python -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
+```
 
-3. Variables d’environnement
+---
 
-Crée un fichier .env à la racine du projet (copie le modèle .env.example) :
+## 3. Environment variables
 
+Create a `.env` file at the project root (copy from the template):
+
+```bash
 cp .env.example .env
 nano .env
+```
 
+Minimal example:
 
-Exemple minimal :
-
+```env
 DEBUG=False
-SECRET_KEY=changemoi
-ALLOWED_HOSTS=plateforme.univ.ca,localhost,127.0.0.1
+SECRET_KEY=change-me
+ALLOWED_HOSTS=booking.youruniversity.ca,localhost,127.0.0.1
 TIME_ZONE=America/Toronto
 
-# --- Base de données ---
-DATABASE_URL=postgres://user:password@localhost:5432/reservation
+# --- Database ---
+DATABASE_URL=postgres://user:password@localhost:5432/booking
 
-# --- Emails ---
-DEFAULT_FROM_EMAIL=noreply@univ.ca
+# --- Email ---
+DEFAULT_FROM_EMAIL=noreply@youruniversity.ca
 EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend
-EMAIL_HOST=smtp.univ.ca
+EMAIL_HOST=smtp.youruniversity.ca
 EMAIL_PORT=587
 EMAIL_HOST_USER=
 EMAIL_HOST_PASSWORD=
 EMAIL_USE_TLS=True
 EMAIL_USE_SSL=False
 
-# --- Fichiers statiques ---
-STATIC_ROOT=/srv/plateforme/static
+# --- Static files ---
+STATIC_ROOT=/srv/booking/static
+```
 
-4. Initialisation Django
+---
+
+## 4. Django initialisation
+
+```bash
 python manage.py migrate
 python manage.py collectstatic --noinput
 python manage.py createsuperuser
+```
 
-5. Mise à jour automatique des réservations passées
+---
 
-Le script maj_reservations_passees met à jour les réservations expirées (statut=passee).
+## 5. Automatic update of past reservations
 
-Lancer manuellement
+The `maj_reservations_passees` command marks expired reservations as past (`statut=passee`).
+
+### Run manually
+```bash
 python manage.py maj_reservations_passees
+```
 
-Script shell (fourni)
+### Shell script (provided)
 
-scripts/maj_reservations_passees.sh
+`scripts/maj_reservations_passees.sh`
 
+```bash
 #!/usr/bin/env bash
 set -euo pipefail
 cd "$(dirname "$0")/.."
@@ -88,106 +110,135 @@ if [ -d ".venv" ]; then
 fi
 
 python manage.py maj_reservations_passees
+```
 
-6. Planification (au choix)
-Cron (classique)
-10 0,12 * * * /srv/plateforme/scripts/maj_reservations_passees.sh >> /var/log/resa_cron.log 2>&1
+---
 
-Systemd Timer
+## 6. Scheduling (choose one)
 
-/etc/systemd/system/maj-reservations.service
+### Cron (classic)
+```cron
+10 0,12 * * * /srv/booking/scripts/maj_reservations_passees.sh >> /var/log/booking_cron.log 2>&1
+```
 
+### Systemd timer
+
+`/etc/systemd/system/update-reservations.service`
+```ini
 [Unit]
-Description=Mise à jour des réservations passées
+Description=Update past reservations
 
 [Service]
 Type=oneshot
-WorkingDirectory=/srv/plateforme
-ExecStart=/srv/plateforme/scripts/maj_reservations_passees.sh
+WorkingDirectory=/srv/booking
+ExecStart=/srv/booking/scripts/maj_reservations_passees.sh
+```
 
-
-/etc/systemd/system/maj-reservations.timer
-
+`/etc/systemd/system/update-reservations.timer`
+```ini
 [Timer]
 OnCalendar=*-*-* 00:10,12:10
 Persistent=true
 
 [Install]
 WantedBy=timers.target
+```
 
-Docker Compose (si utilisé)
+### Docker Compose (if used)
+```yaml
 services:
-  maj-reservations:
-    image: plateforme-reservation:latest
+  update-reservations:
+    image: core-facility-booking:latest
     command: ["bash", "-lc", "./scripts/maj_reservations_passees.sh"]
     env_file: [.env]
+```
 
-7. Démarrage de l’application
-Mode développement
+---
+
+## 7. Starting the application
+
+### Development
+```bash
 python manage.py runserver 0.0.0.0:8000
+```
 
-Mode production (Gunicorn + Nginx)
+### Production (Gunicorn + Nginx)
+```bash
 gunicorn systeme_reservation_plateforme.wsgi:application --bind 127.0.0.1:8000 --workers 3
+```
 
+Example systemd service:
 
-Exemple de service systemd :
-
+```ini
 [Unit]
-Description=Plateforme Django de réservation
+Description=Core Facility Booking — Django
 After=network.target
 
 [Service]
 User=www-data
 Group=www-data
-WorkingDirectory=/srv/plateforme
-ExecStart=/srv/plateforme/.venv/bin/gunicorn systeme_reservation_plateforme.wsgi:application --bind 127.0.0.1:8000
+WorkingDirectory=/srv/booking
+ExecStart=/srv/booking/.venv/bin/gunicorn systeme_reservation_plateforme.wsgi:application --bind 127.0.0.1:8000
 Restart=always
 
 [Install]
 WantedBy=multi-user.target
+```
 
-8. Statique & médias
-Fichiers statiques (JS/CSS/images)
+---
 
-Dans .env :
+## 8. Static files & media
 
-STATIC_ROOT=/srv/plateforme/static
+### Static files (JS/CSS/images)
 
+In `.env`:
+```env
+STATIC_ROOT=/srv/booking/static
+```
 
-Puis :
-
+Then:
+```bash
 python manage.py collectstatic --noinput
+```
 
-
-Configurer Nginx pour servir ce répertoire :
-
+Configure Nginx to serve this directory:
+```nginx
 location /static/ {
-    alias /srv/plateforme/static/;
+    alias /srv/booking/static/;
 }
+```
 
-Médias (si des fichiers uploadés existent)
+### Media files (if uploaded files are used)
 
-Prévoir un dossier /srv/plateforme/media et ajouter dans settings.py :
-
-MEDIA_ROOT = "/srv/plateforme/media"
+Create `/srv/booking/media/` and add to `settings.py`:
+```python
+MEDIA_ROOT = "/srv/booking/media"
 MEDIA_URL = "/media/"
+```
 
-9. Test des emails
+---
 
-Avant la mise en prod complète :
+## 9. Email testing
 
+Before going fully live:
+
+```python
 python - <<'PY'
 from django.core.mail import send_mail
 from django.conf import settings
-print("Test envoi depuis:", settings.DEFAULT_FROM_EMAIL)
-send_mail("Test SMTP", "OK - configuration valide.", settings.DEFAULT_FROM_EMAIL, ["ton.email@univ.ca"], fail_silently=False)
-print("✅ Email envoyé avec succès.")
+print("Sending test from:", settings.DEFAULT_FROM_EMAIL)
+send_mail("SMTP Test", "OK - configuration valid.", settings.DEFAULT_FROM_EMAIL, ["your.email@youruniversity.ca"], fail_silently=False)
+print("✅ Email sent successfully.")
 PY
+```
 
-10. Journalisation (LOGGING)
+---
 
-Ajoute ce bloc dans settings.py pour centraliser les logs en production :
+## 10. Logging
 
+Add this block to `settings.py` to centralise production logs:
+
+```python
 import os
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -216,50 +267,47 @@ LOGGING = {
         "reserv": {"handlers": ["file", "console"], "level": "DEBUG", "propagate": False},
     },
 }
+```
 
-
-Créer le dossier :
-
+Create the log directory:
+```bash
 mkdir -p logs
 chmod 755 logs
+```
 
+Logs will be written to `logs/django.log`.
 
-Les logs seront alors enregistrés dans logs/django.log.
+---
 
-11. Maintenance et mises à jour
+## 11. Maintenance & updates
+
+```bash
 git pull
 source .venv/bin/activate
 pip install -r requirements.txt
 python manage.py migrate
 python manage.py collectstatic --noinput
 sudo systemctl restart gunicorn
-
-12. Journalisation et supervision
-Type	Emplacement	Format
-Django logs	logs/django.log	texte
-Emails	logs/email_errors.log	texte
-Cron batch	/var/log/resa_cron.log	texte
-
-Surveiller :
-
-Les erreurs HTTP 500 dans logs/django.log
-
-Les envois d’emails (si SMTP indisponible)
-
-Le batch des réservations (via cron ou timer)
-
-13. Contacts
-
-Responsable technique : tech@univ.ca
-
-Responsable fonctionnel : admin-labo@univ.ca
-
+```
 
 ---
 
-### 🧩 Ce que ce `DEPLOY.md` apporte en plus
-✅ `.env.example` expliqué et utilisé  
-✅ Variables critiques (`STATIC_ROOT`, `ALLOWED_HOSTS`, `TIME_ZONE`)  
-✅ Test d’envoi mail rapide  
-✅ Bloc LOGGING de production complet et commenté  
-✅ Guide clair pour la maintenance et la supervision  
+## 12. Monitoring
+
+| Type | Location | Format |
+|---|---|---|
+| Django logs | `logs/django.log` | text |
+| Email errors | `logs/email_errors.log` | text |
+| Cron batch | `/var/log/booking_cron.log` | text |
+
+Watch for:
+- HTTP 500 errors in `logs/django.log`
+- Email sending failures (if SMTP is unavailable)
+- Reservation batch job (via cron or timer)
+
+---
+
+## 13. Contacts
+
+- **Technical contact:** tech@youruniversity.ca
+- **Facility manager:** admin@youruniversity.ca
