@@ -1,0 +1,59 @@
+{% extends "admin/base_site.html" %}
+{% load static %}
+
+{% block extrastyle %}
+  <!-- CSS FullCalendar correcte -->
+  <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/main.min.css" rel="stylesheet">
+  <style>
+    .legend { display:flex; flex-wrap:wrap; gap:10px; margin:10px 0 16px; }
+    .legend-item { display:flex; align-items:center; gap:6px; }
+    .legend-color { width:14px; height:14px; border-radius:3px; display:inline-block; }
+    #calendar { min-height: 70vh; background: #fff; border-radius: 8px; }
+  </style>
+{% endblock %}
+
+{% block extrahead %}
+  <!-- Bundle JS “global” -->
+  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
+{% endblock %}
+
+{% block content %}
+  <h1>Calendrier global (Admin)</h1>
+
+  <div class="legend">
+    {% for e in legend %}
+      <div class="legend-item">
+        <span class="legend-color" style="background: {{ e.color }};"></span>
+        <span>{{ e.nom }}</span>
+      </div>
+    {% endfor %}
+  </div>
+
+  <div id="calendar"></div>
+
+  <!-- ⚠️ Mettre l'init JS ici dans 'content' (l’admin n’a pas de bloc 'extrajs') -->
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const el = document.getElementById('calendar');
+      const calendar = new FullCalendar.Calendar(el, {
+        initialView: 'timeGridWeek',
+        firstDay: 1,
+        slotMinTime: '07:00:00',
+        slotMaxTime: '22:00:00',
+        locale: 'fr',
+        height: 'auto',
+        nowIndicator: true,
+        headerToolbar: { left: 'prev,next today', center: 'title', right: 'dayGridMonth,timeGridWeek,timeGridDay' },
+        events: {
+          url: "{% url 'reserv:calendrier_global_admin_data' %}",  // génère /reserv/admin/...
+          failure: function() { alert('Erreur de chargement des réservations.'); }
+        },
+        eventDidMount: function(info) {
+          const p = info.event.extendedProps || {};
+          info.el.title = (p.usager || '') + " – " + (p.equipement || '') + " [" + (p.statut || '') + "]";
+        }
+      });
+      calendar.render();
+    });
+  </script>
+{% endblock %}

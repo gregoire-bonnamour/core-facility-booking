@@ -1,0 +1,54 @@
+# Variables d'environnement et secrets
+.env.prod
+.env.local
+.env.prod.bak*
+.env.prod.template
+
+# Base de données
+db.sqlite3
+db.sqlite3.backup*
+*.sqlite3
+
+# Backups
+backups/
+
+# Emails envoyés
+sent_emails/
+
+# Environnement virtuel Python
+.venv/
+
+# Fichiers nuls et temporaires
+$null
+*.log
+*.pyc
+__pycache__/
+*.pyo
+
+# Dossier de déploiement ops (si contient des secrets)
+
+# Backups manuels dans le code (remplacés par Git)
+*.backup*
+*.bak*
+*.bak_*
+*.broken*
+*.save
+reserv/admin.py.backup*
+reserv/forms.py.backup*
+reserv/views.py.backup*
+usager/views.py.bak*
+usager/utils.py.bak*
+usager/utils.py.save
+systeme_reservation_plateforme/settings/prod.py.bak*
+systeme_reservation_plateforme/templates/admin/*.bak*
+templates/admin/*.bak*
+templates/registration/*.bak*
+
+# Fichiers statiques générés
+systeme_reservation_plateforme/static_collected/
+
+# DB corrompue
+systeme_reservation_plateforme/db.sqlite3.corrupted*
+venv_test/
+db.sqlite3
+sent_emails/

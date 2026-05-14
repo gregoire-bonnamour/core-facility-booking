@@ -1,0 +1,138 @@
+
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>{% block title %}Booking - Core Facility{% endblock %}</title>
+
+    <style>
+        /* === Messages & erreurs === */
+        .error {
+            color: red;
+            margin-top: 5px;
+        }
+        .messages {
+            padding: 1em;
+            background-color: #e6f7ff;
+            border: 1px solid #b3e0ff;
+            border-radius: 5px;
+            margin-bottom: 1em;
+        }
+        .messages li {
+            list-style: none;
+            margin: 0.5em 0;
+        }
+        .messages li.success {
+            color: green;
+        }
+        .messages li.error {
+            color: red;
+        }
+
+        /* === Grille calendrier === */
+        .calendar-container {
+            display: grid;
+            grid-template-columns: 60px repeat(7, 1fr); /* colonne heures + 7 jours */
+            border: 1px solid #ccc;
+        }
+        .time-slot {
+            height: 60px;              /* 1h = 60px → utilisé par JS */
+            border-top: 1px solid #eee;
+            font-size: 0.8em;
+            padding: 2px;
+        }
+        .hour {
+            text-align: right;
+            padding-right: 5px;
+            border-right: 1px solid #ccc;
+            background: #f9f9f9;
+        }
+        .day-header {
+            text-align: center;
+            font-weight: bold;
+            padding: 10px;
+            border-bottom: 1px solid #ccc;
+            background-color: #f0f0f0;
+        }
+        .day-column {
+            position: relative;        /* permet le positionnement absolu des réservations */
+        }
+        .reservation {
+            position: absolute;
+            left: 0;
+            right: 0;
+            background-color: rgba(100, 149, 237, 0.7); /* bleu cornsilk */
+            border: 1px solid #3a6ea5;
+            color: white;
+            font-size: 0.75em;
+            padding: 2px;
+            box-sizing: border-box;
+            z-index: 10;
+        }
+
+        /* === Navigation calendrier === */
+        .navigation {
+            margin-bottom: 15px;
+            text-align: center;
+        }
+        .navigation a {
+            margin: 0 20px;
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        /* === Mise en page générale === */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 2em;
+            background-color: #fdfdfd;
+            color: #333;
+        }
+        h2 {
+            font-size: 1.8em;
+            margin-bottom: 0.5em;
+        }
+
+        /* === Listes & liens === */
+        ul {
+            list-style: none;
+            padding-left: 0;
+        }
+        ul li {
+            margin: 0.5em 0;
+        }
+        ul li a {
+            text-decoration: none;
+            color: #0077cc;
+            font-weight: bold;
+            transition: color 0.3s ease;
+        }
+        ul li a:hover {
+            color: #004999;
+            text-decoration: underline;
+        }
+
+        /* === Sections de contenu === */
+        section {
+            margin-top: 2em;
+            padding: 1em;
+            border-radius: 10px;
+            background-color: #f8f8f8;
+            box-shadow: 0 0 5px rgba(0,0,0,0.05);
+        }
+
+        /* === Conteneur central === */
+        .container {
+            max-width: 900px;
+            margin: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        {% block content %}{% endblock %}
+    </div>
+</body>
+<footer>
+</footer>
+</html>

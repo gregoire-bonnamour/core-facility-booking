@@ -1,0 +1,63 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<h2>🧾 Génération de la facturation</h2>
+
+<p>
+    Cette interface permet de générer les factures <strong>par laboratoire</strong>
+    pour une période donnée (date de début / date de fin).
+</p>
+
+<form method="post">
+    {% csrf_token %}
+
+    <!-- Champ : date de début -->
+    <div class="form-group">
+        {{ form.date_debut.label_tag }}
+        {{ form.date_debut }}
+        {% for error in form.date_debut.errors %}
+            <div class="error">{{ error }}</div>
+        {% endfor %}
+    </div>
+
+    <!-- Champ : date de fin -->
+    <div class="form-group">
+        {{ form.date_fin.label_tag }}
+        {{ form.date_fin }}
+        {% for error in form.date_fin.errors %}
+            <div class="error">{{ error }}</div>
+        {% endfor %}
+    </div>
+
+    <!-- Option : inclure un export CSV -->
+    <div class="form-check">
+        {{ form.inclure_csv }}
+        {{ form.inclure_csv.label_tag }}
+    </div>
+
+    <!-- Sélection multiple des affiliations -->
+    <div class="form-group">
+        {{ form.affiliations.label_tag }}
+        {{ form.affiliations }}
+        {% if form.affiliations.errors %}
+            <div class="error">
+                {% for error in form.affiliations.errors %}
+                    <p>{{ error }}</p>
+                {% endfor %}
+            </div>
+        {% endif %}
+    </div>
+
+    <div style="margin-top: 20px;">
+        <button type="submit" class="btn btn-primary">🧾 Générer les factures</button>
+    </div>
+</form>
+
+{% if confirmation %}
+    <hr>
+    <p><strong>{{ confirmation }}</strong></p>
+{% endif %}
+
+<a href="{% url 'accueil' %}">⬅ Retour à l'accueil</a>
+{% endblock %}

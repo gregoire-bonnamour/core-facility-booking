@@ -1,0 +1,196 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+  <meta charset="utf-8">
+  <title>Règlement de la plateforme</title>
+  <style>
+    @page {
+      margin: 24mm 18mm;
+    }
+
+    body {
+      font-family: DejaVu Sans, Arial, sans-serif;
+      font-size: 11pt;
+      color: #111;
+    }
+
+    h1 {
+      font-size: 18pt;
+      margin: 0 0 8pt 0;
+    }
+
+    h2 {
+      font-size: 13pt;
+      margin: 16pt 0 6pt;
+    }
+
+    h3 {
+      font-size: 12pt;
+      margin: 10pt 0 6pt;
+    }
+
+    p,
+    li {
+      line-height: 1.4;
+    }
+
+    ul,
+    ol {
+      margin: 0 0 0 16pt;
+      padding: 0;
+    }
+
+    .meta {
+      font-size: 9.5pt;
+      color: #555;
+      margin-bottom: 12pt;
+    }
+
+    .section {
+      margin-top: 10pt;
+    }
+
+    .footer {
+      margin-top: 18pt;
+      font-size: 9pt;
+      color: #666;
+    }
+
+    .blockquote {
+      margin: 8pt 0;
+      padding: 8pt 10pt;
+      border-left: 3px solid #ccc;
+      color: #333;
+      background: #fafafa;
+    }
+
+    .badge-warn {
+      display: inline-block;
+      font-size: 9pt;
+      color: #8a6d3b;
+      background: #fcf8e3;
+      border: 1px solid #faebcc;
+      padding: 4pt 6pt;
+      border-radius: 3pt;
+    }
+  </style>
+</head>
+
+<body>
+  <h1>Règlement de la plateforme</h1>
+  <p class="meta">
+    Usager : {{ user.get_full_name|default:user.username }}<br>
+    Date d’acceptation : {{ date|date:"Y-m-d H:i" }}<br>
+    Site : {{ site_url }}
+  </p>
+
+  <!-- 1 -->
+  <div class="section">
+    <h3>1) Publications scientifiques (acknowledgment, information et co-signature)</h3>
+    <ul>
+      <li>Toute publication scientifique issue de données acquises sur la plateforme ou d’un soutien fourni par la
+        plateforme doit contenir un <strong>acknowledgment</strong>.</li>
+      <li>Le personnel de la plateforme doit être <strong>tenu informé</strong> des publications liées aux travaux
+        réalisés sur la plateforme (idéalement <em>avant soumission</em> pour valider l’acknowledgment et, au besoin,
+        <em>à l’acceptation</em> pour nos registres).</li>
+      <li>Si des <strong>grants/numéros de subvention</strong> spécifiques financent les instruments, ils doivent être
+        mentionnés (la plateforme peut fournir les codes à utiliser).</li>
+      <li>Si le soutien dépasse la routine (conception expérimentale, acquisition/ou réglages experts,
+        analyse/interprétation, écriture), la <strong>co-signature</strong> doit être discutée et convenue avec l’équipe de la
+        plateforme <em>avant soumission</em>.</li>
+    </ul>
+    <div class="blockquote">
+      <em>“We acknowledge <strong>Author Author (YourUniversity)</strong> for training and technical/scientific assistance,
+        and the <strong>YourFacility</strong> core facility for access to the equipment.”</em>
+    </div>
+  </div>
+
+  <!-- 2 -->
+  <div class="section">
+    <h3>2) Respect et bon usage des équipements</h3>
+    <ul>
+      <li><strong>Formation obligatoire</strong> avant tout usage ; l’accès peut être restreint par niveau de
+        compétence.</li>
+      <li>Utiliser les <strong>consommables appropriés</strong> et validés par la plateforme ; bannir tout produit non
+        compatible.</li>
+      <li><strong>Nettoyage</strong> et remise en état à la fin de la session (bonnes pratiques vues en formation).</li>
+      <li><strong>Signalement immédiat</strong> de tout incident, anomalie, casse ou alerte de maintenance via
+        «&nbsp;Signaler un problème&nbsp;».</li>
+    </ul>
+    <p><strong>Interdits :</strong></p>
+    <ul>
+      <li>Boire et manger devant les instruments.</li>
+      <li>Modifier des <strong>réglages protégés</strong> ou contourner les contrôles d’accès.</li>
+      <li>Installer/utiliser des <strong>logiciels non autorisés</strong> sur les stations d’acquisition.</li>
+      <li>Stocker durablement des <strong>données</strong> sur les PC d’acquisition (exportez-les en fin de session).
+      </li>
+    </ul>
+    <p><em>Les coûts de réparation liés à une négligence avérée pourront être refacturés à l’unité de recherche
+        responsable.</em></p>
+  </div>
+
+  <!-- 3 -->
+  <div class="section">
+    <h3>3) Réservations, retards et assistance</h3>
+    <ul>
+      <li><strong>Modification/Suppression</strong> : autorisées <strong>jusqu’à 30 minutes après le début</strong> de
+        la réservation. Passé ce délai, <strong>la réservation est facturée au complet</strong>.</li>
+      <li><strong>Assistance</strong> : acceptée <em>selon la disponibilité du personnel</em>. Merci d’anticiper vos
+        besoins.</li>
+    </ul>
+  </div>
+
+  <!-- 4 -->
+  <div class="section">
+    <h3>4) Données, sécurité et confidentialité</h3>
+    <ul>
+      <li>Exportez vos données en fin de session vers vos espaces institutionnels.</li>
+      <li>Respect des politiques YourUniversity (sécurité, confidentialité, éthique).</li>
+      <li><strong>Adresse institutionnelle :</strong> Vous devez fournir une adresse e‑mail institutionnelle ou
+        professionnelle (ex. : admin@youruniversity.ca). Elle sera utilisée uniquement pour les notifications liées à la
+        réservation.</li>
+      <li><strong>Contactabilité :</strong> En acceptant le règlement, vous autorisez le personnel de la plateforme et
+        les autres usagers à vous contacter à cette adresse.</li>
+    </ul>
+  </div>
+
+  <!-- 5 -->
+  <div class="section">
+    <h3>5) Sanctions graduées</h3>
+    <ol>
+      <li>Rappel écrit.</li>
+      <li>Avertissement et/ou facturation (no-show, dégradation, non-nettoyage).</li>
+      <li>Suspension temporaire d’accès.</li>
+      <li>Retrait d’accès et information à la direction de laboratoire.</li>
+    </ol>
+  </div>
+
+  <!-- 6 -->
+  <div class="section">
+    <h3>6) Contacts</h3>
+    <ul>
+      <li>Support / incident : bouton <strong>«&nbsp;Signaler un problème&nbsp;»</strong> (accueil).</li>
+      <li>Responsable : <strong>Author Author</strong> – <a
+          href="mailto:admin@youruniversity.ca">admin@youruniversity.ca</a></li>
+      </li>
+      <li>YourFacility : <a href="https://www.youruniversity.ca/plateformes/analyses-cellulaires-et-imagerie/"
+          rel="noopener">Site officiel</a></li>
+    </ul>
+  </div>
+
+  <p class="footer">
+    En acceptant le règlement sur la plateforme, l’usager atteste avoir pris connaissance de
+    l’ensemble des conditions et s’engage à les respecter.
+  </p>
+
+  <p class="badge-warn">
+    Document généré automatiquement à la date indiquée ci-dessus. Conservez cette copie pour vos archives.
+  </p>
+</body>
+<footer>
+  © 2025 Grégoire Bonnamour Licensed under CC BY-NC-SA 4.0. Visit https://creativecommons.org/licenses/by-nc-sa/4.0/legalcode
+</footer>
+
+</html>

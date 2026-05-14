@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <h2>Mon profil</h2>
+
+  {% if usager %}
+    <p><strong>Prénom :</strong> {{ usager.prenom }}</p>
+    <p><strong>Nom :</strong> {{ usager.nom }}</p>
+    <p><strong>Adresse courriel :</strong> {{ usager.courriel }}</p>
+
+    <p><strong>Fonction :</strong>
+      {% if usager.fonction %}
+        {{ usager.fonction }}
+      {% else %}
+        <em>Non spécifiée</em>
+      {% endif %}
+    </p>
+
+    <p><strong>Affiliation :</strong>
+      {% if usager.affiliation %}
+        {{ usager.affiliation.nom }}
+      {% else %}
+        <em>Non renseignée</em>
+      {% endif %}
+    </p>
+
+    <p><strong>Laboratoire :</strong>
+      {% if usager.laboratoire %}
+        {{ usager.laboratoire.nom }}
+      {% else %}
+        <em>Non renseigné</em>
+      {% endif %}
+    </p>
+
+    <p><strong>Compte actif :</strong>
+      {% if usager.est_actif %}Oui{% else %}Non{% endif %}
+    </p>
+
+    <p><strong>Rôle :</strong>
+      {% if usager.est_admin %}
+        Administrateur de la plateforme
+      {% else %}
+        Usager standard
+      {% endif %}
+    </p>
+
+    <p><strong>Date d’activation :</strong>
+      {% if usager.date_activation %}
+        {{ usager.date_activation|date:"d/m/Y H:i" }}
+      {% else %}
+        <em>Non disponible</em>
+      {% endif %}
+    </p>
+
+    <p style="margin-top:1.5rem;">
+      <a
+        href="mailto:admin@youruniversity.ca?subject={{ 'Core Facility Booking System - Changement profil'|urlencode }}"
+        class="btn"
+      >
+        Signaler un changement au profil
+      </a>
+    </p>
+
+  {% else %}
+    <p><em>Aucun profil usager lié à ce compte.</em></p>
+  {% endif %}
+
+  <footer>
+  </footer>
+{% endblock %}

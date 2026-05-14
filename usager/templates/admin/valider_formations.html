@@ -1,0 +1,86 @@
+{% extends "admin/base_site.html" %}
+{% load static %}
+
+{% block content %}
+<h1>Valider les formations</h1>
+
+<form method="post" action="">
+  {% csrf_token %}
+
+  {% if messages %}
+    <ul class="messagelist">
+      {% for message in messages %}
+        <li class="{{ message.tags }}">{{ message }}</li>
+      {% endfor %}
+    </ul>
+  {% endif %}
+
+  {% if invitations %}
+    <div style="margin: 12px 0;">
+      <label>
+        <input type="checkbox" id="check-all" />
+        <strong>Tout cocher / décocher</strong>
+      </label>
+    </div>
+
+    <table class="adminlist table" id="formations-table">
+      <thead>
+        <tr>
+          <th><input type="checkbox" id="check-all-header" /></th>
+          <th>Courriel</th>
+          <th>État</th>
+          <th>Équipement</th>
+          <th>Date de formation</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for inv in invitations %}
+          <tr>
+            <td>
+              <input type="checkbox" name="invitation_ids" value="{{ inv.id }}" class="row-check" />
+            </td>
+            <td>{{ inv.courriel }}</td>
+            <td>{{ inv.etat }}</td>
+            <td>{{ inv.equipement }}</td>
+            <td>{{ inv.date_formation }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <div style="margin-top: 12px;">
+      <button type="submit" class="default">Valider la sélection</button>
+    </div>
+
+    <script>
+      (function() {
+        const master1 = document.getElementById('check-all');
+        const master2 = document.getElementById('check-all-header');
+        const rows = document.querySelectorAll('.row-check');
+
+        function setAll(checked) {
+          rows.forEach(cb => cb.checked = checked);
+          master1.checked = checked;
+          master2.checked = checked;
+        }
+
+        master1.addEventListener('change', e => setAll(e.target.checked));
+        master2.addEventListener('change', e => setAll(e.target.checked));
+      })();
+    </script>
+  {% else %}
+    <p>Aucune formation à valider 🎉</p>
+  {% endif %}
+  <div style="margin-top: 12px; display:flex; gap:10px;">
+    <!-- ✅ valider -->
+    <button type="submit" name="action" value="validate" class="default">
+      Valider la sélection
+    </button>
+    <!-- 🗑️ supprimer -->
+    <button type="submit" name="action" value="delete" class="deletelink"
+            onclick="return confirm('Supprimer les invitations sélectionnées ?');">
+      Supprimer la sélection
+    </button>
+  </div>
+</form>
+{% endblock %}

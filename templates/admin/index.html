@@ -1,0 +1,34 @@
+{% extends "admin/base_site.html" %}
+{% load i18n %}
+
+{% block content %}
+<h1>Bienvenue dans l'administration de la plateforme</h1>
+
+{% if app_list %}
+<div class="module" id="admin-app-list">
+  <h2>Navigation</h2>
+  {% for app in app_list %}
+  <div class="app-{{ app.app_label }}">
+    <h3>{{ app.name }}</h3>
+    <ul>
+      {% for model in app.models %}
+      <li>
+        {% if model.admin_url %}
+          <a href="{{ model.admin_url }}">{{ model.name }}</a>
+        {% else %}
+          {{ model.name }}
+        {% endif %}
+        {% if model.add_url %}
+          &nbsp;<a href="{{ model.add_url }}" class="addlink">{% trans "Ajouter" %}</a>
+        {% endif %}
+      </li>
+      {% endfor %}
+    </ul>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+<footer>
+</footer>
+{% endblock %}

@@ -1,0 +1,145 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h2>Modifier la réservation pour {{ equipement.nom }}</h2>
+<p><strong>Réservation de :</strong> {{ reservation.usager.prenom }} {{ reservation.usager.nom }}</p>
+
+<style>
+/* Petites erreurs en rouge sous les champs */
+.error {
+    color: red;
+    margin: 5px 0;
+}
+</style>
+
+<form method="post">
+  {% csrf_token %}
+  
+  <!-- erreurs globales du formulaire -->
+  {% if form.non_field_errors %}
+    <div class="alert alert-danger">
+      {% for error in form.non_field_errors %}
+        <div>{{ error }}</div>
+      {% endfor %}
+    </div>
+  {% endif %}
+  <!-- Date et heure début -->
+<div class="form-group mb-3">
+  <label class="form-label">Début :</label><br>
+  {{ form.date_debut }}
+  {{ form.heure_debut_h }} {{ form.minute_debut_m }}
+  {% for error in form.date_debut.errors %}
+    <div class="error">{{ error }}</div>
+  {% endfor %}
+  {% for error in form.heure_debut_h.errors %}
+    <div class="error">{{ error }}</div>
+  {% endfor %}
+  {% for error in form.minute_debut_m.errors %}
+    <div class="error">{{ error }}</div>
+  {% endfor %}
+</div>
+
+  <!-- Date et heure fin -->
+<div class="form-group mb-3">
+  <label class="form-label">Fin :</label><br>
+  {{ form.date_fin }}
+  {{ form.heure_fin_h }} {{ form.minute_fin_m }}
+  {% for error in form.date_fin.errors %}
+    <div class="error">{{ error }}</div>
+  {% endfor %}
+  {% for error in form.heure_fin_h.errors %}
+    <div class="error">{{ error }}</div>
+  {% endfor %}
+  {% for error in form.minute_fin_m.errors %}
+    <div class="error">{{ error }}</div>
+  {% endfor %}
+</div>
+
+  <!-- Demande exceptionnelle -->
+  <div class="form-check mb-3">
+    {{ form.demande_exception }}
+    <label class="form-check-label" for="{{ form.demande_exception.id_for_label }}">
+      Demande exceptionnelle
+      <small class="text-muted">(pour déroger à une règle, ex : dépasser la durée quotidienne)</small>
+    </label>
+  </div>
+  <div id="justification-block" style="display:none; margin-left:1.5em;">
+    <label for="{{ form.justification.id_for_label }}" class="form-label">Justification</label>
+    {{ form.justification }}
+  </div>
+
+  <!-- Formation -->
+  <div class="form-check mb-3">
+    {{ form.est_formation }}
+    <label class="form-check-label" for="{{ form.est_formation.id_for_label }}">
+      Réservation pour formation
+    </label>
+  </div>
+  <div id="formation-block" style="display:none; margin-left:1.5em;">
+    <label for="{{ form.courriels_formes.id_for_label }}" class="form-label">
+      Emails des personnes formées
+    </label>
+    {{ form.courriels_formes }}
+  </div>
+
+  <!-- Assistance -->
+  <div class="form-check mb-3">
+    {{ form.assistance }}
+    <label class="form-check-label" for="{{ form.assistance.id_for_label }}">
+      Assistance demandée
+     {% if tarif_assistance %}
+       <small class="text-muted">({{ tarif_assistance }} $/h)</small>
+     {% else %}
+       <small class="text-muted">(tarif non défini)</small>
+     {% endif %}
+    </label>
+  </div>
+  <div id="assistance-block" style="display:none; margin-left:1.5em;">
+    <label for="{{ form.duree_assistance_minutes.id_for_label }}" class="form-label">
+      Durée d’assistance (min)
+    </label>
+    {{ form.duree_assistance_minutes }}
+    {% for error in form.duree_assistance_minutes.errors %}
+      <div class="error">{{ error }}</div>
+    {% endfor %}
+  </div>
+
+  {% if modification_possible %}
+    <button type="submit" class="btn btn-primary">Modifier la réservation</button>
+  {% endif %}
+</form>
+
+<!-- Bouton de suppression -->
+{% if suppression_possible %}
+  <form method="post" action="{% url 'reserv:supprimer_reservation' reservation.id %}" class="mt-3">
+    {% csrf_token %}
+    <button type="submit" class="btn btn-danger">Supprimer cette réservation</button>
+  </form>
+{% endif %}
+
+<a href="{% url 'reserv:calendrier_equipement' equipement.id %}?semaine={{ reservation.date_debut }}">
+  ⬅ Retour au calendrier
+</a>
+
+<!-- Script JS (affichage conditionnel des blocs) -->
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+  function toggleBlock(checkboxId, blockId) {
+    const checkbox = document.getElementById(checkboxId);
+    const block = document.getElementById(blockId);
+    if (checkbox && block) {
+      function update() {
+        block.style.display = checkbox.checked ? "block" : "none";
+      }
+      checkbox.addEventListener("change", update);
+      update();
+    }
+  }
+  toggleBlock("id_demande_exception", "justification-block");
+  toggleBlock("id_est_formation", "formation-block");
+  toggleBlock("id_assistance", "assistance-block");
+});
+</script>
+<footer>
+</footer>
+{% endblock %}

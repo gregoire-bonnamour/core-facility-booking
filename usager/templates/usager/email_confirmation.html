@@ -1,0 +1,13 @@
+{% if user %}Bonjour {{ user.first_name }} {{ user.last_name }},{% else %}Bonjour,{% endif %}
+Ceci est un courriel automatique, merci de ne pas y répondre.
+
+Merci de votre inscription sur la plateforme de microscopie et cytométrie du YourFacility.
+
+Pour confirmer votre adresse courriel, veuillez cliquer sur le lien ci-dessous :
+
+{{ activation_url }}
+
+Si vous n’êtes pas à l’origine de cette demande, vous pouvez ignorer ce message.
+
+Cordialement,
+L’équipe de la plateforme de microscopie et cytométrie du YourFacility

@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2>Inviter un usager</h2>
+
+{# ✅ Affichage des messages de succès ou d’erreur #}
+{% if messages %}
+<ul class="messages">
+  {% for message in messages %}
+  <li{% if message.tags %} class="{{ message.tags }}" {% endif %}>{{ message }}</li>
+    {% endfor %}
+</ul>
+{% endif %}
+
+{# 📝 Formulaire d’invitation #}
+<form method="post">
+  {% csrf_token %}
+
+  <div>
+    {{ form.courriel.label_tag }}
+    {{ form.courriel }}
+    {% if form.courriel.errors %}
+    <div class="error">
+      {% for error in form.courriel.errors %}
+      <p>{{ error }}</p>
+      {% endfor %}
+    </div>
+    {% endif %}
+  </div>
+
+  <div>
+    <p>Équipements accessibles :</p>
+    {{ form.equipements }}
+    {{ form.equipements.errors }}
+  </div>
+
+  <button type="submit">Envoyer l'invitation</button>
+</form>
+
+{# 📋 Tableau des invitations en attente #}
+{% if invitations_en_attente %}
+<h3>Invitations en attente (comptes non créés)</h3>
+
+<form method="post" id="invitationForm">
+  {% csrf_token %}
+
+  <div style="overflow-x: auto; border: 1px solid #ccc; max-width: 90vw;">
+    <table border="1" style="width: 100%; border-collapse: collapse; min-width: 600px;">
+      <thead>
+        <tr style="background-color: #f2f2f2;">
+          <th style="padding: 10px; width: 40px; text-align: center;">
+            <input type="checkbox" onclick="toggleAll(this)">
+          </th>
+          <th style="padding: 10px; white-space: nowrap;">Courriel</th>
+          <th style="padding: 10px; white-space: nowrap;">Date d'envoi</th>
+          <th style="padding: 10px; min-width: 200px;">Équipements</th>
+          <th style="padding: 10px; white-space: nowrap;">Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for inv in invitations_en_attente %}
+        <tr>
+          <td style="padding: 10px; text-align: center;">
+            <input type="checkbox" name="invitation_ids" value="{{ inv.id }}">
+          </td>
+          <td style="padding: 10px;">{{ inv.courriel }}</td>
+          <td style="padding: 10px; white-space: nowrap;">{{ inv.date_envoi|date:"Y-m-d H:i" }}</td>
+          <td style="padding: 10px;">
+            <div style="max-height: 100px; overflow-y: auto; display: flex; flex-wrap: wrap; gap: 4px;">
+              {% for eq in inv.equipements.all %}
+              <span style="background-color: #e0e0e0; padding: 2px 5px; border-radius: 3px; font-size: 0.9em;">
+                {{ eq.nom }}
+              </span>
+              {% endfor %}
+            </div>
+          </td>
+          <td style="padding: 10px; text-align: center; white-space: nowrap;">
+            {# Action Relancer UN SEUL #}
+            <button type="submit" name="action" value="relancer_{{ inv.id }}"
+              style="cursor: pointer; border: 1px solid #ccc; background: #fff; padding: 2px 6px; border-radius: 4px;"
+              title="Renvoyer l'email">📢 Relancer</button>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <div
+    style="margin-top: 15px; padding: 10px; background-color: #f9f9f9; border: 1px solid #ddd; display: flex; align-items: center; gap: 10px;">
+    <span>↳ Pour la sélection :</span>
+    <button type="submit" name="action" value="supprimer_masse"
+      style="cursor: pointer; color: white; background-color: #dc3545; border: none; padding: 5px 10px; border-radius: 3px;"
+      onclick="return confirm('Confirmer la suppression des éléments sélectionnés ?');">
+      🗑️ Supprimer les cochés
+    </button>
+  </div>
+</form>
+
+<script>
+  function toggleAll(source) {
+    checkboxes = document.getElementsByName('invitation_ids');
+    for (var i = 0, n = checkboxes.length; i < n; i++) {
+      checkboxes[i].checked = source.checked;
+    }
+  }
+</script>
+
+{% else %}
+<p style="margin-top: 20px; font-style: italic; color: gray;">Aucune invitation en attente.</p>
+{% endif %}
+
+<p><a href="{% url 'accueil' %}">⬅ Retour à l'accueil</a></p>
+<footer>
+</footer>
+{% endblock %}

@@ -1,0 +1,161 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Core Facility Booking System</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #f7f8fb; --card: #ffffff; --ink: #1d2734; --ink-weak: #5b6b7a;
+      --brand: #2563eb; --brand-weak: #dbeafe; --ok: #16a34a;
+      --err: #dc2626; --bd: #e5e7eb; --radius: 14px;
+    }
+    html, body { min-height: 100vh; background: var(--bg); color: var(--ink);
+      font: 15px/1.45 system-ui, -apple-system, Segoe UI, Roboto, sans-serif; }
+    a { color: var(--brand); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    /* ── Header ── */
+    .site-header {
+      background: #fff; border-bottom: 1px solid var(--bd);
+      padding: 12px 32px; display: flex; align-items: center; gap: 20px; flex-wrap: wrap;
+    }
+    .logos { display: flex; align-items: center; gap: 14px; }
+    .logos img { height: 60px; width: auto; object-fit: contain; }
+    .logos .sep { width: 1px; height: 36px; background: var(--bd); }
+    .header-title { margin-left: auto; font-size: 15px; font-weight: 600; color: var(--ink-weak); }
+
+    /* ── Layout ── */
+    .page-wrap { max-width: 1060px; margin: 0 auto; padding: 44px 24px 60px; }
+    .split { display: grid; grid-template-columns: 1fr 360px; gap: 48px; align-items: start; margin-bottom: 52px; }
+    @media (max-width: 720px) { .split { grid-template-columns: 1fr; } }
+
+    /* ── Description ── */
+    .desc h1 { font-size: 28px; font-weight: 800; color: var(--ink); margin-bottom: 18px; line-height: 1.2; }
+    .desc p { font-size: 15px; line-height: 1.75; color: var(--ink-weak); }
+
+    /* ── Formulaire ── */
+    .form-card {
+      background: var(--card); border: 1px solid var(--bd); border-radius: var(--radius);
+      box-shadow: 0 2px 16px rgba(20,30,50,.08); padding: 28px;
+    }
+    .form-card h2 { font-size: 17px; font-weight: 700; margin-bottom: 22px; color: var(--ink); }
+    .field { margin-bottom: 16px; }
+    .field label { display: block; font-size: 12px; font-weight: 700; color: var(--ink-weak);
+      text-transform: uppercase; letter-spacing: .05em; margin-bottom: 6px; }
+    .field input { display: block; width: 100%; padding: 10px 12px; border: 1px solid var(--bd);
+      border-radius: 10px; font-size: 15px; color: var(--ink); background: #fff; transition: border-color .15s; }
+    .field input:focus { outline: none; border-color: var(--brand); box-shadow: 0 0 0 3px var(--brand-weak); }
+    .errorlist { color: var(--err); font-size: 13px; font-weight: 600; list-style: none; padding: 0; margin: 5px 0 0; }
+    .err-msg { background: #fef2f2; color: #991b1b; border: 1px solid #fecaca;
+      border-radius: 10px; padding: 10px 12px; font-size: 14px; margin-bottom: 16px; }
+    .btn-login { width: 100%; padding: 12px; background: var(--brand); color: #fff; border: none;
+      border-radius: 10px; font-size: 15px; font-weight: 700; cursor: pointer; transition: background .15s; margin-top: 6px; }
+    .btn-login:hover { background: #1d4ed8; }
+    .forgot { margin-top: 14px; text-align: center; font-size: 13px; color: var(--ink-weak); }
+
+    /* ── Cartes liens ── */
+    .section-label { font-size: 12px; font-weight: 700; color: var(--ink-weak);
+      text-transform: uppercase; letter-spacing: .08em; margin-bottom: 14px; }
+    .cards-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-bottom: 56px; }
+    @media (max-width: 720px) { .cards-grid { grid-template-columns: 1fr 1fr; } }
+    @media (max-width: 420px) { .cards-grid { grid-template-columns: 1fr; } }
+    .lnk-card { background: var(--card); border: 1px solid var(--bd); border-radius: var(--radius);
+      padding: 18px 16px; display: flex; flex-direction: column; gap: 5px; color: var(--ink);
+      transition: border-color .15s, box-shadow .15s; }
+    .lnk-card:hover { border-color: var(--brand); box-shadow: 0 3px 14px rgba(37,99,235,.12); text-decoration: none; }
+    .lnk-card .ci { font-size: 22px; }
+    .lnk-card .cl { font-size: 14px; font-weight: 600; }
+    .lnk-card .cs { font-size: 12px; color: var(--ink-weak); }
+
+    /* ── Footer ── */
+    .site-footer { background: #fff; border-top: 1px solid var(--bd); padding: 24px 32px;
+      font-size: 13px; color: var(--ink-weak); }
+    .footer-inner { max-width: 1060px; margin: 0 auto; display: flex;
+      gap: 20px; flex-wrap: wrap; justify-content: space-between; align-items: center; }
+    .footer-inner a { color: var(--brand); }
+  </style>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="logos">
+    <img src="{% static 'img/logo_youruniversity.png' %}" alt="YourUniversity">
+    <div class="sep"></div>
+    <img src="{% static 'img/logo_yourfacility.png' %}" alt="YourFacility">
+  </div>
+  <span class="header-title">Core Facility Booking System</span>
+</header>
+
+<div class="page-wrap">
+
+  <div class="split">
+    <div class="desc">
+      <h1>Core Facility Booking System</h1>
+      <p>Add a short description of your facility here — the instruments available, the scientific support you provide, who can book them, and anything else you would like visitors to know before signing in.</p>
+    </div>
+
+    <div class="form-card">
+      <h2>Login</h2>
+      {% if form.errors %}
+        <div class="err-msg">Invalid email address or password.</div>
+      {% endif %}
+      <form method="post">
+        {% csrf_token %}
+        {{ form.non_field_errors }}
+        <div class="field">
+          <label for="id_email">Email address</label>
+          {{ form.email }}
+          {{ form.email.errors }}
+        </div>
+        <div class="field">
+          <label for="id_password">Password</label>
+          {{ form.password }}
+          {{ form.password.errors }}
+        </div>
+        <button type="submit" class="btn-login">Sign in</button>
+      </form>
+      <p class="forgot"><a href="{% url 'password_reset' %}">Forgot your password?</a></p>
+    </div>
+  </div>
+
+  <p class="section-label">Useful links</p>
+  <div class="cards-grid">
+    <a class="lnk-card" href="https://www.youruniversity.ca" target="_blank" rel="noopener">
+      <span class="ci">🔬</span>
+      <span class="cl">YourFacility</span>
+      <span class="cs">Official facility website</span>
+    </a>
+    <a class="lnk-card" href="https://www.youruniversity.ca/department" target="_blank" rel="noopener">
+      <span class="ci">🧬</span>
+      <span class="cl">Your Department</span>
+      <span class="cs">your-department.youruniversity.ca</span>
+    </a>
+    <a class="lnk-card" href="#" target="_blank" rel="noopener">
+      <span class="ci">🔗</span>
+      <span class="cl">Other useful link</span>
+      <span class="cs">Documentation &amp; protocols</span>
+    </a>
+  </div>
+
+</div>
+
+<footer class="site-footer">
+  <div class="footer-inner">
+    <div>
+      <strong>Contact:</strong> Your Name —
+      <a href="mailto:admin@youruniversity.ca">admin@youruniversity.ca</a>
+    </div>
+    <div>
+      <a href="https://www.youruniversity.ca/plateformes/analyses-cellulaires-et-imagerie/" target="_blank" rel="noopener">
+        YourFacility — Core Facility Booking System ↗
+      </a>
+    </div>
+    <p style="margin-top: 0.5rem; font-size: 0.8rem; color: #888;">© 2025 Grégoire Bonnamour — <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" style="color: #888;">CC BY-NC-SA 4.0</a></p>
+  </div>
+</footer>
+
+</body>
+</html>

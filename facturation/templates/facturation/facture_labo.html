@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Facture — {{ laboratoire.nom }}</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 12px;
+            margin: 2cm;
+            color: #333;
+        }
+        h2, h3, h4 {
+            text-align: center;
+            margin: 4px 0;
+        }
+        .usager-section {
+            margin-bottom: 25px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 8px;
+        }
+        th, td {
+            border: 1px solid #aaa;
+            padding: 5px;
+            text-align: left;
+        }
+        th {
+            background-color: #f0f0f0;
+        }
+        .sous-total {
+            text-align: right;
+            font-weight: bold;
+            margin-top: 5px;
+        }
+        .total-labo {
+            text-align: right;
+            font-weight: bold;
+            font-size: 15px;
+            margin-top: 30px;
+            border-top: 2px solid #000;
+            padding-top: 10px;
+        }
+        .total-eq {
+            font-weight: bold;
+            text-align: right;
+        }
+    </style>
+</head>
+<body>
+    <div style="text-align: center; margin-bottom: 20px;">
+        <h2>Université du Québec à Montréal</h2>
+        <h3>Core Facility Booking System</h3>
+        <h4>Facture — Laboratoire : {{ laboratoire.nom }}</h4>
+        <p>Période : {{ date_debut|date:"j F Y" }} au {{ date_fin|date:"j F Y" }}</p>
+    </div>
+
+    {% for usager in usagers %}
+        <div class="usager-section">
+            <h3>{{ usager.usager.prenom }} {{ usager.usager.nom }}</h3>
+
+            {% for eq in usager.equipements %}
+                <h4>{{ eq.nom }}</h4>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Type</th>
+                            <th>Durée (h)</th>
+                            <th>Tarif ($)</th>
+                            <th>Coût ($)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for ligne in eq.lignes %}
+                            <tr>
+                                <td>{{ ligne.type }}</td>
+                                <td>
+                                    {% if ligne.duree %}{{ ligne.duree|floatformat:2 }}{% else %}–{% endif %}
+                                </td>
+                                <td>{{ ligne.tarif|floatformat:2 }}</td>
+                                <td>{{ ligne.cout|floatformat:2 }}</td>
+                            </tr>
+                        {% endfor %}
+                        <tr>
+                            <td colspan="3" class="total-eq">Total {{ eq.nom }}</td>
+                            <td><strong>{{ eq.total_equipement|floatformat:2 }}</strong></td>
+                        </tr>
+                    </tbody>
+                </table>
+            {% endfor %}
+
+            <p class="sous-total">Sous-total usager : {{ usager.total_usager|floatformat:2 }} $</p>
+        </div>
+    {% endfor %}
+
+    <p class="total-labo">Total laboratoire : {{ total_laboratoire|floatformat:2 }} $</p>
+</body>
+</html>

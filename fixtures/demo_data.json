@@ -1,0 +1,353 @@
+[
+  {
+    "model": "auth.user",
+    "pk": 1,
+    "fields": {
+      "username": "admin@youruniversity.ca",
+      "email": "admin@youruniversity.ca",
+      "password": "pbkdf2_sha256$600000$Wgi7tuoDMElDERMPFwaYdk$ahAuXILZiQkgFPXu0SRwXnkENiiIDKcqG9veNP6udHs=",
+      "first_name": "Admin",
+      "last_name": "Demo",
+      "is_staff": true,
+      "is_superuser": true,
+      "is_active": true,
+      "date_joined": "2026-01-01T00:00:00Z",
+      "last_login": null,
+      "groups": [],
+      "user_permissions": []
+    }
+  },
+  {
+    "model": "auth.user",
+    "pk": 2,
+    "fields": {
+      "username": "user1@youruniversity.ca",
+      "email": "user1@youruniversity.ca",
+      "password": "pbkdf2_sha256$600000$X1V26wgqKjCOnJWIimroqb$0ij0o388+enqXDcuSKXYIAyfAGgHWrypy8+sWAjihPI=",
+      "first_name": "Alice",
+      "last_name": "Researcher",
+      "is_staff": false,
+      "is_superuser": false,
+      "is_active": true,
+      "date_joined": "2026-01-15T00:00:00Z",
+      "last_login": null,
+      "groups": [],
+      "user_permissions": []
+    }
+  },
+  {
+    "model": "auth.user",
+    "pk": 3,
+    "fields": {
+      "username": "user2@youruniversity.ca",
+      "email": "user2@youruniversity.ca",
+      "password": "pbkdf2_sha256$600000$X1V26wgqKjCOnJWIimroqb$0ij0o388+enqXDcuSKXYIAyfAGgHWrypy8+sWAjihPI=",
+      "first_name": "Bob",
+      "last_name": "Student",
+      "is_staff": false,
+      "is_superuser": false,
+      "is_active": true,
+      "date_joined": "2026-02-01T00:00:00Z",
+      "last_login": null,
+      "groups": [],
+      "user_permissions": []
+    }
+  },
+  {
+    "model": "usager.fonction",
+    "pk": 1,
+    "fields": {
+      "nom": "Graduate student"
+    }
+  },
+  {
+    "model": "usager.fonction",
+    "pk": 2,
+    "fields": {
+      "nom": "Researcher / PI"
+    }
+  },
+  {
+    "model": "usager.affiliation",
+    "pk": 1,
+    "fields": {
+      "nom": "YourUniversity",
+      "tarif_assistance": "0.00"
+    }
+  },
+  {
+    "model": "usager.affiliation",
+    "pk": 2,
+    "fields": {
+      "nom": "External institution",
+      "tarif_assistance": "0.00"
+    }
+  },
+  {
+    "model": "usager.laboratoire",
+    "pk": 1,
+    "fields": {
+      "nom": "Demo Lab A",
+      "affiliation": 1
+    }
+  },
+  {
+    "model": "usager.laboratoire",
+    "pk": 2,
+    "fields": {
+      "nom": "Demo Lab B",
+      "affiliation": 1
+    }
+  },
+  {
+    "model": "usager.usager",
+    "pk": 1,
+    "fields": {
+      "compte_utilisateur": 1,
+      "prenom": "Admin",
+      "nom": "Demo",
+      "courriel": "admin@youruniversity.ca",
+      "reglement_accepte": true,
+      "reglement_accepte_at": "2026-01-01T00:00:00Z",
+      "acknowledgment_inscription": true,
+      "fonction": 2,
+      "affiliation": 1,
+      "laboratoire": 1,
+      "equipements_autorises": [
+        1,
+        2,
+        3
+      ],
+      "est_actif": true,
+      "est_admin": true,
+      "date_activation": "2026-01-01T00:00:00Z",
+      "date_derniere_reverification": null,
+      "date_acceptation_reglement": "2026-01-01T00:00:00Z"
+    }
+  },
+  {
+    "model": "usager.usager",
+    "pk": 2,
+    "fields": {
+      "compte_utilisateur": 2,
+      "prenom": "Alice",
+      "nom": "Researcher",
+      "courriel": "user1@youruniversity.ca",
+      "reglement_accepte": true,
+      "reglement_accepte_at": "2026-01-16T00:00:00Z",
+      "acknowledgment_inscription": true,
+      "fonction": 2,
+      "affiliation": 1,
+      "laboratoire": 1,
+      "equipements_autorises": [
+        1,
+        2,
+        3
+      ],
+      "est_actif": true,
+      "est_admin": false,
+      "date_activation": "2026-01-15T00:00:00Z",
+      "date_derniere_reverification": null,
+      "date_acceptation_reglement": "2026-01-16T00:00:00Z"
+    }
+  },
+  {
+    "model": "usager.usager",
+    "pk": 3,
+    "fields": {
+      "compte_utilisateur": 3,
+      "prenom": "Bob",
+      "nom": "Student",
+      "courriel": "user2@youruniversity.ca",
+      "reglement_accepte": true,
+      "reglement_accepte_at": "2026-02-02T00:00:00Z",
+      "acknowledgment_inscription": true,
+      "fonction": 1,
+      "affiliation": 1,
+      "laboratoire": 2,
+      "equipements_autorises": [
+        1,
+        2
+      ],
+      "est_actif": true,
+      "est_admin": false,
+      "date_activation": "2026-02-01T00:00:00Z",
+      "date_derniere_reverification": null,
+      "date_acceptation_reglement": "2026-02-02T00:00:00Z"
+    }
+  },
+  {
+    "model": "equipements.equipement",
+    "pk": 1,
+    "fields": {
+      "nom": "Confocal Microscope A",
+      "description": "High-resolution confocal microscope for fluorescence imaging.",
+      "duree_max_heures": 8,
+      "type": "microscope",
+      "localisation": "Room 101",
+      "actif": true
+    }
+  },
+  {
+    "model": "equipements.equipement",
+    "pk": 2,
+    "fields": {
+      "nom": "Flow Cytometer B",
+      "description": "Multi-parameter flow cytometer for cell analysis.",
+      "duree_max_heures": 4,
+      "type": "cytometre",
+      "localisation": "Room 102",
+      "actif": true
+    }
+  },
+  {
+    "model": "equipements.equipement",
+    "pk": 3,
+    "fields": {
+      "nom": "Image Analyzer C",
+      "description": "Automated image analysis system.",
+      "duree_max_heures": 6,
+      "type": "autre",
+      "localisation": "Room 103",
+      "actif": true
+    }
+  },
+  {
+    "model": "reserv.reservation",
+    "pk": 1,
+    "fields": {
+      "usager": 2,
+      "equipement": 1,
+      "date_debut": "2026-04-16",
+      "heure_debut": "09:00:00",
+      "date_fin": "2026-04-16",
+      "heure_fin": "12:00:00",
+      "assistance": false,
+      "duree_assistance_minutes": 0,
+      "est_formation": false,
+      "courriels_formes": "",
+      "demande_exception": false,
+      "justification": "",
+      "est_maintenance": false,
+      "est_enseignement": false,
+      "statut": "valide",
+      "date_creation": "2026-04-14T10:00:00Z",
+      "updated_at": "2026-04-14T10:00:00Z"
+    }
+  },
+  {
+    "model": "reserv.reservation",
+    "pk": 2,
+    "fields": {
+      "usager": 3,
+      "equipement": 2,
+      "date_debut": "2026-04-22",
+      "heure_debut": "13:00:00",
+      "date_fin": "2026-04-22",
+      "heure_fin": "16:00:00",
+      "assistance": false,
+      "duree_assistance_minutes": 0,
+      "est_formation": false,
+      "courriels_formes": "",
+      "demande_exception": false,
+      "justification": "",
+      "est_maintenance": false,
+      "est_enseignement": false,
+      "statut": "valide",
+      "date_creation": "2026-04-20T09:00:00Z",
+      "updated_at": "2026-04-20T09:00:00Z"
+    }
+  },
+  {
+    "model": "reserv.reservation",
+    "pk": 3,
+    "fields": {
+      "usager": 2,
+      "equipement": 3,
+      "date_debut": "2026-04-28",
+      "heure_debut": "10:00:00",
+      "date_fin": "2026-04-28",
+      "heure_fin": "11:00:00",
+      "assistance": true,
+      "duree_assistance_minutes": 60,
+      "est_formation": false,
+      "courriels_formes": "",
+      "demande_exception": false,
+      "justification": "",
+      "est_maintenance": false,
+      "est_enseignement": false,
+      "statut": "valide",
+      "date_creation": "2026-04-25T14:00:00Z",
+      "updated_at": "2026-04-25T14:00:00Z"
+    }
+  },
+  {
+    "model": "reserv.reservation",
+    "pk": 4,
+    "fields": {
+      "usager": 3,
+      "equipement": 1,
+      "date_debut": "2026-05-05",
+      "heure_debut": "14:00:00",
+      "date_fin": "2026-05-05",
+      "heure_fin": "17:00:00",
+      "assistance": false,
+      "duree_assistance_minutes": 0,
+      "est_formation": false,
+      "courriels_formes": "",
+      "demande_exception": false,
+      "justification": "",
+      "est_maintenance": false,
+      "est_enseignement": false,
+      "statut": "valide",
+      "date_creation": "2026-05-02T11:00:00Z",
+      "updated_at": "2026-05-02T11:00:00Z"
+    }
+  },
+  {
+    "model": "reserv.reservation",
+    "pk": 5,
+    "fields": {
+      "usager": 2,
+      "equipement": 2,
+      "date_debut": "2026-05-10",
+      "heure_debut": "09:00:00",
+      "date_fin": "2026-05-10",
+      "heure_fin": "10:00:00",
+      "assistance": false,
+      "duree_assistance_minutes": 0,
+      "est_formation": false,
+      "courriels_formes": "",
+      "demande_exception": false,
+      "justification": "",
+      "est_maintenance": false,
+      "est_enseignement": false,
+      "statut": "valide",
+      "date_creation": "2026-05-08T16:00:00Z",
+      "updated_at": "2026-05-08T16:00:00Z"
+    }
+  },
+  {
+    "model": "reserv.reservation",
+    "pk": 6,
+    "fields": {
+      "usager": 3,
+      "equipement": 3,
+      "date_debut": "2026-05-20",
+      "heure_debut": "11:00:00",
+      "date_fin": "2026-05-20",
+      "heure_fin": "13:00:00",
+      "assistance": false,
+      "duree_assistance_minutes": 0,
+      "est_formation": false,
+      "courriels_formes": "",
+      "demande_exception": false,
+      "justification": "",
+      "est_maintenance": false,
+      "est_enseignement": false,
+      "statut": "en_attente",
+      "date_creation": "2026-05-14T08:00:00Z",
+      "updated_at": "2026-05-14T08:00:00Z"
+    }
+  }
+]

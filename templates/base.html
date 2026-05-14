@@ -1,0 +1,210 @@
+
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>{% block title %}Booking - Core Facility{% endblock %}</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+
+  :root{
+    --bg:#f7f8fb; --card:#ffffff; --ink:#1d2734; --ink-weak:#5b6b7a;
+    --brand:#2563eb; --brand-weak:#dbeafe; --ok:#16a34a; --warn:#d97706; --err:#dc2626;
+    --bd:#e5e7eb;
+    --radius:14px;
+  }
+  @media (max-width: 600px) {
+    .container {
+        padding: 12px;
+    }
+    body {
+        font-size: 16px;
+    }
+    header.site {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+  }
+  .alert-danger {
+    background: #fee2e2;   /* fond rouge clair */
+    color: #991b1b;        /* rouge sombre */
+    border: 1px solid #fecaca;
+    padding: 10px 12px;
+    border-radius: 10px;
+    margin: 8px 0;
+    font-weight: bold;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);font:15px/1.45 system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial}
+  a{color:var(--brand);text-decoration:none}
+  a:hover{text-decoration:underline}
+  .container{max-width:1100px;margin:0 auto;padding:24px}
+  header.site{display:flex;gap:16px;align-items:center;justify-content:space-between;margin-bottom:18px}
+  header.site h1{font-size:18px;margin:0}
+  .card{background:var(--card);border:1px solid var(--bd);border-radius:var(--radius);box-shadow:0 1px 2px rgba(20,30,50,.04);padding:18px}
+  .stack{display:grid;gap:16px}
+  .row{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+  .btn{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--bd);background:#fff;border-radius:10px;padding:8px 12px;cursor:pointer}
+  .btn.primary{background:var(--brand);border-color:var(--brand);color:#fff}
+  .btn.danger{background:var(--err);border-color:var(--err);color:#fff}
+  .btn:disabled{opacity:.6;cursor:not-allowed}
+  .btn {min-height: 44px; /* recommandé par Google pour le confort tactile */}
+  .badge{display:inline-block;border-radius:999px;font-size:12px;padding:4px 8px;border:1px solid var(--bd);background:#fff;color:var(--ink-weak)}
+  .badge.ok{background:#ecfdf5;border-color:#bbf7d0;color:#065f46}
+  .badge.warn{background:#fffbeb;border-color:#fde68a;color:#92400e}
+  .badge.err{background:#fef2f2;border-color:#fecaca;color:#991b1b}
+  .errorlist {
+    color: red;
+    font-weight: bold;
+    margin: 4px 0;
+    list-style-type: none;
+    padding: 0;
+  }
+  .errorlist li {
+    margin-left: 0;
+  }
+  table {
+    width:100%;
+    border-collapse:separate;
+    border-spacing:0;
+    border:1px solid var(--bd);
+    border-radius:12px;
+    overflow:hidden;
+    background:#fff;
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+  th,td{padding:10px 12px;border-bottom:1px solid var(--bd);vertical-align:top}
+  th{background:#fafafa;text-align:left;color:#334155;font-weight:600}
+  tr:last-child td{border-bottom:none}
+  .messages{margin:0 0 16px 0}
+  .messages .msg{padding:10px 12px;border-radius:10px;margin-bottom:8px}
+  .msg.info{background:var(--brand-weak)}
+  .msg.err{background:#fee2e2;color:#991b1b}
+  /* Calendrier (simplifié) */
+  .legend{display:flex;gap:8px;align-items:center;margin:8px 0 16px}
+  .legend .swatch{width:12px;height:12px;border-radius:3px;border:1px solid var(--bd)}
+  .slot{border:1px dashed #e2e8f0;border-radius:8px;padding:8px;background:#fff}
+  .slot:hover{background:#f8fafc}
+  .today{outline:2px solid var(--brand-weak);outline-offset:2px;border-radius:10px}
+  @media (max-width:720px){
+    .container{padding:16px}
+    table{font-size:14px}
+  }
+
+  /* ── Layout accueil 2 colonnes ── */
+  .accueil-layout{display:grid;grid-template-columns:1fr 468px;gap:32px;align-items:start}
+  @media (max-width:720px){
+    .accueil-layout{grid-template-columns:1fr}
+    .accueil-news{overflow-y:visible !important;max-height:none !important}
+  }
+
+  /* ── Fil d'actualités ── */
+  .accueil-news{overflow-y:auto}
+  .news-titre{margin:0 0 12px;font-size:15px;font-weight:700;color:var(--ink)}
+  .news-feed{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:12px}
+  .news-item{padding:12px 14px;border-radius:12px;border-left:4px solid var(--bd);background:var(--card);box-shadow:0 1px 2px rgba(20,30,50,.04)}
+  .news-cat-equipement{border-left-color:#d97706}
+  .news-cat-evenement{border-left-color:#2563eb}
+  .news-cat-formation{border-left-color:#16a34a}
+  .news-cat-emploi{border-left-color:#7c3aed}
+  .news-badge{display:inline-block;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px;opacity:.7}
+  .news-cat-equipement .news-badge{color:#92400e}
+  .news-cat-evenement .news-badge{color:#1e40af}
+  .news-cat-formation .news-badge{color:#065f46}
+  .news-cat-emploi .news-badge{color:#4c1d95}
+  .news-item-titre{display:block;font-size:14px;margin-bottom:4px}
+  .news-item-contenu{margin:0 0 6px;font-size:13px;color:var(--ink-weak);line-height:1.4}
+  .news-item-date{font-size:12px;color:var(--ink-weak);opacity:.7}
+</style>
+
+</head>
+<body>
+  <div class="container">
+    <header class="site">
+      <h1>{% block page_title %}Core Facility Booking System{% endblock %}</h1>
+      <nav class="row">
+        <a class="btn" href="{% url 'accueil' %}">Accueil</a>
+        {% if user.is_staff %}
+          <a class="btn" href="{% url 'admin:index' %}">Admin</a>
+        {% endif %}
+        {% if user.is_authenticated %}
+          <a class="btn" href="{% url 'logout' %}">Se déconnecter</a>
+        {% else %}
+          <a class="btn primary" href="{% url 'login' %}">Se connecter</a>
+        {% endif %}
+      </nav>
+    </header>
+
+    {% if messages %}
+      <div class="messages">
+        {% for message in messages %}
+          <div class="msg {{ message.tags|default:'info' }}">{{ message }}</div>
+        {% endfor %}
+      </div>
+    {% endif %}
+
+    <main class="stack">
+      {% block content %}{% endblock %}
+    </main>
+  </div>
+  <footer style="text-align:center;padding:16px 0 8px;font-size:0.8rem;color:#888;">© 2025 Grégoire Bonnamour — <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" style="color:#888;">CC BY-NC-SA 4.0</a></footer>
+</body>
+
+<script>
+/* --- CSRF helper pour Django --- */
+function getCookie(name) {
+  const cookies = document.cookie ? document.cookie.split('; ') : [];
+  for (const c of cookies) {
+    const [k, ...rest] = c.split('=');
+    if (k === name) return rest.join('=');
+  }
+  return '';
+}
+const csrftoken = getCookie('csrftoken') || ''; // vide si pas encore set
+
+/* --- fetch helpers --- */
+async function postJSON(url, data) {
+  const res = await fetch(url, {
+    method: 'POST',
+    credentials: 'same-origin',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRFToken': csrftoken,
+    },
+    body: JSON.stringify(data || {})
+  });
+
+  // Si pas 2xx → on tente de lire le texte pour un message d'erreur utile
+  if (!res.ok) {
+    const msg = await res.text().catch(() => '');
+    throw new Error(`HTTP ${res.status}${msg ? ` — ${msg}` : ''}`);
+  }
+
+  // Certaines vues renvoient 204 / pas de JSON
+  const ct = res.headers.get('content-type') || '';
+  if (!ct.includes('application/json')) return null;
+
+  return res.json();
+}
+
+/* Optionnel : GET JSON cohérent (mêmes erreurs) */
+async function getJSON(url) {
+  const res = await fetch(url, { credentials: 'same-origin' });
+  if (!res.ok) {
+    const msg = await res.text().catch(() => '');
+    throw new Error(`HTTP ${res.status}${msg ? ` — ${msg}` : ''}`);
+  }
+  const ct = res.headers.get('content-type') || '';
+  if (!ct.includes('application/json')) return null;
+  return res.json();
+}
+
+/* Expose global (utile depuis d'autres scripts) */
+window.postJSON = postJSON;
+window.getJSON = getJSON;
+</script>
+
+</html>
+
