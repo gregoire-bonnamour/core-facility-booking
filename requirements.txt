@@ -11,3 +11,4 @@ psycopg2-binary>=2.9      # si PostgreSQL
 # pillow>=10              # si vous manipulez des images
 # django-environ>=0.11    # si vous l'utilisez pour .env
 python-dotenv>=1.0.1
+icalendar>=5.0

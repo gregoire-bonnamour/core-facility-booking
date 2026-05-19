@@ -10,6 +10,7 @@ A Django-based equipment booking and management system for research core facilit
 - Admin dashboard with reservation statistics
 - French interface with bilingual elements (registration, platform rules available in English)
 - Maintenance scheduling and usage reporting
+- Assistance request notifications with iCalendar (.ics) attachment for one-click calendar import
 - News feed for facility announcements
 
 ## Screenshots
@@ -41,6 +42,7 @@ A Django-based equipment booking and management system for research core facilit
 | WeasyPrint | 66.x (PDF generation) |
 | openpyxl | 3.1.x (Excel export) |
 | python-dotenv | 1.x (environment config) |
+| icalendar | 5.x+ (iCalendar .ics generation) |
 
 ## Installation
 

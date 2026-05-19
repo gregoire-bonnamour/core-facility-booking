@@ -32,7 +32,7 @@ from django.contrib import messages
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth.models import User
-from django.core.mail import send_mail
+from django.core.mail import send_mail, EmailMessage
 from django.db.models import Q, Sum, Count, Avg, F
 from django.db.models.functions import TruncMonth, ExtractWeekDay, ExtractHour
 from django.http import HttpResponse, JsonResponse
@@ -264,21 +264,52 @@ def reserver_equipement(request, equipement_id):
             # mail assistance (facultatif)
             if reservation.assistance and admin_emails:
                 tarif_txt = f"{tarif_assistance} $/h" if tarif_assistance is not None else "N/A"
-                send_mail(
-                    subject=f"[Calendrier] Assistance demandée – {reservation.equipement.nom}",
-                    message=(
-                        "Une assistance a été demandée pour une réservation :\n\n"
-                        f"Usager : {usager.prenom} {usager.nom} ({usager.courriel})\n"
-                        f"Équipement : {reservation.equipement.nom}\n"
-                        f"Date : {reservation.date_debut} {reservation.heure_debut} → "
-                        f"{reservation.date_fin} {reservation.heure_fin}\n"
-                        f"Durée assistance (min) : {reservation.duree_assistance_minutes}\n"
-                        f"Tarif assistance (affiliation) : {tarif_txt}\n"
-                    ),
-                    from_email=settings.DEFAULT_FROM_EMAIL,
-                    recipient_list=admin_emails,
-                    fail_silently=True,
+                corps = (
+                    "Une assistance a été demandée pour une réservation :
+
+"
+                    f"Usager : {usager.prenom} {usager.nom} ({usager.courriel})
+"
+                    f"Équipement : {reservation.equipement.nom}
+"
+                    f"Date : {reservation.date_debut} {reservation.heure_debut} → "
+                    f"{reservation.date_fin} {reservation.heure_fin}
+"
+                    f"Durée assistance (min) : {reservation.duree_assistance_minutes}
+"
+                    f"Tarif assistance (affiliation) : {tarif_txt}
+"
                 )
+                email_msg = EmailMessage(
+                    subject=f"[Calendrier] Assistance demandée – {reservation.equipement.nom}",
+                    body=corps,
+                    from_email=settings.DEFAULT_FROM_EMAIL,
+                    to=admin_emails,
+                )
+                try:
+                    from icalendar import Calendar, Event
+                    import uuid
+                    cal = Calendar()
+                    cal.add('prodid', '-//Core Facility//Booking System//EN')
+                    cal.add('version', '2.0')
+                    cal.add('method', 'REQUEST')
+                    evt = Event()
+                    dt_debut_assist = datetime.combine(reservation.date_debut, reservation.heure_debut)
+                    dt_fin_assist = dt_debut_assist + timedelta(minutes=int(reservation.duree_assistance_minutes or 0))
+                    evt.add('uid', str(uuid.uuid4()))
+                    evt.add('summary', f"Assistance – {reservation.equipement.nom} ({usager.prenom} {usager.nom})")
+                    evt.add('dtstart', dt_debut_assist)
+                    evt.add('dtend', dt_fin_assist)
+                    evt.add('description', corps)
+                    cal.add_component(evt)
+                    email_msg.attach('assistance.ics', cal.to_ical(), 'text/calendar')
+                except ImportError:
+                    pass  # icalendar not installed, email sent without attachment
+                email_msg.fail_silently = True
+                try:
+                    email_msg.send()
+                except Exception:
+                    pass
 
             reservation.save()
 
