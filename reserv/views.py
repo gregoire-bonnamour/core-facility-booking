@@ -32,7 +32,7 @@ from django.contrib import messages
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth.models import User
-from django.core.mail import send_mail, EmailMessage
+from django.core.mail import send_mail
 from django.db.models import Q, Sum, Count, Avg, F
 from django.db.models.functions import TruncMonth, ExtractWeekDay, ExtractHour
 from django.http import HttpResponse, JsonResponse
@@ -280,14 +280,11 @@ def reserver_equipement(request, equipement_id):
                     f"Tarif assistance (affiliation) : {tarif_txt}
 "
                 )
-                email_msg = EmailMessage(
-                    subject=f"[Calendrier] Assistance demandée – {reservation.equipement.nom}",
-                    body=corps,
-                    from_email=settings.DEFAULT_FROM_EMAIL,
-                    to=admin_emails,
-                )
                 try:
                     from icalendar import Calendar, Event
+                    from email.mime.multipart import MIMEMultipart
+                    from email.mime.text import MIMEText as MIMETextRaw
+                    from django.core.mail import get_connection
                     import uuid
                     cal = Calendar()
                     cal.add('prodid', '-//Core Facility//Booking System//EN')
@@ -302,14 +299,29 @@ def reserver_equipement(request, equipement_id):
                     evt.add('dtend', dt_fin_assist)
                     evt.add('description', corps)
                     cal.add_component(evt)
-                    email_msg.attach('assistance.ics', cal.to_ical(), 'text/calendar')
-                except ImportError:
-                    pass  # icalendar not installed, email sent without attachment
-                email_msg.fail_silently = True
-                try:
-                    email_msg.send()
+                    msg = MIMEMultipart('mixed')
+                    msg['Subject'] = f"[Calendrier] Assistance demandée – {reservation.equipement.nom}"
+                    msg['From'] = settings.DEFAULT_FROM_EMAIL
+                    msg['To'] = ', '.join(admin_emails)
+                    msg.attach(MIMETextRaw(corps, 'plain', 'utf-8'))
+                    ics_part = MIMETextRaw(cal.to_ical().decode('utf-8'), 'calendar', 'utf-8')
+                    ics_part.set_param('method', 'REQUEST')
+                    ics_part['Content-Disposition'] = 'inline; filename="assistance.ics"'
+                    msg.attach(ics_part)
+                    conn = get_connection(fail_silently=True)
+                    try:
+                        conn.open()
+                        conn.connection.sendmail(settings.DEFAULT_FROM_EMAIL, admin_emails, msg.as_string())
+                    finally:
+                        conn.close()
                 except Exception:
-                    pass
+                    send_mail(
+                        subject=f"[Calendrier] Assistance demandée – {reservation.equipement.nom}",
+                        message=corps,
+                        from_email=settings.DEFAULT_FROM_EMAIL,
+                        recipient_list=admin_emails,
+                        fail_silently=True,
+                    )
 
             reservation.save()
 
