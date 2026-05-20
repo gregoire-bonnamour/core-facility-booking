@@ -1,5 +1,5 @@
 # Copyright (c) 2025 Author Author
-# Licensed under the Creative Commons Attribution-NonCommercial 4.0 International License (CC BY-NC 4.0)
+# Licensed under the Creative Commons Attribution-NoCommercial 4.0 International License (CC BY-NC 4.0)
 # See the LICENSE file or https://creativecommons.org/licenses/by-nc/4.0/legalcode for details.
 
 """
@@ -7,7 +7,7 @@ Fichier : systeme_reservation_plateforme/wsgi.py
 ------------------------------------------------
 Point d’entrée WSGI pour déployer l’application Django.
 
-- WSGI (Web Server Gateway Interface) est le standard utilisé par
+- WSGI (Web Server Gateway Interface) est le standard used by
   la plupart des serveurs web (Gunicorn, uWSGI, mod_wsgi, etc.) 
   pour exécuter une application Python comme Django.
 - Ce fichier expose une variable `application` que le serveur WSGI utilisera.
@@ -16,7 +16,7 @@ Point d’entrée WSGI pour déployer l’application Django.
 import os
 from django.core.wsgi import get_wsgi_application
 
-# Définit le module de configuration Django par défaut
+# Définit le module de configuration Django by default
 # (ici : settings.py de ton projet)
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'systeme_reservation_plateforme.settings')
 

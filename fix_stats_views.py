@@ -49,17 +49,17 @@ print("OK: par_aff et par_fct supprimes des defaultdicts")
 
 # -- 1c. Supprimer l'alimentation de par_aff dans le loop
 old_aff_block = (
-    "        aff = getattr(getattr(getattr(r, 'accounts', None), 'laboratoire', None), 'affiliation', None)\n"
+    "        aff = getattr(getattr(getattr(r, 'user_profile', None), 'laboratory', None), 'affiliation', None)\n"
     "        if aff:\n"
     "            key = (aff.id, aff.name)\n"
     "            par_aff[key]['reservations'] += 1\n"
     "            par_aff[key]['min_usage']    += mu\n"
     "            par_aff[key]['min_assist']   += ma\n"
     "\n"
-    "        if getattr(r, 'accounts', None) and getattr(r.user_profile, 'laboratoire', None):"
+    "        if getattr(r, 'user_profile', None) and getattr(r.user_profile, 'laboratory', None):"
 )
 new_aff_block = (
-    "        if getattr(r, 'accounts', None) and getattr(r.user_profile, 'laboratoire', None):"
+    "        if getattr(r, 'user_profile', None) and getattr(r.user_profile, 'laboratory', None):"
 )
 assert old_aff_block in src, "ERREUR: bloc par_aff loop introuvable"
 src = src.replace(old_aff_block, new_aff_block, 1)
@@ -67,36 +67,36 @@ print("OK: alimentation par_aff supprimee du loop")
 
 # -- 1d. Supprimer l'alimentation de par_fct dans le loop
 old_fct_block = (
-    "        if getattr(r, 'accounts', None) and getattr(r.user_profile, 'fonction', None):\n"
-    "            key = (r.user_profile.fonction.id, r.user_profile.fonction.name)\n"
+    "        if getattr(r, 'user_profile', None) and getattr(r.user_profile, 'role', None):\n"
+    "            key = (r.user_profile.role.id, r.user_profile.role.name)\n"
     "            par_fct[key]['reservations'] += 1\n"
     "            par_fct[key]['min_usage']    += mu\n"
     "            par_fct[key]['min_assist']   += ma\n"
     "\n"
-    "        if getattr(r, 'accounts', None):"
+    "        if getattr(r, 'user_profile', None):"
 )
 new_fct_block = (
-    "        if getattr(r, 'accounts', None):"
+    "        if getattr(r, 'user_profile', None):"
 )
 assert old_fct_block in src, "ERREUR: bloc par_fct loop introuvable"
 src = src.replace(old_fct_block, new_fct_block, 1)
 print("OK: alimentation par_fct supprimee du loop")
 
-# -- 1e. Mettre a day_of_week le dict tables (supprimer affiliations et fonctions)
+# -- 1e. Mettre a day_of_week le dict tables (supprimer affiliations et roles)
 old_tables = (
     "    tables = {\n"
     "        'equipment':  _tabify(par_eq),\n"
     "        'affiliations': _tabify(par_aff),\n"
-    "        'laboratoires': _tabify(par_labo),\n"
-    "        'fonctions':    _tabify(par_fct),\n"
-    "        'usagers':      _tabify(par_usr),\n"
+    "        'laboratories': _tabify(par_labo),\n"
+    "        'roles':    _tabify(par_fct),\n"
+    "        'user_profiles':      _tabify(par_usr),\n"
     "    }"
 )
 new_tables = (
     "    tables = {\n"
     "        'equipment':  _tabify(par_eq),\n"
-    "        'laboratoires': _tabify(par_labo),\n"
-    "        'usagers':      _tabify(par_usr),\n"
+    "        'laboratories': _tabify(par_labo),\n"
+    "        'user_profiles':      _tabify(par_usr),\n"
     "    }"
 )
 assert old_tables in src, "ERREUR: dict tables stats_query introuvable"
@@ -161,8 +161,8 @@ stats_zone1_code = '''
 def stats_zone1(request):
     """
     Statistiques globales plateforme (zone 1) :
-    - Nombre d usagers actifs
-    - Nombre de laboratoires representes (au moins un user_profile is_active)
+    - Nombre d user_profiles actifs
+    - Nombre de laboratories representes (au moins un user_profile is_active)
     - Nombre de nouveaux inscrits sur la periode (reglement accepte)
     """
     from accounts.models import UserProfile, Laboratory

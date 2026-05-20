@@ -48,7 +48,7 @@ def confirmer_activite(request, token):
 
     return render(request, "user_profile/confirmer_activite.html", {
         "status": "ok",
-        "accounts": user_profile,
+        "user_profile": user_profile,
     })
 
 

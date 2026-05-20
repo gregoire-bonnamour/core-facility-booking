@@ -1,9 +1,9 @@
 # Copyright (c) 2025 Author Author
-# Licensed under the Creative Commons Attribution-NonCommercial 4.0 International License (CC BY-NC 4.0)
+# Licensed under the Creative Commons Attribution-NoCommercial 4.0 International License (CC BY-NC 4.0)
 # See the LICENSE file or https://creativecommons.org/licenses/by-nc/4.0/legalcode for details.
 
 """
-Module : user_profile.apps
+Module: user_profile.apps
 --------------------
 Configuration de l’application `user_profile` pour Django.
 
@@ -19,7 +19,7 @@ class AccountsConfig(AppConfig):
     Configuration principale de l’app `user_profile`.
 
     Attributs :
-        default_auto_field (str) : Définit le type de clé primaire par défaut
+        default_auto_field (str) : Définit le type de clé primaire by default
                                    (ici, `BigAutoField`).
         name (str)               : Nom interne de l’application.
     """

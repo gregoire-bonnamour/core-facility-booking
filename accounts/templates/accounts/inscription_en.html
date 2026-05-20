@@ -8,7 +8,7 @@
         background-color: white;
         padding: 2rem;
         border-radius: 8px;
-        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        box-shadow: 0 0 10px rgba(0,0,0,0.1);
     }
 
     .signup-form h1 {
@@ -111,29 +111,29 @@
 </div>
 
 <div class="signup-form">
-    <h1>Créer un compte</h1>
+    <h1>Create an Account</h1>
 
     {% if messages %}
-    {% for message in messages %}
-    <div class="messages">{{ message }}</div>
-    {% endfor %}
+        {% for message in messages %}
+            <div class="messages">{{ message }}</div>
+        {% endfor %}
     {% endif %}
 
     {% if form.non_field_errors %}
-    <ul class="errorlist">
-        {% for error in form.non_field_errors %}
-        <li>{{ error }}</li>
-        {% endfor %}
-    </ul>
+        <ul class="errorlist">
+            {% for error in form.non_field_errors %}
+                <li>{{ error }}</li>
+            {% endfor %}
+        </ul>
     {% endif %}
 
     <form method="post" novalidate>
         {% csrf_token %}
         <p>{{ form.first_name.errors }}{{ form.first_name.label_tag }}{{ form.first_name }}</p>
         <p>{{ form.name.errors }}{{ form.name.label_tag }}{{ form.name }}</p>
-        <p>{{ form.fonction.errors }}{{ form.fonction.label_tag }}{{ form.fonction }}</p>
+        <p>{{ form.role.errors }}{{ form.role.label_tag }}{{ form.role }}</p>
         <p>{{ form.affiliation.errors }}{{ form.affiliation.label_tag }}{{ form.affiliation }}</p>
-        <p>{{ form.laboratoire.errors }}{{ form.laboratoire.label_tag }}{{ form.laboratoire }}</p>
+        <p>{{ form.laboratory.errors }}{{ form.laboratory.label_tag }}{{ form.laboratory }}</p>
         <p>{{ form.email.errors }}{{ form.email.label_tag }}{{ form.email }}</p>
         <p>{{ form.password.errors }}{{ form.password.label_tag }}{{ form.password }}</p>
         <p>{{ form.password_confirmation.errors }}{{ form.password_confirmation.label_tag }}{{ form.password_confirmation }}</p>
@@ -141,13 +141,13 @@
         <div class="acknowledgment-block">
             <span class="ack-label">{{ form.registration_acknowledged.label }}</span>
             <blockquote>
-                "We acknowledge Author Author (YourUniversity) for training and technical/scientific
+                "We acknowledge Tothor Tothor (YourUniversity) for training and technical/scientific
                 assistance with microscope/cytometer, and the YourFacility core facility for access
                 to the equipment."
             </blockquote>
             <div class="ack-checkbox-row">
                 {{ form.registration_acknowledged }}
-                <label for="{{ form.registration_acknowledged.id_for_label }}">Lu et approuvé *</label>
+                <label for="{{ form.registration_acknowledged.id_for_label }}">Read and approved *</label>
             </div>
             {% if form.registration_acknowledged.errors %}
             <ul class="errorlist">
@@ -155,7 +155,7 @@
             </ul>
             {% endif %}
         </div>
-        <button type="submit">S'inscrire</button>
+        <button type="submit">Sign Up</button>
     </form>
 </div>
 
@@ -173,22 +173,22 @@
                     },
                     dataType: 'json',
                     success: function (data) {
-                        const laboSelect = $('#id_laboratoire');
+                        const laboSelect = $('#id_laboratory');
                         laboSelect.empty();
                         laboSelect.append($('<option>', {
                             value: '',
                             text: '---------'
                         }));
-                        data.laboratoires.forEach(function (labo) {
+                        data.laboratories.forEach(function (lab) {
                             laboSelect.append($('<option>', {
-                                value: labo.id,
-                                text: labo.name
+                                value: lab.id,
+                                text: lab.name
                             }));
                         });
                     }
                 });
             } else {
-                $('#id_laboratoire').empty().append($('<option>', {
+                $('#id_laboratory').empty().append($('<option>', {
                     value: '',
                     text: '---------'
                 }));

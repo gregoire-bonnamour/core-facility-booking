@@ -1,17 +1,17 @@
 # Copyright (c) 2025 Author Author
-# Licensed under the Creative Commons Attribution-NonCommercial 4.0 International License (CC BY-NC 4.0)
+# Licensed under the Creative Commons Attribution-NoCommercial 4.0 International License (CC BY-NC 4.0)
 # See the LICENSE file or https://creativecommons.org/licenses/by-nc/4.0/legalcode for details.
 
 """
-Module : user_profile.views
+Module: user_profile.views
 ---------------------
 Vues de l’application `user_profile` :
 - inscription d’un nouvel utilisateur (User + UserProfile) et confirmation par email,
-- invitation d’usagers (admin),
+- invitation d’user_profiles (admin),
 - profil de l’user_profile connecté,
-- endpoint AJAX pour récupérer les laboratoires d’une affiliation.
+- endpoint AJAX pour récupérer les laboratories d’une affiliation.
 
-Notes :
+Notes:
 - L’authentification se fait par email (voir accounts.backends.EmailAuthBackend).
 - L’inscription crée un User inactif puis envoie un lien de confirmation.
 - La confirmation active le User + l’UserProfile.
@@ -69,7 +69,7 @@ def inscription(request):
         - form : RegistrationForm
     """
     lang = (request.GET.get("lang") or "").lower()
-    tpl = "user_profile/inscription_en.html" if lang == "en" else "user_profile/inscription.html"
+    tpl = "accounts/inscription_en.html" if lang == "en" else "accounts/inscription.html"
 
     if request.method == 'POST':
         form = RegistrationForm(request.POST, request=request, language=lang)
@@ -80,11 +80,11 @@ def inscription(request):
             # Génération du lien de confirmation
             token = default_token_generator.make_token(user)
             uid = urlsafe_base64_encode(force_bytes(user.pk))
-            activation_url = request.build_absolute_uri(f"/user_profile/confirmation/{uid}/{token}/")
+            activation_url = request.build_absolute_uri(f"/accounts/confirmation/{uid}/{token}/")
 
             # Envoi du email de confirmation
             subject = "Confirmation de votre inscription"
-            message = render_to_string("user_profile/email_confirmation.html", {
+            message = render_to_string("accounts/email_confirmation.html", {
                 'user': user,
                 'activation_url': activation_url,
             })
@@ -96,7 +96,7 @@ def inscription(request):
                 fail_silently=False,
             )
 
-            return render(request, 'user_profile/inscription_confirmation.html', {'email': user.email})
+            return render(request, 'accounts/inscription_confirmation.html', {'email': user.email})
         else:
             # Log structurée (passe par la config LOGGING des settings)
             logger.warning("Erreurs formulaire inscription: %s", form.errors)
@@ -180,7 +180,7 @@ def inviter_usager(request):
                 count, _ = Invitation.objects.filter(id__in=ids).delete()
                 messages.success(request, f"{count} invitation(s) supprimée(s).")
             else:
-                messages.warning(request, "Aucune invitation sélectionnée.")
+                messages.warning(request, "None invitation sélectionnée.")
             return redirect('accounts:inviter_usager')
         
         if action and action.startswith('relancer_'):
@@ -222,7 +222,7 @@ def inviter_usager(request):
     emails_inscrits = UserProfile.objects.values_list('email', flat=True)
     invitations_en_attente = Invitation.objects.exclude(email__in=emails_inscrits).order_by('-sent_at')
 
-    return render(request, 'user_profile/inviter_usager.html', {
+    return render(request, 'accounts/inviter_usager.html', {
         'form': form,
         'invitations_en_attente': invitations_en_attente
     })
@@ -277,20 +277,20 @@ def profil(request):
         - user_profile: profil UserProfile lié (peut être None si non créé)
     """
     user_profile = getattr(request.user, 'accounts', None)
-    return render(request, 'user_profile/profil.html', {'user': request.user, 'accounts': user_profile})
+    return render(request, 'accounts/profil.html', {'user': request.user, 'accounts': user_profile})
 
 
 @require_GET
 def get_laboratoires_par_affiliation(request):
     """
-    Endpoint AJAX (GET) : retourne les laboratoires d’une affiliation donnée.
+    Endpoint AJAX (GET) : retourne les laboratories d’une affiliation donnée.
 
-    Paramètres :
+    Parameters:
         - affiliation_id : identifiant d’Affiliation (GET)
 
     Réponse (JSON) :
         {
-            "laboratoires": [
+            "laboratories": [
                 {"id": <int>, "name": <str>}, ...
             ]
         }
@@ -299,8 +299,8 @@ def get_laboratoires_par_affiliation(request):
     if affiliation_id:
         labos = Laboratory.objects.filter(affiliation_id=affiliation_id).order_by('name')
         data = [{'id': l.id, 'name': l.name} for l in labos]
-        return JsonResponse({'laboratoires': data})
-    return JsonResponse({'laboratoires': []})
+        return JsonResponse({'laboratories': data})
+    return JsonResponse({'laboratories': []})
 
 
 @user_passes_test(is_platform_admin_plateforme)
@@ -314,7 +314,7 @@ def valider_formations(request):
         ids = request.POST.getlist("invitation_ids")
 
         if not ids:
-            messages.warning(request, "Aucune invitation sélectionnée.")
+            messages.warning(request, "None invitation sélectionnée.")
             return redirect(request.path)
 
         # 1) SUPPRIMER LA SÉLECTION
@@ -323,7 +323,7 @@ def valider_formations(request):
             if deleted:
                 messages.success(request, f"{deleted} invitation(s) supprimée(s).")
             else:
-                messages.info(request, "Aucune invitation supprimée (déjà validée ?).")
+                messages.info(request, "None invitation supprimée (déjà validée ?).")
             return redirect(request.path)
 
         # 2) VALIDER LA SÉLECTION
@@ -359,7 +359,7 @@ def valider_formations(request):
         email = inv.email
         user_exists = User.objects.filter(email__iexact=email).exists()
         usager_exists = UserProfile.objects.filter(email__iexact=email).exists()
-        etat = "✅ Inscrit" if user_exists and usager_exists else "❌ Non inscrit"
+        etat = "✅ Inscrit" if user_exists and usager_exists else "❌ No inscrit"
         equipment = inv.reservation.equipment.name if inv.reservation else "—"
         date_formation = inv.reservation.start_date.strftime("%Y-%m-%d") if inv.reservation else "—"
         lignes.append({
@@ -387,32 +387,32 @@ def confirmer_activite(request, token):
         data = signing.loads(token, max_age=30 * 86400, salt="reverification")
         usager_id = data["usager_id"]
     except signing.SignatureExpired:
-        return render(request, "user_profile/confirmer_activite.html", {
+        return render(request, "accounts/confirmer_activite.html", {
             "status": "expire",
         })
     except (signing.BadSignature, KeyError):
-        return render(request, "user_profile/confirmer_activite.html", {
+        return render(request, "accounts/confirmer_activite.html", {
             "status": "invalide",
         })
 
     try:
         user_profile = UserProfile.objects.get(pk=usager_id)
     except UserProfile.DoesNotExist:
-        return render(request, "user_profile/confirmer_activite.html", {
+        return render(request, "accounts/confirmer_activite.html", {
             "status": "invalide",
         })
 
     if not user_profile.is_active:
-        return render(request, "user_profile/confirmer_activite.html", {
+        return render(request, "accounts/confirmer_activite.html", {
             "status": "desactive",
         })
 
     user_profile.last_reverification_date = timezone.now()
     user_profile.save(update_fields=["last_reverification_date"])
 
-    return render(request, "user_profile/confirmer_activite.html", {
+    return render(request, "accounts/confirmer_activite.html", {
         "status": "ok",
-        "accounts": user_profile,
+        "user_profile": user_profile,
     })
 
 
@@ -427,12 +427,12 @@ def accueil(request):
 
     news_list = (News.objects
                  .filter(is_active=True)
-                 .only('id', 'title', 'content', 'published_at')  # optionnel
+                 .only('id', 'title', 'content', 'published_at')  # optional
                  .order_by('-published_at')[:5])
                  
 
     
-    return render(request, 'user_profile/accueil.html', {
+    return render(request, 'accounts/accueil.html', {
         'is_admin': is_admin,
         'equipment': equipment_set,
         'nb_reservations_en_attente': nb_reservations_en_attente,
@@ -462,9 +462,9 @@ def reglement_view(request):
     # Où rediriger après succès
     next_url = request.POST.get("next") or request.GET.get("next") or reverse("accueil")
 
-    # — NEW: choisir le template d'affichage selon ?lang=en (FR par défaut)
+    # — NEW: choisir le template d'affichage selon ?lang=en (FR by default)
     lang = (request.GET.get("lang") or "").lower()
-    tpl = "user_profile/reglement_en.html" if lang == "en" else "user_profile/reglement.html"
+    tpl = "accounts/reglement_en.html" if lang == "en" else "accounts/reglement.html"
 
     if request.method == "POST":
         acks = request.POST.getlist("ack")
@@ -484,7 +484,7 @@ def reglement_view(request):
                 profil.terms_accepted_at = timezone.now()
                 profil.save(update_fields=["terms_accepted", "terms_accepted_at"])
 
-            # 1) Générer le PDF (optionnel) — ne bloque jamais
+            # 1) Générer le PDF (optional) — ne bloque jamais
             pdf_bytes = None
             pdf_err = None
             try:
@@ -496,7 +496,7 @@ def reglement_view(request):
                     "site_url": getattr(settings, "SITE_URL", ""),
                     "points": REGLEMENT_POINTS,
                 }
-                pdf_tpl = "user_profile/reglement_pdf_en.html" if lang == "en" else "user_profile/reglement_pdf.html"
+                pdf_tpl = "accounts/reglement_pdf_en.html" if lang == "en" else "accounts/reglement_pdf.html"
                 html = render_to_string(pdf_tpl, ctx)
 
                 # IMPORTANT: base_url en file:// absolu (Windows-safe)
@@ -585,7 +585,7 @@ def reglement_lecture(request):
     """
     lang = (request.GET.get("lang") or "").lower()
 
-    tpl = "user_profile/reglement_lecture_en.html" if lang == "en" else "user_profile/reglement_lecture.html"
+    tpl = "accounts/reglement_lecture_en.html" if lang == "en" else "accounts/reglement_lecture.html"
 
     return render(request, tpl)
 
@@ -593,7 +593,7 @@ def reglement_lecture(request):
 
 def _envoyer_reglement_pdf(request):
     """
-    Rend un PDF à partir d'un template (user_profile/reglement_pdf.html) et l'envoie à l'user_profile.
+    Rend un PDF à partir d'un template (accounts/reglement_pdf.html) et l'envoie à l'user_profile.
     """
     if not HTML:
         raise RuntimeError("WeasyPrint n'est pas disponible dans l'environnement.")
@@ -601,7 +601,7 @@ def _envoyer_reglement_pdf(request):
     user = request.user
     usager_email = getattr(user, "email", "") or getattr(getattr(user, "accounts", None), "email", "")
     if not usager_email:
-        raise RuntimeError("Aucune adresse email n'est associée à votre compte.")
+        raise RuntimeError("None adresse email n'est associée à votre compte.")
 
     contexte_pdf = {
         "user": user,
@@ -609,7 +609,7 @@ def _envoyer_reglement_pdf(request):
         "date": timezone.now(),
         "site_url": getattr(settings, "SITE_URL", ""),
     }
-    html_string = render_to_string("user_profile/reglement_pdf.html", contexte_pdf)
+    html_string = render_to_string("accounts/reglement_pdf.html", contexte_pdf)
     pdf_bytes = HTML(string=html_string, base_url=getattr(settings, "SITE_URL", "")).write_pdf()
 
     subject = "Règlement de la plateforme – confirmation d’acceptation"

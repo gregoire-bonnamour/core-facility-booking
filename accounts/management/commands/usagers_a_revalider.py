@@ -1,5 +1,5 @@
 # Copyright (c) 2025 Author Author
-# Licensed under the Creative Commons Attribution-NonCommercial 4.0 International License (CC BY-NC 4.0)
+# Licensed under the Creative Commons Attribution-NoCommercial 4.0 International License (CC BY-NC 4.0)
 # See the LICENSE file or https://creativecommons.org/licenses/by-nc/4.0/legalcode for details.
 
 """
@@ -8,7 +8,7 @@ Commande : usagers_a_revalider
 Objectif :
     1. Envoyer un email a chaque user_profile dont le profil doit etre reverifie (>= 5 ans)
        avec un lien signe (valable 30 jours) pour confirmer son activite.
-    2. Envoyer un recap a l'admin listant les usagers contactes.
+    2. Envoyer un recap a l'admin listant les user_profiles contactes.
 
 Utilisation :
     python manage.py usagers_a_revalider
@@ -26,7 +26,7 @@ from accounts.models import UserProfile
 
 
 class Command(BaseCommand):
-    help = "Envoie un email de re-verification aux usagers >= 5 ans."
+    help = "Envoie un email de re-verification aux user_profiles >= 5 ans."
 
     def handle(self, *args, **options):
         seuil = timezone.now() - timezone.timedelta(days=5 * 365)
@@ -36,23 +36,23 @@ class Command(BaseCommand):
             | Q(last_reverification_date__lte=seuil)
         )
 
-        usagers = (
+        user_profiles = (
             UserProfile.objects
-            .select_related("laboratoire", "affiliation")
+            .select_related("laboratory", "affiliation")
             .filter(q_due)
             .order_by("name", "first_name")
         )
 
-        nb = usagers.count()
+        nb = user_profiles.count()
         if nb == 0:
-            self.stdout.write(self.style.SUCCESS("Aucun user_profile a revalider."))
+            self.stdout.write(self.style.SUCCESS("No user_profile a revalider."))
             return
 
         site_url = getattr(settings, "SITE_URL", "https://yourserver.youruniversity.ca").rstrip("/")
         from_email = settings.DEFAULT_FROM_EMAIL
         contactes = []
 
-        for u in usagers:
+        for u in user_profiles:
             token = signing.dumps({"usager_id": u.pk}, salt="reverification")
             lien = site_url + reverse("accounts:confirmer_activite", kwargs={"token": token})
 
@@ -88,12 +88,12 @@ class Command(BaseCommand):
         if dests_admin and contactes:
             lignes = []
             for u in contactes:
-                labo = getattr(u.laboratoire, "name", "—")
+                lab = getattr(u.laboratory, "name", "—")
                 aff  = getattr(u.affiliation, "name", "—")
                 date_act = u.activation_date.astimezone(timezone.get_current_timezone()).strftime("%Y-%m-%d")
                 lignes.append(
                     f"- {u.name} {u.first_name} <{u.email}> | "
-                    f"Affiliation: {aff} | Labo: {labo} | Activation: {date_act}"
+                    f"Affiliation: {aff} | Labo: {lab} | Activation: {date_act}"
                 )
 
             corps_admin = (
@@ -104,7 +104,7 @@ class Command(BaseCommand):
                 "Sans reponse, la commande 'desactiver_non_repondants' les desactivera automatiquement."
             )
             send_mail(
-                subject="[Plateforme cellulaire] Re-verification envoyee a des usagers",
+                subject="[Plateforme cellulaire] Re-verification envoyee a des user_profiles",
                 message=corps_admin,
                 from_email=from_email,
                 recipient_list=dests_admin,

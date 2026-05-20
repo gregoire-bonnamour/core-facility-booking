@@ -1,11 +1,11 @@
 # Copyright (c) 2025 Author Author
-# Licensed under the Creative Commons Attribution-NonCommercial 4.0 International License (CC BY-NC 4.0)
+# Licensed under the Creative Commons Attribution-NoCommercial 4.0 International License (CC BY-NC 4.0)
 # See the LICENSE file or https://creativecommons.org/licenses/by-nc/4.0/legalcode for details.
 
 """
-Module : user_profile.forms
+Module: user_profile.forms
 ---------------------
-Définit les formulaires liés à la gestion des usagers :
+Définit les formulaires liés à la gestion des user_profiles :
 - Création / modification d'user_profile (UserProfileForm, UserProfileAdminForm)
 - Inscription en autonomie (RegistrationForm)
 - Connexion par email (EmailLoginForm)
@@ -28,7 +28,7 @@ class UserProfileForm(forms.ModelForm):
 
     Champs spécifiques :
     - affiliation : choix obligatoire (liste complète).
-    - laboratoire : filtré dynamiquement selon l'affiliation choisie.
+    - laboratory : filtré dynamiquement selon l'affiliation choisie.
     """
 
     affiliation = forms.ModelChoiceField(
@@ -37,45 +37,45 @@ class UserProfileForm(forms.ModelForm):
         label="Affiliation",
         help_text="Choisissez l'affiliation de l'user_profile."
     )
-    laboratoire = forms.ModelChoiceField(
+    laboratory = forms.ModelChoiceField(
         queryset=Laboratory.objects.none(),
         required=True,
         label="Laboratory",
-        help_text="Choisissez le laboratoire correspondant à l'affiliation."
+        help_text="Choisissez le laboratory correspondant à l'affiliation."
     )
 
     class Meta:
         model = UserProfile
         fields = [
             "first_name", "name", "email",
-            "fonction", "affiliation", "laboratoire",
+            "role", "affiliation", "laboratory",
             "authorized_equipment",
             "is_active", "is_platform_admin",
             "user",
         ]
 
     def __init__(self, *args, **kwargs):
-        """Filtre les laboratoires selon l'affiliation déjà choisie ou l'instance."""
+        """Filtre les laboratories selon l'affiliation déjà choisie ou l'instance."""
         super().__init__(*args, **kwargs)
-        self.fields['laboratoire'].label = "Laboratory / Compagnie"
+        self.fields['laboratory'].label = "Laboratory / Compagnie"
 
         if 'affiliation' in self.data:
-            # Cas formulaire soumis : on filtre en fonction de la valeur choisie
+            # Cas formulaire soumis : on filtre en role de la valeur choisie
             try:
                 affiliation_id = int(self.data.get('affiliation'))
-                self.fields['laboratoire'].queryset = Laboratory.objects.filter(
+                self.fields['laboratory'].queryset = Laboratory.objects.filter(
                     affiliation_id=affiliation_id
                 ).order_by('name')
             except (ValueError, TypeError):
-                self.fields['laboratoire'].queryset = Laboratory.objects.none()
+                self.fields['laboratory'].queryset = Laboratory.objects.none()
         elif self.instance.pk and self.instance.affiliation:
             # Cas édition : on filtre avec l'affiliation de l'user_profile existant
-            self.fields['laboratoire'].queryset = Laboratory.objects.filter(
+            self.fields['laboratory'].queryset = Laboratory.objects.filter(
                 affiliation=self.instance.affiliation
             ).order_by('name')
         else:
-            # Cas création : pas encore d'affiliation → labo vide
-            self.fields['laboratoire'].queryset = Laboratory.objects.none()
+            # Cas création : pas encore d'affiliation → lab vide
+            self.fields['laboratory'].queryset = Laboratory.objects.none()
 
     def clean_email(self):
         """
@@ -89,18 +89,18 @@ class UserProfileForm(forms.ModelForm):
             raise ValidationError("Cette adresse email est déjà utilisée par un autre user_profile.")
 
         if not User.objects.filter(email__iexact=email).exists():
-            raise ValidationError("Aucun compte utilisateur associé à cette adresse email.")
+            raise ValidationError("No compte utilisateur associé à cette adresse email.")
 
         return email
 
     def clean(self):
-        """Validation croisée : cohérence affiliation ↔ laboratoire."""
+        """Validation croisée : cohérence affiliation ↔ laboratory."""
         cleaned_data = super().clean()
         affiliation = cleaned_data.get('affiliation')
-        laboratoire = cleaned_data.get('laboratoire')
+        laboratory = cleaned_data.get('laboratory')
 
-        if affiliation and laboratoire and laboratoire.affiliation != affiliation:
-            raise ValidationError("Le laboratoire sélectionné ne correspond pas à l'affiliation choisie.")
+        if affiliation and laboratory and laboratory.affiliation != affiliation:
+            raise ValidationError("Le laboratory sélectionné ne correspond pas à l'affiliation choisie.")
         return cleaned_data
 
 
@@ -144,7 +144,7 @@ class RegistrationForm(forms.ModelForm):
 
     class Meta:
         model = UserProfile
-        fields = ['first_name', 'name', 'fonction', 'affiliation', 'laboratoire']
+        fields = ['first_name', 'name', 'role', 'affiliation', 'laboratory']
 
     def __init__(self, *args, **kwargs):
         initial = kwargs.get("initial", {})
@@ -165,28 +165,28 @@ class RegistrationForm(forms.ModelForm):
             self.fields['password_confirmation'].label = "Confirm Password"
             self.fields['first_name'].label = "First Name"
             self.fields['name'].label = "Last Name"
-            self.fields['fonction'].label = "Position"
+            self.fields['role'].label = "Position"
             self.fields['affiliation'].label = "Affiliation"
-            self.fields['laboratoire'].label = "Laboratory / Company"
+            self.fields['laboratory'].label = "Laboratory / Company"
             self.fields['registration_acknowledged'].label = (
                 "I commit to including the following acknowledgment in my scientific publications "
                 "resulting from data acquired on the platform or from support provided by the platform:"
             )
         else:
-            self.fields['laboratoire'].label = "Laboratory / Compagnie"
+            self.fields['laboratory'].label = "Laboratory / Compagnie"
 
         if Role.objects.exists():
-            self.fields['fonction'].queryset = Role.objects.all()
+            self.fields['role'].queryset = Role.objects.all()
         if Affiliation.objects.exists():
             self.fields['affiliation'].queryset = Affiliation.objects.all()
         if Laboratory.objects.exists():
-            self.fields['laboratoire'].queryset = Laboratory.objects.all()
+            self.fields['laboratory'].queryset = Laboratory.objects.all()
 
     def clean(self):
         """
         Validation du formulaire :
         - Vérifie la concordance des mots de passe.
-        - Vérifie qu'aucun profil user_profile complet n'existe déjà pour ce email.
+        - Vérifie qu'no profil user_profile complet n'existe déjà pour ce email.
           (Un UserProfile "vide" créé automatiquement par le signal est toléré.)
         """
         cleaned_data = super().clean()
@@ -246,9 +246,9 @@ class RegistrationForm(forms.ModelForm):
         # 3) Compléter / mettre à day_of_week le profil UserProfile
         user_profile.name = self.cleaned_data['name']
         user_profile.first_name = self.cleaned_data['first_name']
-        user_profile.fonction = self.cleaned_data['fonction']
+        user_profile.role = self.cleaned_data['role']
         user_profile.affiliation = self.cleaned_data['affiliation']
-        user_profile.laboratoire = self.cleaned_data['laboratoire']
+        user_profile.laboratory = self.cleaned_data['laboratory']
         user_profile.email = email
         user_profile.registration_acknowledged = self.cleaned_data.get('registration_acknowledged', False)
 
@@ -261,7 +261,7 @@ class RegistrationForm(forms.ModelForm):
                 user_profile.authorized_equipment.set(invitation.equipment_set.all())
                 user_profile.save()
 
-        # 5) Retourner le User (comme attendu par la vue d'inscription)
+        # 5) Returnsr le User (comme attendu par la vue d'inscription)
         return user
 
 
@@ -290,7 +290,7 @@ class EmailLoginForm(forms.Form):
         return self.cleaned_data
 
     def get_user(self):
-        """Retourne l'utilisateur authentifié (ou None)."""
+        """Returns l'utilisateur authentifié (ou None)."""
         return getattr(self, 'user', None)
 
 

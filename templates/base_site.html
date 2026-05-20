@@ -29,14 +29,14 @@
             color: red;
         }
 
-        /* === Grille calendrier === */
+        /* === Grille calendar === */
         .calendar-container {
             display: grid;
             grid-template-columns: 60px repeat(7, 1fr); /* colonne heures + 7 jours */
             border: 1px solid #ccc;
         }
         .time-slot {
-            height: 60px;              /* 1h = 60px → utilisé par JS */
+            height: 60px;              /* 1h = 60px → used by JS */
             border-top: 1px solid #eee;
             font-size: 0.8em;
             padding: 2px;
@@ -55,7 +55,7 @@
             background-color: #f0f0f0;
         }
         .day-column {
-            position: relative;        /* permet le positionnement absolu des réservations */
+            position: relative;        /* permet le positionnement absolu des bookings */
         }
         .reservation {
             position: absolute;
@@ -70,7 +70,7 @@
             z-index: 10;
         }
 
-        /* === Navigation calendrier === */
+        /* === Navigation calendar === */
         .navigation {
             margin-bottom: 15px;
             text-align: center;

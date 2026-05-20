@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 
 {% block content %}
-<h2>Inviter un user_profile</h2>
+<h2>Invite un user_profile</h2>
 
 {# ✅ Affichage des messages de succès ou d’erreur #}
 {% if messages %}
@@ -29,12 +29,12 @@
   </div>
 
   <div>
-    <p>Équipements accessibles :</p>
+    <p>Equipment accessibles :</p>
     {{ form.equipment_set }}
     {{ form.equipment_set.errors }}
   </div>
 
-  <button type="submit">Envoyer l'invitation</button>
+  <button type="submit">Send l'invitation</button>
 </form>
 
 {# 📋 Tableau des invitations en attente #}
@@ -51,9 +51,9 @@
           <th style="padding: 10px; width: 40px; text-align: center;">
             <input type="checkbox" onclick="toggleAll(this)">
           </th>
-          <th style="padding: 10px; white-space: nowrap;">Courriel</th>
+          <th style="padding: 10px; white-space: nowrap;">Email</th>
           <th style="padding: 10px; white-space: nowrap;">Date d'envoi</th>
-          <th style="padding: 10px; min-width: 200px;">Équipements</th>
+          <th style="padding: 10px; min-width: 200px;">Equipment</th>
           <th style="padding: 10px; white-space: nowrap;">Action</th>
         </tr>
       </thead>
@@ -91,8 +91,8 @@
     <span>↳ Pour la sélection :</span>
     <button type="submit" name="action" value="supprimer_masse"
       style="cursor: pointer; color: white; background-color: #dc3545; border: none; padding: 5px 10px; border-radius: 3px;"
-      onclick="return confirm('Confirmer la suppression des éléments sélectionnés ?');">
-      🗑️ Supprimer les cochés
+      onclick="return confirm('Confirm la suppression des éléments sélectionnés ?');">
+      🗑️ Delete les cochés
     </button>
   </div>
 </form>
@@ -107,10 +107,10 @@
 </script>
 
 {% else %}
-<p style="margin-top: 20px; font-style: italic; color: gray;">Aucune invitation en attente.</p>
+<p style="margin-top: 20px; font-style: italic; color: gray;">Tocune invitation en attente.</p>
 {% endif %}
 
-<p><a href="{% url 'accueil' %}">⬅ Retour à l'accueil</a></p>
+<p><a href="{% url 'home' %}">⬅ Back à l'home</a></p>
 <footer>
 </footer>
 {% endblock %}

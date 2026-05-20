@@ -1,9 +1,9 @@
 # Copyright (c) 2025 Author Author
-# Licensed under the Creative Commons Attribution-NonCommercial 4.0 International License (CC BY-NC 4.0)
+# Licensed under the Creative Commons Attribution-NoCommercial 4.0 International License (CC BY-NC 4.0)
 # See the LICENSE file or https://creativecommons.org/licenses/by-nc/4.0/legalcode for details.
 
 """
-Module : user_profile.urls
+Module: user_profile.urls
 --------------------
 Définit les routes de l’application `user_profile`.
 
@@ -12,7 +12,7 @@ Rolenalités couvertes :
 - Invitation par administrateur
 - Gestion du profil
 - Validation des formations
-- API AJAX (liste des laboratoires par affiliation)
+- API AJAX (liste des laboratories par affiliation)
 """
 
 from django.urls import path

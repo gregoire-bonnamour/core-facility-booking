@@ -11,21 +11,21 @@
         <h3>🔧 Administration</h3>
         <ul>
 			<li><a href="{% url 'admin:index' %}">⚙️ Interface Django admin</a></li>
-            <li><a href="{% url 'accounts:inviter_usager' %}">📨 Inviter un user_profile</a></li>
-            <li><a href="{% url 'booking:stats_admin' %}">📊 Statistiques</a></li>
-            <li><a href="{% url 'billing:page_facturation' %}">💰 Facturation</a></li>
-            <!-- 👉 nouveau : bouton vers le calendrier global admin -->
-            <li><a href="{% url 'booking:calendrier_global_admin' %}">📅 Calendrier global (tous équipements)</a></li>
+            <li><a href="{% url 'accounts:invite_usager' %}">📨 Invite un user_profile</a></li>
+            <li><a href="{% url 'booking:stats_admin' %}">📊 Statistics</a></li>
+            <li><a href="{% url 'billing:page_facturation' %}">💰 Billing</a></li>
+            <!-- 👉 nouveau : bouton vers le calendar global admin -->
+            <li><a href="{% url 'booking:calendar_global_admin' %}">📅 Calendar global (tous équipements)</a></li>
         </ul>
     </section>
 {% endif %}
 
-{# --- Alerte admin si réservations en attente de validation --- #}
+{# --- Alerte admin si bookings en attente de validation --- #}
 {% if user.is_staff and nb_reservations_en_attente %}
     <section class="alert-admin">
-        <h3>🚨 Réservations en attente</h3>
+        <h3>🚨 Bookings en attente</h3>
         <p><a href="{% url 'admin:reserv_reservation_changelist' %}?status=en_attente">
-            {{ nb_reservations_en_attente }} réservation(s) à valider
+            {{ nb_reservations_en_attente }} booking(s) à valider
         </a></p>
     </section>
 {% endif %}
@@ -34,24 +34,24 @@
 <section>
     <h3>🔧 Accès user_profile</h3>
     <ul>
-        <li><a href="{% url 'accounts:profil' %}">👤 Mon profil</a></li>
+        <li><a href="{% url 'accounts:profil' %}">👤 My profile</a></li>
         <li><a href="{{ MAILTO_SIGNALER_PROBLEME }}">Signaler un problème</a></li>
-        <li><a href="{% url 'accounts:reglement_lecture' %}">📄 Voir le règlement de la plateforme</a></li>
+        <li><a href="{% url 'accounts:reglement_lecture' %}">📄 Voir le terms & conditions de la plateforme</a></li>
     </ul>
 </section>
 
-{# --- Liste des équipements accessibles (ou message si aucun) --- #}
+{# --- Liste des équipements accessibles (ou message si no) --- #}
 <section>
     <h3>🗓️ Mes équipements</h3>
     <ul>
         {% for equipment in equipment_set %}
             <li>
-                <a href="{% url 'booking:calendrier_equipement' equipment.id %}?semaine={{ lundi|date:'Y-m-d' }}">
+                <a href="{% url 'booking:calendar_equipement' equipment.id %}?semaine={{ lundi|date:'Y-m-d' }}">
                     📅 {{ equipment.name }}
                 </a>
             </li>
         {% empty %}
-            <li>Aucun équipement accessible.</li>
+            <li>Tocun équipement accessible.</li>
         {% endfor %}
     </ul>
 </section>
@@ -59,7 +59,7 @@
 {# --- Bloc actualités en bas de page --- #}
 {% if news_list %}
 <section style="margin-top: 2em;">
-    <h3>📰 Actualités</h3>
+    <h3>📰 News</h3>
     <ul class="news-feed">
         {% for news in news_list %}
             <li>

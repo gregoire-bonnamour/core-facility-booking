@@ -1,5 +1,5 @@
 # Copyright (c) 2025 Author Author
-# Licensed under the Creative Commons Attribution-NonCommercial 4.0 International License (CC BY-NC 4.0)
+# Licensed under the Creative Commons Attribution-NoCommercial 4.0 International License (CC BY-NC 4.0)
 # See the LICENSE file or https://creativecommons.org/licenses/by-nc/4.0/legalcode for details.
 
 """
@@ -16,7 +16,7 @@ Point d’entrée ASGI pour l’application Django.
 import os
 from django.core.asgi import get_asgi_application
 
-# Définit le module de configuration Django par défaut
+# Définit le module de configuration Django by default
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'systeme_reservation_plateforme.settings')
 
 # Crée l’objet ASGI qui servira de point d’entrée au serveur ASGI

@@ -1,5 +1,5 @@
 # Copyright (c) 2025 Author Author
-# Licensed under the Creative Commons Attribution-NonCommercial 4.0 International License (CC BY-NC 4.0)
+# Licensed under the Creative Commons Attribution-NoCommercial 4.0 International License (CC BY-NC 4.0)
 # See the LICENSE file or https://creativecommons.org/licenses/by-nc/4.0/legalcode for details.
 
 #!/usr/bin/env python
@@ -7,7 +7,7 @@
 import os
 import sys
 
-# 👉 Point unique de vérité : on force les settings de dev par défaut.
+# 👉 Point unique de vérité : on force les settings de dev by default.
 os.environ.setdefault(
     "DJANGO_SETTINGS_MODULE",
     "systeme_reservation_plateforme.settings.local"

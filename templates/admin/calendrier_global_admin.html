@@ -18,7 +18,7 @@
 {% endblock %}
 
 {% block content %}
-  <h1>Calendrier global (Admin)</h1>
+  <h1>Calendar global (Admin)</h1>
 
   <div class="legend">
     {% for e in legend %}
@@ -45,8 +45,8 @@
         nowIndicator: true,
         headerToolbar: { left: 'prev,next today', center: 'title', right: 'dayGridMonth,timeGridWeek,timeGridDay' },
         events: {
-          url: "{% url 'booking:calendrier_global_admin_data' %}",  // génère /reserv/admin/...
-          failure: function() { alert('Erreur de chargement des réservations.'); }
+          url: "{% url 'booking:calendar_global_admin_data' %}",  // génère /reserv/admin/...
+          failure: function() { alert('Erreur de chargement des bookings.'); }
         },
         eventDidMount: function(info) {
           const p = info.event.extendedProps || {};

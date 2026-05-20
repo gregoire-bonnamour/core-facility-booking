@@ -1,9 +1,9 @@
 # Copyright (c) 2025 Author Author
-# Licensed under the Creative Commons Attribution-NonCommercial 4.0 International License (CC BY-NC 4.0)
+# Licensed under the Creative Commons Attribution-NoCommercial 4.0 International License (CC BY-NC 4.0)
 # See the LICENSE file or https://creativecommons.org/licenses/by-nc/4.0/legalcode for details.
 
 """
-Module : reserv.forms
+Module: reserv.forms
 ---------------------
 Formulaires lies aux reservations.
 
@@ -13,7 +13,7 @@ Deux formulaires principaux :
 
 Regles implementees :
 - Regles de base (dates futures, coherence debut/fin, pas de chevauchement).
-- Gestion des demandes exceptionnelles (bypass des regles optionnelles).
+- Gestion des demandes exceptionnelles (bypass des regles optionalles).
 - Validation par rapport aux creneaux autorises.
 - Validation par rapport aux plages limites (duree max par user_profile).
 """
@@ -39,19 +39,19 @@ def generate_time_choices():
 class ReservationForm(forms.ModelForm):
     # Champs virtuels pour l'UI
     start_time_h = forms.ChoiceField(choices=HOUR_CHOICES, label="Heure debut")
-    minute_debut_m = forms.ChoiceField(choices=MINUTE_CHOICES, label="Minutes debut")
+    start_minute_m = forms.ChoiceField(choices=MINUTE_CHOICES, label="Minutes debut")
     end_time_h = forms.ChoiceField(choices=HOUR_CHOICES, label="Heure fin")
-    minute_fin_m = forms.ChoiceField(choices=MINUTE_CHOICES, label="Minutes fin")
+    end_minute_m = forms.ChoiceField(choices=MINUTE_CHOICES, label="Minutes fin")
 
     # Champs virtuels (ne se sauvegardent PAS dans la DB)
     # Ils servent uniquement a l'interface pour les admins
-    type_reservation_maintenance = forms.BooleanField(
+    is_maintenance = forms.BooleanField(
         required=False,
         label="Reservation Maintenance",
         widget=forms.CheckboxInput(attrs={"class": "form-check-input"}),
         help_text="La reservation sera attribuee a l'user_profile systeme 'Maintenance'"
     )
-    type_reservation_enseignement = forms.BooleanField(
+    is_teaching = forms.BooleanField(
         required=False,
         label="Reservation Enseignement",
         widget=forms.CheckboxInput(attrs={"class": "form-check-input"}),
@@ -76,8 +76,8 @@ class ReservationForm(forms.ModelForm):
         fields = [
             "start_date",
             "end_date",
-            "start_time_h", "minute_debut_m",
-            "end_time_h", "minute_fin_m",
+            "start_time_h", "start_minute_m",
+            "end_time_h", "end_minute_m",
             "exception_request",
             "justification",
             "is_training",
@@ -119,8 +119,8 @@ class ReservationForm(forms.ModelForm):
             self.fields['is_training'].widget = forms.HiddenInput()
             self.fields['is_training'].initial = False
             self.fields['trained_emails'].widget = forms.HiddenInput()
-            self.fields['type_reservation_maintenance'].widget = forms.HiddenInput()
-            self.fields['type_reservation_enseignement'].widget = forms.HiddenInput()
+            self.fields['is_maintenance'].widget = forms.HiddenInput()
+            self.fields['is_teaching'].widget = forms.HiddenInput()
 
     def clean(self):
         cleaned_data = super().clean()
@@ -132,9 +132,9 @@ class ReservationForm(forms.ModelForm):
 
         # Recomposition des heures
         h_d = cleaned_data.get("start_time_h")
-        m_d = cleaned_data.get("minute_debut_m")
+        m_d = cleaned_data.get("start_minute_m")
         h_f = cleaned_data.get("end_time_h")
-        m_f = cleaned_data.get("minute_fin_m")
+        m_f = cleaned_data.get("end_minute_m")
 
         start_time = time(int(h_d), int(m_d)) if h_d and m_d else None
         end_time = time(int(h_f), int(m_f)) if h_f and m_f else None
@@ -195,8 +195,8 @@ class ReservationForm(forms.ModelForm):
             self.add_error("assistance_duration_minutes", "La duree d'assistance est obligatoire si cette option est cochee.")
 
         # Validation : Maintenance et Enseignement sont mutuellement exclusifs
-        type_maint = cleaned_data.get("type_reservation_maintenance", False)
-        type_enseign = cleaned_data.get("type_reservation_enseignement", False)
+        type_maint = cleaned_data.get("is_maintenance", False)
+        type_enseign = cleaned_data.get("is_teaching", False)
         if type_maint and type_enseign:
             raise ValidationError(
                 "Une reservation ne peut pas etre a la fois Maintenance et Enseignement. "
@@ -204,7 +204,7 @@ class ReservationForm(forms.ModelForm):
             )
 
         if exception_request:
-            return cleaned_data  # on bypass les regles optionnelles (creneaux, plages)
+            return cleaned_data  # on bypass les regles optionalles (creneaux, plages)
 
         # 6. Respect des creneaux autorises
         creneaux = TimeSlot.objects.filter(equipment=self.equipment, day_of_week=start_date.weekday())
@@ -250,9 +250,9 @@ class ReservationForm(forms.ModelForm):
 
         # Composer les heures depuis les champs virtuels si presents
         h_d = self.cleaned_data.get("start_time_h")
-        m_d = self.cleaned_data.get("minute_debut_m")
+        m_d = self.cleaned_data.get("start_minute_m")
         h_f = self.cleaned_data.get("end_time_h")
-        m_f = self.cleaned_data.get("minute_fin_m")
+        m_f = self.cleaned_data.get("end_minute_m")
 
         if h_d is not None and m_d is not None:
             instance.start_time = time(int(h_d), int(m_d))
@@ -286,10 +286,10 @@ class ReservationModificationForm(ReservationForm):
         if self.instance and self.instance.pk:
             if self.instance.start_time:
                 self.fields["start_time_h"].initial = f"{self.instance.start_time.hour:02d}"
-                self.fields["minute_debut_m"].initial = f"{self.instance.start_time.minute - self.instance.start_time.minute % 10:02d}"
+                self.fields["start_minute_m"].initial = f"{self.instance.start_time.minute - self.instance.start_time.minute % 10:02d}"
             if self.instance.end_time:
                 self.fields["end_time_h"].initial = f"{self.instance.end_time.hour:02d}"
-                self.fields["minute_fin_m"].initial = f"{self.instance.end_time.minute - self.instance.end_time.minute % 10:02d}"
+                self.fields["end_minute_m"].initial = f"{self.instance.end_time.minute - self.instance.end_time.minute % 10:02d}"
 
         # Restrictions si pas admin
         is_admin = False

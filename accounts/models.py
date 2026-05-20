@@ -1,20 +1,20 @@
 # Copyright (c) 2025 Author Author
-# Licensed under the Creative Commons Attribution-NonCommercial 4.0 International License (CC BY-NC 4.0)
+# Licensed under the Creative Commons Attribution-NoCommercial 4.0 International License (CC BY-NC 4.0)
 # See the LICENSE file or https://creativecommons.org/licenses/by-nc/4.0/legalcode for details.
 
 """
-Module : user_profile.models
+Module: user_profile.models
 ----------------------
-Modèles liés à la gestion des usagers et de leurs rattachements.
+Modèles liés à la gestion des user_profiles et de leurs rattachements.
 
-Contenu :
-- Role     : table de référence pour le rôle/fonction d'un user_profile.
+Content:
+- Role     : table de référence pour le rôle/role d'un user_profile.
 - Affiliation  : organisme d'appartenance (YourUniversity, McGill, Industriel, etc.).
 - Laboratory  : unité rattachée à une affiliation.
 - UserProfile       : profil applicatif relié au User Django (auth).
 - Invitation   : système d'invitation (email + équipements autorisés).
 
-Remarques :
+Notes:
 - La relation aux équipements autorisés (ManyToMany) vit côté UserProfile.
 - La facturation peut utiliser plusieurs sources de rates (voir TODO ci-dessous).
 """
@@ -31,8 +31,8 @@ from dateutil.relativedelta import relativedelta
 
 class Role(models.Model):
     """
-    Référentiel des fonctions/statuts d'un user_profile (étudiant, postdoc, etc.).
-    Utilisé par le modèle UserProfile via une FK optionnelle.
+    Référentiel des roles/statuts d'un user_profile (étudiant, postdoc, etc.).
+    Used by le modèle UserProfile via une FK optionalle.
     """
     name = models.CharField(max_length=100)
 
@@ -42,12 +42,12 @@ class Role(models.Model):
 
 class Affiliation(models.Model):
     """
-    Représente une affiliation (université, institut, entreprise…).
+    Represents une affiliation (université, institut, entreprise…).
 
-    Exemples : YourUniversity, McGill, Compagnie X.
-    Une affiliation regroupe un ou plusieurs laboratoires.
+    Examples: YourUniversity, McGill, Compagnie X.
+    Une affiliation regroupe un ou plusieurs laboratories.
 
-    Champs :
+    Fields:
         - name               : libellé unique
         - assistance_rate  : taux horaire d'assistance « par affiliation »
                               (peut coexister avec d'autres mécaniques de tarification)
@@ -72,20 +72,20 @@ class Affiliation(models.Model):
 
 class Laboratory(models.Model):
     """
-    Représente un laboratoire (ou compagnie/unité) rattaché à une affiliation.
+    Represents un laboratory (ou compagnie/unité) rattaché à une affiliation.
 
-    Contrainte :
+    Constraint:
         - (name, affiliation) doit être unique pour éviter les doublons.
     """
-    name = models.CharField(max_length=150, help_text="Nom du laboratoire")
+    name = models.CharField(max_length=150, help_text="Nom du laboratory")
     affiliation = models.ForeignKey(
         Affiliation,
         on_delete=models.CASCADE,
-        related_name='laboratoires'
+        related_name='laboratories'
     )
 
     class Meta:
-        unique_together = ('name', 'affiliation')  # Empêche doublons de labo pour une même affiliation
+        unique_together = ('name', 'affiliation')  # Prevents doublons de lab pour une même affiliation
 
     def __str__(self):
         return f"{self.name} ({self.affiliation.name})"
@@ -99,23 +99,23 @@ class UserProfile(models.Model):
     """
     Profil applicatif étendu, lié 1–1 au `User` Django (authentification/permissions).
 
-    Champs principaux :
+    Main fields:
         - user : lien OneToOne vers `auth.User`
         - first_name / name / email (email unique côté UserProfile)
-        - fonction (FK -> Role, optionnelle)
-        - affiliation (FK -> Affiliation, optionnelle)
-        - laboratoire (FK -> Laboratory, optionnelle)
+        - role (FK -> Role, optionalle)
+        - affiliation (FK -> Affiliation, optionalle)
+        - laboratory (FK -> Laboratory, optionalle)
         - authorized_equipment (M2M -> Equipment)
         - is_active / is_platform_admin : flags applicatifs (différents des flags Django User)
 
-    Notes :
+    Notes:
         - `is_platform_admin` ici est un attribut *applicatif*. Il ne remplace pas `is_staff` / `is_superuser`
           du modèle `User`. On peut s'en servir pour l'UI ou des règles spécifiques.
         - La contrainte d'email unique côté UserProfile ne remplace pas l'unicité email côté User ;
           les deux sont utiles selon les écrans.
     """
     # (Option alternative possible : conserver des choices ; ici on utilise une table Role)
-    FONCTION_CHOICES = [
+    ROLE_CHOICES = [
         ('etudiant1', "Étudiant 1er cycle"),
         ('etudiant2', "Étudiant 2e cycle"),
         ('etudiant3', "Étudiant 3e cycle"),
@@ -148,7 +148,7 @@ class UserProfile(models.Model):
     )
 
     # Référentiels et rattachements
-    fonction = models.ForeignKey(
+    role = models.ForeignKey(
         Role,
         on_delete=models.SET_NULL,
         null=True,
@@ -162,7 +162,7 @@ class UserProfile(models.Model):
         blank=True,
         help_text="Affiliation de l'user_profile"
     )
-    laboratoire = models.ForeignKey(
+    laboratory = models.ForeignKey(
         Laboratory,
         on_delete=models.SET_NULL,
         null=True,
@@ -170,11 +170,11 @@ class UserProfile(models.Model):
         help_text="Laboratory de l'user_profile"
     )
 
-    # Relation plusieurs-à-plusieurs vers les équipements autorisés
+    # Relation many-to-many vers les équipements autorisés
     authorized_equipment = models.ManyToManyField(
         'equipment.Equipment',
         blank=True,
-        related_name='usagers_autorises'
+        related_name='authorized_user_profiles'
     )
 
     # Flags d'état applicatifs
@@ -212,7 +212,7 @@ class Invitation(models.Model):
     equipment_set = models.ManyToManyField("equipment.Equipment", blank=True)
     sent_at = models.DateTimeField(auto_now_add=True)
 
-    # Lien vers la réservation de formation (optionnel)
+    # Link to la réservation de formation (optional)
     reservation = models.ForeignKey(
         'booking.Reservation',  # ← chaîne au lieu d'import
         null=True,
@@ -222,7 +222,7 @@ class Invitation(models.Model):
     )
 
 
-    # Date de validation de l'accès (optionnelle)
+    # Date de validation de l'accès (optionalle)
     validated_at = models.DateTimeField(
         null=True,
         blank=True,
@@ -242,15 +242,15 @@ class TrainingInvitation(Invitation):
     """
     class Meta:
         proxy = True
-        verbose_name = "Validation des formations"
-        verbose_name_plural = "Validation des formations"
+        verbose_name = "Training validation"
+        verbose_name_plural = "Training validation"
 
 class News(models.Model):
     CATEGORIE_CHOICES = [
-        ('equipment', 'Équipement'),
-        ('evenement', 'Événement'),
-        ('formation', 'Formation'),
-        ('emploi', "Offre d'emploi"),
+        ('equipment', 'Equipment'),
+        ('event', 'Event'),
+        ('training', 'Training'),
+        ('job', 'Job offer'),
     ]
 
     title = models.CharField(max_length=200)
@@ -266,5 +266,5 @@ class News(models.Model):
 
     class Meta:
         ordering = ['-published_at']
-        verbose_name = "Actualité"
-        verbose_name_plural = "Actualités"
+        verbose_name = "News item"
+        verbose_name_plural = "News items"

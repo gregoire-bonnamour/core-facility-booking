@@ -117,9 +117,9 @@
   }
 </style>
 
-<a href="{% url 'accueil' %}" class="btn-retour">🏠 Retour à l'accueil</a>
+<a href="{% url 'home' %}" class="btn-retour">🏠 Back à l'home</a>
 
-<h1>Calendrier – {{ equipment.name }}</h1>
+<h1>Calendar – {{ equipment.name }}</h1>
 <p><strong>Rate horaire :</strong> {{ hourly_rate }} $ CAD/h</p>
 <p><strong>Localisation :</strong> {{ equipment.location }}</p>
 
@@ -204,7 +204,7 @@
         const startMin = isFirst ? minutesOfDay(dtStart) : 0;
         const endMin = isLast ? minutesOfDay(dtEnd) : 24 * 60;
 
-        // Détermine les classes CSS selon le type de réservation
+        // Détermine les classes CSS selon le type de booking
         let cssClasses = "reservation";
         if (resa.is_maintenance) cssClasses += " maintenance";
         if (resa.is_teaching) cssClasses += " enseignement";
@@ -262,7 +262,7 @@
       window.location.href = `${reserverBase}?${params.toString()}`;
     });
 
-    // Auto-scroll to today @ 12:00
+    // Toto-scroll to today @ 12:00
     const todayStr = localYmd(new Date());
     let targetEl = document.querySelector(`.day-column[data-day="${todayStr}"][data-hour="12"]`);
 

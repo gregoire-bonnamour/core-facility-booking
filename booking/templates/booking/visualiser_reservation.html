@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<h2>Détails de la réservation</h2>
+<h2>Détails de la booking</h2>
 
 <ul>
     <li><strong>Équipement :</strong> {{ reservation.equipment.name }}</li>
@@ -16,13 +16,13 @@
 <a href="mailto:{{ reservation.user_profile.user.email }}?cc=admin@youruniversity.ca&subject=R%C3%A9servation%20%23{{ reservation.id }}%20%E2%80%93%20{{ reservation.equipment.name }}">
     <button>Contacter {{ reservation.user_profile.first_name }} {{ reservation.user_profile.name }}</button>
 </a>
-<p><small>ℹ️ Par défaut l'administrateur de la plateforme est en CC de ce message.</small></p>
+<p><small>ℹ️ By default l'administrateur de la plateforme est en CC de ce message.</small></p>
 
 <br>
 
-{# Retour vers le calendrier, centré sur la semaine de la date de début #}
-<a href="{% url 'booking:calendrier_equipement' reservation.equipment.id %}?semaine={{ reservation.start_date }}">
-    ⬅ Retour au calendrier
+{# Back vers le calendar, centré sur la semaine de la date de début #}
+<a href="{% url 'booking:calendar_equipement' reservation.equipment.id %}?semaine={{ reservation.start_date }}">
+    ⬅ Back to calendar
 </a>
 <footer>
 </footer>

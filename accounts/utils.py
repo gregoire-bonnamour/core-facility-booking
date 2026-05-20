@@ -1,5 +1,5 @@
 # Copyright (c) 2025 Author Author
-# Licensed under the Creative Commons Attribution-NonCommercial 4.0 International License (CC BY-NC 4.0)
+# Licensed under the Creative Commons Attribution-NoCommercial 4.0 International License (CC BY-NC 4.0)
 # See the LICENSE file or https://creativecommons.org/licenses/by-nc/4.0/legalcode for details.
 
 # user_profile/utils.py
@@ -112,7 +112,7 @@ def creer_invitations_pour_formation(reservation, force_resend=False):
 def is_platform_admin_plateforme(user):
     """
     Vérifie si l'utilisateur a les droits de gestion de la plateforme.
-    Retourne True si l'user_profile est Super-utilisateur (Django), Staff (Django) 
+    Returns True si l'user_profile est Super-utilisateur (Django), Staff (Django) 
     OU a la case 'Est admin' cochée sur son profil plateforme.
     """
     return user.is_staff or user.is_superuser or (hasattr(user, 'accounts') and getattr(user.user_profile, 'is_platform_admin', False))

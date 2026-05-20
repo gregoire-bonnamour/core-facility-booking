@@ -31,7 +31,7 @@ DEBUG = _as_bool(os.getenv("DEBUG"), default=False)
 _default_hosts = "localhost,127.0.0.1"
 ALLOWED_HOSTS = [h.strip() for h in os.getenv("ALLOWED_HOSTS", _default_hosts).split(",") if h.strip()]
 
-# Optionnel: origines CSRF de confiance (laisser vide en local)
+# Optional: origines CSRF de confiance (laisser vide en local)
 CSRF_TRUSTED_ORIGINS = [
     o.strip() for o in os.getenv("CSRF_TRUSTED_ORIGINS", "").split(",") if o.strip()
 ]

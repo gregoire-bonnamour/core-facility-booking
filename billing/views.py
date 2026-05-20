@@ -1,15 +1,15 @@
 from accounts.utils import is_platform_admin_plateforme
 # Copyright (c) 2025 Author Author
-# Licensed under the Creative Commons Attribution-NonCommercial 4.0 International License (CC BY-NC 4.0)
+# Licensed under the Creative Commons Attribution-NoCommercial 4.0 International License (CC BY-NC 4.0)
 # See the LICENSE file or https://creativecommons.org/licenses/by-nc/4.0/legalcode for details.
 
 """
-Module : facturation.views
+Module: facturation.views
 --------------------------
 Vues de l’application `facturation`.
 
-- generer_factures : génération de factures par laboratoire
-  (PDF obligatoires, CSV optionnel) pour une période donnée.
+- generer_factures : génération de factures par laboratory
+  (PDF obligatoires, CSV optional) pour une période donnée.
 """
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth.decorators import user_passes_test
@@ -17,8 +17,8 @@ from django.shortcuts import render
 from django.http import HttpResponse
 from .forms import FacturationForm
 from .utils import (
-    filtrer_reservations_par_laboratoire,
-    generer_csv_par_laboratoire,
+    filter_reservations_by_laboratory,
+    generate_csv_by_laboratory,
     generer_pdfs_par_labo,
 )
 import zipfile
@@ -34,7 +34,7 @@ def is_platform_admin_plateforme(user):
 @user_passes_test(is_platform_admin_plateforme)
 def generer_factures(request):
     """
-    Génère les factures (PDF/CSV) regroupées par laboratoire
+    Génère les factures (PDF/CSV) regroupées par laboratory
     sur la période sélectionnée.
     """
     if request.method == 'POST':
@@ -46,40 +46,40 @@ def generer_factures(request):
             inclure_csv = form.cleaned_data['inclure_csv']
 
             # --- Étape 1 : Filtrage initial ---
-            groupes = filtrer_reservations_par_laboratoire(start_date, end_date)
-            logger.debug(f"Réservations brutes par labo : "
+            groupes = filter_reservations_by_laboratory(start_date, end_date)
+            logger.debug(f"Réservations brutes par lab : "
                          f"{[(l, len(r)) for l, r in groupes.items()]}")
 
-            # --- Étape 2 : Filtre par affiliation (optionnel) ---
-            # --- Étape 2 : Filtre par affiliation (optionnel) ---
+            # --- Étape 2 : Filtre par affiliation (optional) ---
+            # --- Étape 2 : Filtre par affiliation (optional) ---
             if affiliations.exists():
-                # [MODIF] Pour les formations, on doit vérifier l'affiliation du PARTICIPANT du labo
+                # [MODIF] Pour les formations, on doit vérifier l'affiliation du PARTICIPANT du lab
                 # et non celle de l'organisateur (qui peut être différent).
                 from .utils import get_usagers_facturables
                 
-                def _check_affiliation(resa, labo_nom, affiliations_demandees):
+                def _check_affiliation(resa, lab_name, affiliations_demandees):
                     # 1. Qui paye pour cette réservation ?
                     payeurs = get_usagers_facturables(resa)
                     
-                    # 2. On cherche le payeur qui appartient à 'labo_nom'
-                    # (car 'resa' est dans le bucket 'labo_nom')
+                    # 2. On cherche le payeur qui appartient à 'lab_name'
+                    # (car 'resa' est dans le bucket 'lab_name')
                     for u in payeurs:
-                        if u and u.laboratoire and u.laboratoire.name == labo_nom:
+                        if u and u.laboratory and u.laboratory.name == lab_name:
                             return u.affiliation in affiliations_demandees
                             
-                    # Fallback (si pas trouvé, ex: labo changé entre temps ? ou cas standard)
+                    # Fallback (si pas trouvé, ex: lab changé entre temps ? ou cas standard)
                     if resa.user_profile and resa.user_profile.affiliation:
                         return resa.user_profile.affiliation in affiliations_demandees
                     return False
 
                 new_groupes = {}
-                for labo, resas in groupes.items():
+                for lab, resas in groupes.items():
                     resas_filtrees = [
                         r for r in resas 
-                        if _check_affiliation(r, labo, affiliations)
+                        if _check_affiliation(r, lab, affiliations)
                     ]
                     if resas_filtrees:
-                        new_groupes[labo] = resas_filtrees
+                        new_groupes[lab] = resas_filtrees
                 groupes = new_groupes
 
                 logger.debug(f"Après filtre affiliations : "
@@ -100,9 +100,9 @@ def generer_factures(request):
                 for nom_fichier, content in pdfs.items():
                     zip_file.writestr(nom_fichier, content)
 
-                # CSVs optionnels
+                # CSVs optionals
                 if inclure_csv:
-                    csv_archive = generer_csv_par_laboratoire(groupes)
+                    csv_archive = generate_csv_by_laboratory(groupes)
                     with zipfile.ZipFile(csv_archive) as csv_zip:
                         for name in csv_zip.namelist():
                             zip_file.writestr(name, csv_zip.read(name))
@@ -117,4 +117,4 @@ def generer_factures(request):
     else:
         form = FacturationForm()
 
-    return render(request, 'facturation/facturation.html', {'form': form})
+    return render(request, 'billing/facturation.html', {'form': form})

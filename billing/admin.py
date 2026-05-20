@@ -1,9 +1,9 @@
 # Copyright (c) 2025 Author Author
-# Licensed under the Creative Commons Attribution-NonCommercial 4.0 International License (CC BY-NC 4.0)
+# Licensed under the Creative Commons Attribution-NoCommercial 4.0 International License (CC BY-NC 4.0)
 # See the LICENSE file or https://creativecommons.org/licenses/by-nc/4.0/legalcode for details.
 
 """
-Module : facturation.admin
+Module: facturation.admin
 --------------------------
 Ce module configure l’interface d’administration Django pour l’application
 `facturation`.
@@ -21,8 +21,8 @@ Bonnes pratiques :
 
 from django.contrib import admin
 
-# Remarque :
-# À ce stade, aucun modèle n’est enregistré.
+# Note:
+# À ce stade, no modèle n’est enregistré.
 # Quand les modèles seront prêts (ex. Facture, LigneFacture, Reglement),
 # il suffira de les importer et de définir des classes ModelAdmin.
 
@@ -55,5 +55,5 @@ from django.contrib import admin
 #     list_filter = ('mode', 'date')
 #     search_fields = ('facture__numero',)
 #
-# Note : pensez à définir `readonly_fields` si certains champs sont calculés,
+# Note: pensez à définir `readonly_fields` si certains champs sont calculés,
 # et `inlines` pour éditer des lignes de facture directement depuis la facture.

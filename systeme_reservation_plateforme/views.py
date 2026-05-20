@@ -1,5 +1,5 @@
 # Copyright (c) 2025 Author Author
-# Licensed under the Creative Commons Attribution-NonCommercial 4.0 International License (CC BY-NC 4.0)
+# Licensed under the Creative Commons Attribution-NoCommercial 4.0 International License (CC BY-NC 4.0)
 # See the LICENSE file or https://creativecommons.org/licenses/by-nc/4.0/legalcode for details.
 
 """
@@ -40,7 +40,7 @@ def accueil(request):
         user_profile = get_object_or_404(UserProfile, user=request.user)
         equipment_set = user_profile.authorized_equipment.all()
     except UserProfile.DoesNotExist:
-        # Si aucun profil user_profile n’est lié au compte (cas exceptionnel)
+        # Si no profil user_profile n’est lié au compte (cas exceptionnel)
         pass  
 
     # Calcule le lundi de la semaine courante (utile pour affichage du calendrier)

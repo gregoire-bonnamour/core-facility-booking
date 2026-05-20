@@ -1,11 +1,11 @@
 # Copyright (c) 2025 Author Author
-# Licensed under the Creative Commons Attribution-NonCommercial 4.0 International License (CC BY-NC 4.0)
+# Licensed under the Creative Commons Attribution-NoCommercial 4.0 International License (CC BY-NC 4.0)
 # See the LICENSE file or https://creativecommons.org/licenses/by-nc/4.0/legalcode for details.
 
 """
 Commande Django : emails_equipement
 ------------------------------------
-Génère la liste des emails des usagers autorisés pour un équipement donné.
+Génère la liste des emails des user_profiles autorisés pour un équipement donné.
 
 Usage:
     python manage.py emails_equipement "Nom de l'équipement"
@@ -20,7 +20,7 @@ from accounts.models import UserProfile
 
 
 class Command(BaseCommand):
-    help = "Génère la liste des emails des usagers autorisés pour un équipement"
+    help = "Génère la liste des emails des user_profiles autorisés pour un équipement"
 
     def add_arguments(self, parser):
         parser.add_argument(
@@ -32,12 +32,12 @@ class Command(BaseCommand):
             '--actifs-seulement',
             action='store_true',
             default=True,
-            help="Afficher uniquement les usagers actifs (défaut: True)"
+            help="Afficher uniquement les user_profiles actifs (défaut: True)"
         )
         parser.add_argument(
             '--tous',
             action='store_true',
-            help="Inclure les usagers inactifs (raccourci pour --actifs-seulement=False)"
+            help="Inclure les user_profiles inactifs (raccourci pour --actifs-seulement=False)"
         )
         parser.add_argument(
             '--format',
@@ -62,7 +62,7 @@ class Command(BaseCommand):
 
         if not equipment_set.exists():
             raise CommandError(
-                f"Aucun équipement trouvé avec le name '{equipement_nom}'. "
+                f"No équipement trouvé avec le name '{equipement_nom}'. "
                 f"Vérifiez l'orthographe ou utilisez une recherche partielle."
             )
 
@@ -85,18 +85,18 @@ class Command(BaseCommand):
             self.style.SUCCESS(f"\n📋 Équipement: {equipment.name}")
         )
 
-        # Récupération des usagers autorisés
-        usagers = equipment.usagers_autorises.all()
+        # Récupération des user_profiles autorisés
+        user_profiles = equipment.authorized_user_profiles.all()
 
         if actifs_seulement:
-            usagers = usagers.filter(is_active=True)
+            user_profiles = user_profiles.filter(is_active=True)
 
         # Comptage
-        total = usagers.count()
+        total = user_profiles.count()
         if total == 0:
             self.stdout.write(
                 self.style.WARNING(
-                    f"\n⚠️  Aucun user_profile {'is_active ' if actifs_seulement else ''}autorisé pour cet équipement.\n"
+                    f"\n⚠️  No user_profile {'is_active ' if actifs_seulement else ''}autorisé pour cet équipement.\n"
                 )
             )
             return
@@ -110,35 +110,35 @@ class Command(BaseCommand):
         )
 
         if format_sortie == 'liste':
-            self._afficher_liste(usagers)
+            self._afficher_liste(user_profiles)
         elif format_sortie == 'csv':
-            self._afficher_csv(usagers)
+            self._afficher_csv(user_profiles)
         elif format_sortie == 'email':
-            self._afficher_email(usagers)
+            self._afficher_email(user_profiles)
 
-    def _afficher_liste(self, usagers):
+    def _afficher_liste(self, user_profiles):
         """Affiche une liste simple, un email par ligne"""
         self.stdout.write("\n📧 Liste des emails:\n")
-        for user_profile in usagers:
+        for user_profile in user_profiles:
             self.stdout.write(user_profile.email)
         self.stdout.write("")  # Ligne vide à la fin
 
-    def _afficher_csv(self, usagers):
+    def _afficher_csv(self, user_profiles):
         """Affiche un CSV avec détails (name, prénom, email, status)"""
         self.stdout.write("\n📊 Format CSV:\n")
         self.stdout.write("Nom,Prénom,Courriel,Actif,Affiliation,Laboratory")
-        for user_profile in usagers:
+        for user_profile in user_profiles:
             affiliation = user_profile.affiliation.name if user_profile.affiliation else "N/A"
-            laboratoire = user_profile.laboratoire.name if user_profile.laboratoire else "N/A"
+            laboratory = user_profile.laboratory.name if user_profile.laboratory else "N/A"
             self.stdout.write(
                 f"{user_profile.name},{user_profile.first_name},{user_profile.email},"
-                f"{'Oui' if user_profile.is_active else 'Non'},{affiliation},{laboratoire}"
+                f"{'Yes' if user_profile.is_active else 'No'},{affiliation},{laboratory}"
             )
         self.stdout.write("")  # Ligne vide à la fin
 
-    def _afficher_email(self, usagers):
+    def _afficher_email(self, user_profiles):
         """Affiche les emails séparés par point-virgule pour copier-coller dans un client email"""
-        emails = "; ".join([user_profile.email for user_profile in usagers])
+        emails = "; ".join([user_profile.email for user_profile in user_profiles])
         self.stdout.write("\n✉️  Format email (copier-coller):\n")
         self.stdout.write(emails)
         self.stdout.write("")  # Ligne vide à la fin

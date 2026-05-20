@@ -1,9 +1,9 @@
 # Copyright (c) 2025 Author Author
-# Licensed under the Creative Commons Attribution-NonCommercial 4.0 International License (CC BY-NC 4.0)
+# Licensed under the Creative Commons Attribution-NoCommercial 4.0 International License (CC BY-NC 4.0)
 # See the LICENSE file or https://creativecommons.org/licenses/by-nc/4.0/legalcode for details.
 
 """
-Module : equipment_set.admin
+Module: equipment_set.admin
 --------------------------
 Ce module configure l’interface d’administration Django pour l’application
 `equipment_set`. Il définit comment les modèles `Equipment`, `TimeSlot`,
@@ -24,7 +24,7 @@ from .models import Equipment, TimeSlot, UsageQuota, Rate, TrainingRate
 class UserProfileAdmin(admin.ModelAdmin):
     """
     (Actuellement non utilisé ici.)
-    Classe prévue pour personnaliser l’affichage des usagers dans l’admin.
+    Classe prévue pour personnaliser l’affichage des user_profiles dans l’admin.
     """
     pass
 
@@ -33,7 +33,7 @@ class TimeSlotInline(admin.TabularInline):
     """
     Inline admin pour gérer les créneaux horaires d’un équipement
     directement depuis la page de l’équipement.
-    - `extra = 0` : aucun formulaire vide affiché par défaut.
+    - `extra = 0` : no formulaire vide affiché by default.
     """
     model = TimeSlot
     extra = 1
@@ -43,7 +43,7 @@ class UsageQuotaInline(admin.TabularInline):
     """
     Inline admin pour gérer les plages limites d’un équipement
     (restrictions horaires, durées max).
-    - `extra = 0` : aucun formulaire vide affiché par défaut.
+    - `extra = 0` : no formulaire vide affiché by default.
     """
     model = UsageQuota
     extra = 1
@@ -52,7 +52,7 @@ class UsageQuotaInline(admin.TabularInline):
 class RateInline(admin.TabularInline):
     """
     Inline admin pour gérer les rates associés à un équipement.
-    - `extra = 1` : affiche une ligne vide par défaut pour saisir un nouveau tarif.
+    - `extra = 1` : affiche une ligne vide by default pour saisir un nouveau tarif.
     - Peut être transformé en `StackedInline` si on veut plus d’espace
       (utile si beaucoup de champs dans Rate).
     """

@@ -1,5 +1,5 @@
 # Copyright (c) 2025 Author Author
-# Licensed under the Creative Commons Attribution-NonCommercial 4.0 International License (CC BY-NC 4.0)
+# Licensed under the Creative Commons Attribution-NoCommercial 4.0 International License (CC BY-NC 4.0)
 # See the LICENSE file or https://creativecommons.org/licenses/by-nc/4.0/legalcode for details.
 
 # systeme_reservation_plateforme/context_processors.py
@@ -12,7 +12,7 @@ def support_mailto(request):
     # Récupère les emails des ADMINS (liste de tuples (name, email))
     admin_emails = [email for (_name, email) in getattr(settings, "ADMINS", []) if email]
 
-    # Si vide, on peut fallback sur DEFAULT_FROM_EMAIL (optionnel)
+    # Si vide, on peut fallback sur DEFAULT_FROM_EMAIL (optional)
     if not admin_emails and getattr(settings, "DEFAULT_FROM_EMAIL", None):
         admin_emails = [settings.DEFAULT_FROM_EMAIL]
 

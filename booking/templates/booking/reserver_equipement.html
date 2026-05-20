@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<h2>Réserver {{ equipment.name }}</h2>
+<h2>Book {{ equipment.name }}</h2>
 
 <style>
     /* Petites erreurs en rouge sous les champs */
@@ -14,7 +14,7 @@
 <form method="post">
     {% csrf_token %}
 
-    <!-- erreurs globales du formulaire -->
+    <!-- global form errors du formulaire -->
     {% if form.non_field_errors %}
     <div class="alert alert-danger">
         {% for error in form.non_field_errors %}
@@ -23,44 +23,44 @@
     </div>
     {% endif %}
 
-    <!-- Date et heure début -->
+    <!-- Start date and time -->
     <div class="form-group mb-3">
-        <label class="form-label">Début :</label><br>
+        <label class="form-label">Start:</label><br>
         {{ form.start_date }}
-        {{ form.start_time_h }} {{ form.minute_debut_m }}
+        {{ form.start_time_h }} {{ form.start_minute_m }}
         {% for error in form.start_date.errors %}
         <div class="error">{{ error }}</div>
         {% endfor %}
         {% for error in form.start_time_h.errors %}
         <div class="error">{{ error }}</div>
         {% endfor %}
-        {% for error in form.minute_debut_m.errors %}
+        {% for error in form.start_minute_m.errors %}
         <div class="error">{{ error }}</div>
         {% endfor %}
     </div>
 
-    <!-- Date et heure fin -->
+    <!-- End date and time -->
     <div class="form-group mb-3">
-        <label class="form-label">Fin :</label><br>
+        <label class="form-label">End:</label><br>
         {{ form.end_date }}
-        {{ form.end_time_h }} {{ form.minute_fin_m }}
+        {{ form.end_time_h }} {{ form.end_minute_m }}
         {% for error in form.end_date.errors %}
         <div class="error">{{ error }}</div>
         {% endfor %}
         {% for error in form.end_time_h.errors %}
         <div class="error">{{ error }}</div>
         {% endfor %}
-        {% for error in form.minute_fin_m.errors %}
+        {% for error in form.end_minute_m.errors %}
         <div class="error">{{ error }}</div>
         {% endfor %}
     </div>
 
-    <!-- Demande exceptionnelle -->
+    <!-- Exception request -->
     <div class="form-check mb-3" style="margin-top: 1.5rem;">
         {{ form.exception_request }}
         <label class="form-check-label" for="{{ form.exception_request.id_for_label }}">
-            Demande exceptionnelle
-            <small class="text-muted">(pour déroger à une règle, ex : dépasser la durée quotidienne)</small>
+            Exception request
+            <small class="text-muted">(to override a rule, e.g. exceed the daily duration limit)</small>
         </label>
     </div>
     <div id="justification-block" style="display:none; margin-left:1.5em;">
@@ -68,17 +68,17 @@
         {{ form.justification }}
     </div>
 
-    <!-- Formation -->
+    <!-- Training -->
     {% if not form.is_training.is_hidden %}
     <div class="form-check mb-3" style="margin-top: 1.5rem;">
         {{ form.is_training }}
         <label class="form-check-label" for="{{ form.is_training.id_for_label }}">
-            Réservation pour formation
+            Training booking
         </label>
     </div>
     <div id="formation-block" style="display:none; margin-left:1.5em;">
         <label for="{{ form.trained_emails.id_for_label }}" class="form-label">
-            Emails des personnes formées
+            Emails of trained participants
         </label>
         {{ form.trained_emails }}
         <div class="form-text text-muted">
@@ -87,22 +87,22 @@
     </div>
     {% endif %}
 
-    <!-- Réservation Maintenance (Admin seulement) -->
-    {% if not form.type_reservation_maintenance.is_hidden %}
+    <!-- Maintenance booking (Admin seulement) -->
+    {% if not form.is_maintenance.is_hidden %}
     <div class="form-check mb-3" style="margin-top: 1.5rem;">
-        {{ form.type_reservation_maintenance }}
-        <label class="form-check-label" for="{{ form.type_reservation_maintenance.id_for_label }}">
-            🔴 Réservation Maintenance
+        {{ form.is_maintenance }}
+        <label class="form-check-label" for="{{ form.is_maintenance.id_for_label }}">
+            🔴 Maintenance booking
         </label>
     </div>
     {% endif %}
 
-    <!-- Réservation Enseignement (Admin seulement) -->
-    {% if not form.type_reservation_enseignement.is_hidden %}
+    <!-- Teaching booking (Admin seulement) -->
+    {% if not form.is_teaching.is_hidden %}
     <div class="form-check mb-3" style="margin-top: 1.5rem;">
-        {{ form.type_reservation_enseignement }}
-        <label class="form-check-label" for="{{ form.type_reservation_enseignement.id_for_label }}">
-            🟢 Réservation Enseignement
+        {{ form.is_teaching }}
+        <label class="form-check-label" for="{{ form.is_teaching.id_for_label }}">
+            🟢 Teaching booking
         </label>
     </div>
     {% endif %}
@@ -111,17 +111,17 @@
     <div class="form-check mb-3" style="margin-top: 1.5rem;">
         {{ form.assistance }}
         <label class="form-check-label" for="{{ form.assistance.id_for_label }}">
-            Assistance demandée
+            Assistance requested
             {% if assistance_rate %}
             <small class="text-muted">({{ assistance_rate }} $/h)</small>
             {% else %}
-            <small class="text-muted">(tarif non défini)</small>
+            <small class="text-muted">(rate not defined)</small>
             {% endif %}
         </label>
     </div>
     <div id="assistance-block" style="display:none; margin-left:1.5em;">
         <label for="{{ form.assistance_duration_minutes.id_for_label }}" class="form-label">
-            Durée d'assistance (min)
+            Assistance duration (min)
         </label>
         {{ form.assistance_duration_minutes }}
         {% for error in form.assistance_duration_minutes.errors %}
@@ -129,11 +129,11 @@
         {% endfor %}
     </div>
 
-    <button type="submit" class="btn btn-primary" style="margin-top: 1.5rem;">Valider</button>
+    <button type="submit" class="btn btn-primary" style="margin-top: 1.5rem;">Submit</button>
 </form>
 
-<a href="{% url 'booking:calendrier_equipement' equipment.id %}?semaine={{ date_retour|date:'Y-m-d' }}">
-    ⬅ Retour au calendrier
+<a href="{% url 'booking:calendar_equipement' equipment.id %}?semaine={{ date_retour|date:'Y-m-d' }}">
+    ⬅ Back to calendar
 </a>
 
 <!-- Scripts -->
@@ -158,32 +158,32 @@
 
 <script>
     /* Ajuste la fin automatiquement (+60min) quand on change l'heure de début */
-    function ajouterDuree(minutes) {
-        const debutHeure = document.getElementById("id_start_time_h");
-        const debutMinute = document.getElementById("id_minute_debut_m");
-        const finHeure = document.getElementById("id_end_time_h");
-        const finMinute = document.getElementById("id_minute_fin_m");
+    function addFromration(minutes) {
+        const startHour = document.getElementById("id_start_time_h");
+        const startMinute = document.getElementById("id_start_minute_m");
+        const endHour = document.getElementById("id_end_time_h");
+        const endMinute = document.getElementById("id_end_minute_m");
 
-        if (!debutHeure || !debutMinute || !finHeure || !finMinute) return;
+        if (!startHour || !startMinute || !endHour || !endMinute) return;
 
-        const h = parseInt(debutHeure.value);
-        const m = parseInt(debutMinute.value);
+        const h = parseInt(startHour.value);
+        const m = parseInt(startMinute.value);
 
         const date = new Date(0, 0, 0, h, m + minutes);
 
-        finHeure.value = String(date.getHours()).padStart(2, '0');
-        finMinute.value = String(date.getMinutes()).padStart(2, '0');
+        endHour.value = String(date.getHours()).padStart(2, '0');
+        endMinute.value = String(date.getMinutes()).padStart(2, '0');
     }
 
     document.addEventListener("DOMContentLoaded", function () {
-        const debutHeure = document.getElementById("id_start_time_h");
-        const debutMinute = document.getElementById("id_minute_debut_m");
-        if (debutHeure && debutMinute) {
-            function majFin() {
-                ajouterDuree(60); // +1h par défaut
+        const startHour = document.getElementById("id_start_time_h");
+        const startMinute = document.getElementById("id_start_minute_m");
+        if (startHour && startMinute) {
+            function updateEndTime() {
+                addFromration(60); // +1h by default
             }
-            debutHeure.addEventListener("change", majFin);
-            debutMinute.addEventListener("change", majFin);
+            startHour.addEventListener("change", updateEndTime);
+            startMinute.addEventListener("change", updateEndTime);
         }
     });
 </script>

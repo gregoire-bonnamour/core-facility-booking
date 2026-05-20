@@ -1,9 +1,9 @@
 # Copyright (c) 2025 Author Author
-# Licensed under the Creative Commons Attribution-NonCommercial 4.0 International License (CC BY-NC 4.0)
+# Licensed under the Creative Commons Attribution-NoCommercial 4.0 International License (CC BY-NC 4.0)
 # See the LICENSE file or https://creativecommons.org/licenses/by-nc/4.0/legalcode for details.
 
 """
-Module : reserv.urls
+Module: reserv.urls
 --------------------
 Définit les routes (URLs) pour l'application `reserv`.
 
@@ -44,8 +44,8 @@ urlpatterns = [
     path("admin/reservations/calendrier-global/data/", views.calendrier_global_admin_data, name="calendrier_global_admin_data"),
     path('stats/export/unified/', views.stats_export_unified_xlsx, name='stats_export_unified_xlsx'),
     path('stats/ajax/labos/', views.ajax_labos, name='stats_ajax_labos'),
-    path('stats/ajax/usagers/', views.ajax_usagers, name='stats_ajax_usagers'),
-    path('stats/ajax/fonctions/', views.ajax_fonctions, name='stats_ajax_fonctions'),
+    path('stats/ajax/user_profiles/', views.ajax_usagers, name='stats_ajax_usagers'),
+    path('stats/ajax/roles/', views.ajax_fonctions, name='stats_ajax_fonctions'),
     
     # --- Accueil ---
     path('', views.accueil, name='accueil'),

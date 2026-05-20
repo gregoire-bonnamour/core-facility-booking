@@ -1,5 +1,5 @@
 # Copyright (c) 2025 Author Author
-# Licensed under the Creative Commons Attribution-NonCommercial 4.0 International License (CC BY-NC 4.0)
+# Licensed under the Creative Commons Attribution-NoCommercial 4.0 International License (CC BY-NC 4.0)
 # See the LICENSE file or https://creativecommons.org/licenses/by-nc/4.0/legalcode for details.
 
 import os, zipfile, sys
@@ -64,7 +64,7 @@ def sanity_checks(root: Path) -> list[str]:
     # migrations (vérif simple)
     has_migrations = any(p.name == "migrations" for p in root.rglob("migrations"))
     if not has_migrations:
-        issues.append("Aucune 'migrations/' détectée dans les apps — attention au schéma DB en prod.")
+        issues.append("None 'migrations/' détectée dans les apps — attention au schéma DB en prod.")
 
     # .env templates conseillés
     for env_name in ENV_INCLUDE:

@@ -1,17 +1,17 @@
 # Copyright (c) 2025 Author Author
-# Licensed under the Creative Commons Attribution-NonCommercial 4.0 International License (CC BY-NC 4.0)
+# Licensed under the Creative Commons Attribution-NoCommercial 4.0 International License (CC BY-NC 4.0)
 # See the LICENSE file or https://creativecommons.org/licenses/by-nc/4.0/legalcode for details.
 
 """
-Module : user_profile.admin
+Module: user_profile.admin
 ---------------------
 Configuration de l’interface d’administration Django pour l’application `user_profile`.
 
 Permet :
 - la gestion des tables de référence (Role, Affiliation, Laboratory),
-- la gestion complète des usagers (modèle UserProfile),
+- la gestion complète des user_profiles (modèle UserProfile),
 - l’utilisation d’un formulaire personnalisé (UserProfileAdminForm) pour
-  améliorer la saisie des usagers dans l’admin.
+  améliorer la saisie des user_profiles dans l’admin.
 """
 
 from django.contrib import admin
@@ -32,7 +32,7 @@ admin.site.register(Role)
 @admin.register(Laboratory)
 class LaboratoryAdmin(admin.ModelAdmin):
     """
-    Interface d’administration pour les laboratoires.
+    Interface d’administration pour les laboratories.
     Affiche et filtre par affiliation.
     """
     list_display = ('name', 'affiliation')
@@ -55,7 +55,7 @@ class ARevaliderFilter(admin.SimpleListFilter):
     parameter_name = "a_revalider"
 
     def lookups(self, request, model_admin):
-        return (("oui", "Oui"), ("non", "Non"))
+        return (("oui", "Yes"), ("non", "No"))
 
     def queryset(self, request, qs):
         seuil = timezone.now() - relativedelta(years=5)
@@ -84,7 +84,7 @@ class UserProfileAdmin(admin.ModelAdmin):
     # Colonnes affichées
     list_display = (
         'first_name', 'name', 'email',
-        'fonction', 'affiliation', 'laboratoire',
+        'role', 'affiliation', 'laboratory',
         'is_active', 'is_platform_admin',
         'activation_date', 
     )
@@ -93,7 +93,7 @@ class UserProfileAdmin(admin.ModelAdmin):
     search_fields = ('first_name', 'name', 'email', 'affiliation__nom', 'laboratoire__nom')
 
     # Filtres latéraux
-    list_filter = ('affiliation', 'laboratoire', 'fonction', 'is_active', 'is_platform_admin', ARevaliderFilter)
+    list_filter = ('affiliation', 'laboratory', 'role', 'is_active', 'is_platform_admin', ARevaliderFilter)
 
     # Sélection multiple M2M
     filter_horizontal = ['authorized_equipment']
@@ -102,7 +102,7 @@ class UserProfileAdmin(admin.ModelAdmin):
     fields = [
         'user',
         'first_name', 'name', 'email',
-        'fonction', 'affiliation', 'laboratoire',
+        'role', 'affiliation', 'laboratory',
         'authorized_equipment',
         'is_active', 'is_platform_admin',
         'activation_date', 'last_reverification_date',  # ✅ visibles/éditables
@@ -122,8 +122,8 @@ class ProfilCompletFilter(admin.SimpleListFilter):
 
     def lookups(self, request, model_admin):
         return (
-            ("oui", "Oui"),
-            ("non", "Non"),
+            ("oui", "Yes"),
+            ("non", "No"),
         )
 
     def queryset(self, request, queryset):

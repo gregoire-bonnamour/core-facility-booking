@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <title>Facture — {{ laboratoire.name }}</title>
+    <title>Invoice — {{ laboratory.name }}</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -35,7 +35,7 @@
             font-weight: bold;
             margin-top: 5px;
         }
-        .total-labo {
+        .total-lab {
             text-align: right;
             font-weight: bold;
             font-size: 15px;
@@ -53,11 +53,11 @@
     <div style="text-align: center; margin-bottom: 20px;">
         <h2>Université du Québec à Montréal</h2>
         <h3>Core Facility Booking System</h3>
-        <h4>Facture — Laboratory : {{ laboratoire.name }}</h4>
-        <p>Période : {{ start_date|date:"j F Y" }} au {{ end_date|date:"j F Y" }}</p>
+        <h4>Invoice — Laboratory : {{ laboratory.name }}</h4>
+        <p>Period : {{ start_date|date:"j F Y" }} au {{ end_date|date:"j F Y" }}</p>
     </div>
 
-    {% for user_profile in usagers %}
+    {% for user_profile in user_profiles %}
         <div class="user_profile-section">
             <h3>{{ user_profile.user_profile.first_name }} {{ user_profile.user_profile.name }}</h3>
 
@@ -67,7 +67,7 @@
                     <thead>
                         <tr>
                             <th>Type</th>
-                            <th>Durée (h)</th>
+                            <th>Fromrée (h)</th>
                             <th>Rate ($)</th>
                             <th>Coût ($)</th>
                         </tr>
@@ -95,6 +95,6 @@
         </div>
     {% endfor %}
 
-    <p class="total-labo">Total laboratoire : {{ total_laboratoire|floatformat:2 }} $</p>
+    <p class="total-lab">Total laboratory : {{ total_laboratory|floatformat:2 }} $</p>
 </body>
 </html>

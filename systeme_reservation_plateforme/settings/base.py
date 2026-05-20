@@ -81,7 +81,7 @@ TEMPLATES = [
     },
 ]
 
-# --- DB (par défaut SQLite, override en prod si besoin) ---
+# --- DB (by default SQLite, override en prod si besoin) ---
 DATABASES = {
     "default": {
         "ENGINE": os.getenv("DB_ENGINE", "django.db.backends.sqlite3"),
@@ -94,7 +94,7 @@ DATABASES = {
 }
 
 # --- i18n / TZ ---
-LANGUAGE_CODE = "fr"          # FR par défaut
+LANGUAGE_CODE = "fr"          # FR by default
 TIME_ZONE = "America/Toronto"  # EST/EDT — même fuseau que Montréal
 USE_I18N = True
 USE_L10N = True
@@ -117,7 +117,7 @@ MEDIA_ROOT = Path(os.getenv("MEDIA_ROOT", BASE_DIR / "media"))
 LOGIN_REDIRECT_URL = "/"
 LOGOUT_REDIRECT_URL = "/accounts/login/"
 
-# --- Email (par défaut sûr: filebased) ---
+# --- Email (by default sûr: filebased) ---
 EMAIL_BACKEND = os.getenv("EMAIL_BACKEND", "django.core.mail.backends.filebased.EmailBackend")
 DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL", "Plateforme Réservation <no-reply@example.com>")
 SERVER_EMAIL = os.getenv("SERVER_EMAIL", "no-reply@example.com")

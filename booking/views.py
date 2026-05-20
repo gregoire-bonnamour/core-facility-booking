@@ -1,18 +1,18 @@
 # Copyright (c) 2025 Author Author
-# Licensed under the Creative Commons Attribution-NonCommercial 4.0 International License (CC BY-NC 4.0)
+# Licensed under the Creative Commons Attribution-NoCommercial 4.0 International License (CC BY-NC 4.0)
 # See the LICENSE file or https://creativecommons.org/licenses/by-nc/4.0/legalcode for details.
 
 """
-Module : reserv.views
+Module: reserv.views
 ---------------------
 Vues de l’application `reserv` :
 - Réservation d’un équipement
 - Visualisation du calendrier hebdomadaire
 - Modification / suppression / visualisation d’une réservation
-- Redirection en fonction des permissions et délais
+- Redirection en role des permissions et délais
 - Accueil (vue simple)
 
-Notes :
+Notes:
 - L’accès est réservé aux utilisateurs authentifiés (decorator @login_required).
 - Les messages utilisateur (succès/erreur) sont gérés via django.contrib.messages.
 - Les états/permissions sont recalculés côté vue (ex. fenêtre de modification/suppression).
@@ -91,7 +91,7 @@ def _to_bool(val: Any) -> bool | None:
     s = str(val).strip().lower()
     if s in {"1","true","vrai","yes","oui","y"}: return True
     if s in {"0","false","faux","no","non","n"}: return False
-    return None  # inconnu → None
+    return None  # unknown → None
 
 def _to_int_list(val: Any) -> list[int]:
     if val is None or val == "":
@@ -166,7 +166,7 @@ def _filters_from_request(request) -> Dict[str, Any]:
 def _parse_iso_to_local_dt(s: str):
     """
     Parse une date ISO 8601 (ex: 2025-10-29T13:30:00Z) et renvoie un datetime
-    en timezone locale (aware). Retourne None si invalide.
+    en timezone locale (aware). Returns None si invalide.
     """
     if not s:
         return None
@@ -204,13 +204,13 @@ def reserver_equipement(request, equipement_id):
 
             # 🆕 Logique pour les réservations spéciales (Admin seulement)
             if is_platform_admin_plateforme(request.user):
-                if form.cleaned_data.get('type_reservation_maintenance'):
+                if form.cleaned_data.get('is_maintenance'):
                     try:
                         # Maintenance: Prénom="Système", Nom="Maintenance"
                         reservation.user_profile = UserProfile.objects.get(name="Maintenance", first_name="Système")
                     except UserProfile.DoesNotExist:
                         messages.warning(request, "UserProfile 'Système Maintenance' introuvable. Réservation attribuée à vous-même.")
-                elif form.cleaned_data.get('type_reservation_enseignement'):
+                elif form.cleaned_data.get('is_teaching'):
                     try:
                         # Enseignement: Prénom="Enseignement", Nom="Sciences Biologiques"
                         reservation.user_profile = UserProfile.objects.get(name="Sciences Biologiques", first_name="Enseignement")
@@ -226,7 +226,7 @@ def reserver_equipement(request, equipement_id):
             except ValidationError as e:
                 form.add_error(None, e)
                 messages.error(request, "La réservation n’a pas pu être enregistrée : vérifie dates et chevauchements.")
-                return render(request, 'reserv/reserver_equipement.html', {
+                return render(request, 'booking/reserver_equipement.html', {
                     'equipment': equipment,
                     'form': form,
                     'assistance_rate': assistance_rate,
@@ -251,7 +251,7 @@ def reserver_equipement(request, equipement_id):
                             f"Date : {reservation.start_date} {reservation.start_time} → "
                             f"{reservation.end_date} {reservation.end_time}\n\n"
                             "Justification :\n"
-                            f"{reservation.justification or '(aucune)'}\n\n"
+                            f"{reservation.justification or '(noe)'}\n\n"
                             f"{admin_url}\n"
                         ),
                         from_email=settings.DEFAULT_FROM_EMAIL,
@@ -353,7 +353,7 @@ def reserver_equipement(request, equipement_id):
             try:
                 h, m = map(int, heure_str.split(":"))
                 initial['start_time_h']  = f"{h:02d}"
-                initial['minute_debut_m'] = f"{(m // 10) * 10:02d}"
+                initial['start_minute_m'] = f"{(m // 10) * 10:02d}"
             except ValueError:
                 pass
 
@@ -367,7 +367,7 @@ def reserver_equipement(request, equipement_id):
     if form.is_bound and form.is_valid():
         date_retour = form.cleaned_data.get("start_date", date_retour)
 
-    return render(request, 'reserv/reserver_equipement.html', {
+    return render(request, 'booking/reserver_equipement.html', {
         'equipment': equipment,
         'form': form,
         'assistance_rate': assistance_rate,
@@ -389,7 +389,7 @@ def calendrier_equipement(request, equipement_id):
         - heures : 0..23 (pour l’affichage de la grille)
         - variables de navigation : lundi, semaine_suivante, semaine_precedente
 
-    Notes :
+    Notes:
         - Les réservations affichées filtrent sur certains statuts.
         - Le calcul du lundi de la semaine suit la convention ISO (weekday() : lundi=0).
     """
@@ -469,7 +469,7 @@ def calendrier_equipement(request, equipement_id):
     affiliation = request.user.user_profile.affiliation if hasattr(request.user, 'accounts') else None
     hourly_rate = get_hourly_rate(equipment, affiliation)
 
-    return render(request, 'reserv/calendrier_equipement.html', {
+    return render(request, 'booking/calendrier_equipement.html', {
         'creneaux_json': creneaux_serialises,
         'equipment': equipment,
         'jours_semaine': jours_semaine,
@@ -525,7 +525,7 @@ def modifier_reservation(request, reservation_id):
             except ValidationError as e:
                 form.add_error(None, e)
                 messages.error(request, "Impossible d’enregistrer : vérifie dates et chevauchements.")
-                return render(request, 'reserv/modifier_reservation.html', {
+                return render(request, 'booking/modifier_reservation.html', {
                     'form': form,
                     'equipment': reservation.equipment,
                     'reservation': reservation,
@@ -549,7 +549,7 @@ def modifier_reservation(request, reservation_id):
             request=request
         )
 
-    return render(request, 'reserv/modifier_reservation.html', {
+    return render(request, 'booking/modifier_reservation.html', {
         'form': form,
         'equipment': reservation.equipment,
         'reservation': reservation,
@@ -596,7 +596,7 @@ def visualiser_reservation(request, reservation_id):
     """
     reservation = get_object_or_404(Reservation, id=reservation_id)
 
-    return render(request, 'reserv/visualiser_reservation.html', {
+    return render(request, 'booking/visualiser_reservation.html', {
         'reservation': reservation
     })
 
@@ -609,7 +609,7 @@ def rediriger_reservation(request, reservation_id):
 
     Règle :
         - Admin ou créateur : accès à la modification.
-        - Non-admin créateur : accès à la modification tant que dt_now < (début + 30 min).
+        - No-admin créateur : accès à la modification tant que dt_now < (début + 30 min).
         - Sinon : visualisation seule.
     """
     reservation = get_object_or_404(Reservation, id=reservation_id)
@@ -644,7 +644,7 @@ def stats_admin(request):
     """Page stats admin – UI des filtres + conteneur résultats."""
     equipment_set = Equipment.objects.filter(is_active=True).order_by('name').values('id', 'name')
     affiliations = Affiliation.objects.order_by('name').values('id', 'name')
-    return render(request, 'reserv/stats_admin.html', {
+    return render(request, 'booking/stats_admin.html', {
         'equipment': equipment_set,
         'affiliations': affiliations,
     })
@@ -655,21 +655,21 @@ def ajax_labos(request):
     ids = request.GET.get('affiliations', '')
     aff_ids = [int(x) for x in ids.split(',') if x.strip().isdigit()]
     if not aff_ids:
-        return JsonResponse({'laboratoires': []})
+        return JsonResponse({'laboratories': []})
 
     labs = (Laboratory.objects
             .filter(affiliation__id__in=aff_ids)   # ⬅️ plus sûr que ...affiliation_id__in
             .order_by('name')
             .values('id', 'name', 'affiliation_id'))
-    return JsonResponse({'laboratoires': list(labs)})
+    return JsonResponse({'laboratories': list(labs)})
 
 @login_required
 @user_passes_test(is_platform_admin_plateforme)
 def ajax_usagers(request):
     lab_ids = [int(x) for x in request.GET.get('labos','').split(',') if x.strip().isdigit()]
-    fct_ids = [int(x) for x in request.GET.get('fonctions','').split(',') if x.strip().isdigit()]
+    fct_ids = [int(x) for x in request.GET.get('roles','').split(',') if x.strip().isdigit()]
     if not lab_ids:
-        return JsonResponse({'usagers': []})
+        return JsonResponse({'user_profiles': []})
 
     qs = UserProfile.objects.filter(laboratoire_id__in=lab_ids)
     if fct_ids:
@@ -677,7 +677,7 @@ def ajax_usagers(request):
 
     users = (qs.order_by('name','first_name')
                .values('id','name','first_name','laboratoire_id','fonction_id'))
-    return JsonResponse({'usagers': list(users)})
+    return JsonResponse({'user_profiles': list(users)})
 
 @login_required
 @user_passes_test(is_platform_admin_plateforme)
@@ -685,15 +685,15 @@ def ajax_fonctions(request):
     ids = request.GET.get('labos', '')
     labo_ids = [int(x) for x in ids.split(',') if x.strip().isdigit()]
     if not labo_ids:
-        return JsonResponse({'fonctions': []})
+        return JsonResponse({'roles': []})
 
-    # Roles réellement présentes pour les usagers des labos cochés
-    fonctions = (Role.objects
-                 .filter(user_profile__laboratoire_id__in=labo_ids)
+    # Roles réellement présentes pour les user_profiles des labos cochés
+    roles = (Role.objects
+                 .filter(user_profile__laboratory_id__in=labo_ids)
                  .distinct()
                  .order_by('name')
                  .values('id', 'name'))
-    return JsonResponse({'fonctions': list(fonctions)})
+    return JsonResponse({'roles': list(roles)})
 
 def _parse_date_or_none(s):
     try:
@@ -938,9 +938,9 @@ def _filters_from_request_export(request):
          'end_date':   _parse_date_or_none(request.POST.get('end_date')   or request.GET.get('end_date')),
          'equipment':   _to_ids('equipment'),
          'affiliations':  _to_ids('affiliations'),
-         'laboratoires':  _to_ids('laboratoires'),
-         'fonctions':     _to_ids('fonctions'),
-         'usagers':       _to_ids('usagers'),
+         'laboratories':  _to_ids('laboratories'),
+         'roles':     _to_ids('roles'),
+         'user_profiles':       _to_ids('user_profiles'),
      }
 
 def _filtered_reservations(filters):
@@ -953,7 +953,7 @@ def _filtered_reservations(filters):
     _today = date.today()
     _now_time = datetime.now().time()
     qs = (Reservation.objects
-          .select_related('user_profile__laboratoire__affiliation', 'user_profile__fonction', 'equipment')
+          .select_related('user_profile__laboratory__affiliation', 'user_profile__role', 'equipment')
           .exclude(status='cancelled')
           .filter(
               Q(status='past')
@@ -974,13 +974,13 @@ def _filtered_reservations(filters):
     if filters.get('equipment'):
         qs = qs.filter(equipement_id__in=filters['equipment'])
     if filters.get('affiliations'):
-        qs = qs.filter(user_profile__laboratoire__affiliation_id__in=filters['affiliations'])
-    if filters.get('laboratoires'):
-        qs = qs.filter(user_profile__laboratoire_id__in=filters['laboratoires'])
-    if filters.get('fonctions'):
-        qs = qs.filter(user_profile__fonction_id__in=filters['fonctions'])
-    if filters.get('usagers'):
-        qs = qs.filter(usager_id__in=filters['usagers'])
+        qs = qs.filter(user_profile__laboratory__affiliation_id__in=filters['affiliations'])
+    if filters.get('laboratories'):
+        qs = qs.filter(user_profile__laboratory_id__in=filters['laboratories'])
+    if filters.get('roles'):
+        qs = qs.filter(user_profile__role_id__in=filters['roles'])
+    if filters.get('user_profiles'):
+        qs = qs.filter(usager_id__in=filters['user_profiles'])
 
     return qs
 
@@ -990,7 +990,7 @@ def _minutes_totales(resa):
     return max(int((dt2 - dt1).total_seconds() // 60), 0)
 
 def _minutes_usage_assistance(resa):
-    """Retourne (min_usage, min_assistance) selon règles métier."""
+    """Returns (min_usage, min_assistance) selon règles métier."""
     total = _minutes_totales(resa)
     if getattr(resa, 'is_training', False):
         return (0, 0)  # forfait global → pas d'heures comptées
@@ -1036,18 +1036,18 @@ def _agg_metrics(reservations):
 
 def _group_key_and_label(resa, level):
     """
-    Retourne (id, label) selon le niveau demandé: 'equipment' | 'affiliation' | 'laboratoire' | 'fonction' | 'accounts'.
+    Returns (id, label) selon le niveau demandé: 'equipment' | 'affiliation' | 'laboratory' | 'role' | 'accounts'.
     """
     if level == 'equipment' and resa.equipment:
         return (resa.equipement_id, resa.equipment.name)
-    if level == 'affiliation' and getattr(resa.user_profile, 'laboratoire', None) and resa.user_profile.laboratoire.affiliation:
-        aff = resa.user_profile.laboratoire.affiliation
+    if level == 'affiliation' and getattr(resa.user_profile, 'laboratory', None) and resa.user_profile.laboratory.affiliation:
+        aff = resa.user_profile.laboratory.affiliation
         return (aff.id, aff.name)
-    if level == 'laboratoire' and getattr(resa.user_profile, 'laboratoire', None):
-        lab = resa.user_profile.laboratoire
+    if level == 'laboratory' and getattr(resa.user_profile, 'laboratory', None):
+        lab = resa.user_profile.laboratory
         return (lab.id, lab.name)
-    if level == 'fonction' and getattr(resa.user_profile, 'fonction', None):
-        f = resa.user_profile.fonction
+    if level == 'role' and getattr(resa.user_profile, 'role', None):
+        f = resa.user_profile.role
         return (f.id, f.name)
     if level == 'accounts' and resa.user_profile:
         u = resa.user_profile
@@ -1081,14 +1081,14 @@ def _group_aggregate(reservations, level):
 def _last_selected_level(filters):
     """
     Détermine le “dernier niveau coché” côté filtre.
-    Priorité : usagers > fonctions > laboratoires > affiliations ; sinon None (global).
+    Priorité : user_profiles > roles > laboratories > affiliations ; sinon None (global).
     """
-    if filters['usagers']:
+    if filters['user_profiles']:
         return 'accounts'
-    if filters['fonctions']:
-        return 'fonction'
-    if filters['laboratoires']:
-        return 'laboratoire'
+    if filters['roles']:
+        return 'role'
+    if filters['laboratories']:
+        return 'laboratory'
     if filters['affiliations']:
         return 'affiliation'
     return None
@@ -1104,17 +1104,17 @@ def _extract_filters(request):
         'end_date': request.GET.get('end_date') or request.POST.get('end_date') or '',
         'equipment': _ids('equipment'),
         'affiliations': _ids('affiliations'),
-        'laboratoires': _ids('laboratoires'),
-        'fonctions': _ids('fonctions'),
-        'usagers': _ids('usagers'),
+        'laboratories': _ids('laboratories'),
+        'roles': _ids('roles'),
+        'user_profiles': _ids('user_profiles'),
     }
 
 
-# --- convertit filtres (str) en dates et applique sur Reservation (status=passee par défaut) ---
+# --- convertit filtres (str) en dates et applique sur Reservation (status=passee by default) ---
 def _filtered_reservations_for_exports(filters):
     qs = (
         Reservation.objects
-        .select_related('user_profile__laboratoire__affiliation', 'user_profile__fonction', 'equipment')
+        .select_related('user_profile__laboratory__affiliation', 'user_profile__role', 'equipment')
         .filter(status='past')
     )
     
@@ -1138,20 +1138,20 @@ def _filtered_reservations_for_exports(filters):
     if filters['equipment']:
         qs = qs.filter(equipement_id__in=filters['equipment'])
     if filters['affiliations']:
-        qs = qs.filter(user_profile__laboratoire__affiliation_id__in=filters['affiliations'])
-    if filters['laboratoires']:
-        qs = qs.filter(user_profile__laboratoire_id__in=filters['laboratoires'])
-    if filters['fonctions']:
-        qs = qs.filter(user_profile__fonction_id__in=filters['fonctions'])
-    if filters['usagers']:
-        qs = qs.filter(usager_id__in=filters['usagers'])
+        qs = qs.filter(user_profile__laboratory__affiliation_id__in=filters['affiliations'])
+    if filters['laboratories']:
+        qs = qs.filter(user_profile__laboratory_id__in=filters['laboratories'])
+    if filters['roles']:
+        qs = qs.filter(user_profile__role_id__in=filters['roles'])
+    if filters['user_profiles']:
+        qs = qs.filter(usager_id__in=filters['user_profiles'])
 
     return qs
 
 # --- agrégation générique par dimension ---
 def _rows_by_dimension(qs, dimension):
     """
-    dimension ∈ {"equipment","affiliation","laboratoire","fonction","accounts"}
+    dimension ∈ {"equipment","affiliation","laboratory","role","accounts"}
     Return: list[dict] avec clés:
       name, reservations, heures_usage, heures_assistance, heures_totales,
       duree_moy_heures, nb_assistance, usagers_distincts
@@ -1162,23 +1162,23 @@ def _rows_by_dimension(qs, dimension):
         'minutes_usage': 0,
         'minutes_ass': 0,
         'nb_assistance': 0,
-        'usagers': set(),
+        'user_profiles': set(),
     })
 
     def _key_name(r):
         if dimension == 'equipment':
             return (getattr(r.equipment, 'id', None), getattr(r.equipment, 'name', '—'))
         if dimension == 'affiliation':
-            aff = getattr(getattr(getattr(r, 'accounts', None), 'laboratoire', None), 'affiliation', None)
+            aff = getattr(getattr(getattr(r, 'user_profile', None), 'laboratory', None), 'affiliation', None)
             return (getattr(aff, 'id', None), getattr(aff, 'name', '—'))
-        if dimension == 'laboratoire':
-            lab = getattr(getattr(r, 'accounts', None), 'laboratoire', None)
+        if dimension == 'laboratory':
+            lab = getattr(getattr(r, 'user_profile', None), 'laboratory', None)
             return (getattr(lab, 'id', None), getattr(lab, 'name', '—'))
-        if dimension == 'fonction':
-            f = getattr(getattr(r, 'accounts', None), 'fonction', None)
+        if dimension == 'role':
+            f = getattr(getattr(r, 'user_profile', None), 'role', None)
             return (getattr(f, 'id', None), getattr(f, 'name', '—'))
         if dimension == 'accounts':
-            u = getattr(r, 'accounts', None)
+            u = getattr(r, 'user_profile', None)
             name = f"{getattr(u, 'name', '')} {getattr(u, 'first_name', '')}".strip() or '—'
             return (getattr(u, 'id', None), name)
         return (None, '—')
@@ -1193,7 +1193,7 @@ def _rows_by_dimension(qs, dimension):
         if getattr(r, 'assistance', False):
             b['nb_assistance'] += 1
         if r.usager_id:
-            b['usagers'].add(r.usager_id)
+            b['user_profiles'].add(r.usager_id)
 
     rows = []
     for (k_id, name), b in buckets.items():
@@ -1206,7 +1206,7 @@ def _rows_by_dimension(qs, dimension):
             'heures_totales': round(total_min / 60.0, 2),
             'duree_moy_heures': round((total_min / b['reservations']) / 60.0, 2) if b['reservations'] else 0,
             'nb_assistance': b['nb_assistance'],
-            'usagers_distincts': len(b['usagers']),
+            'usagers_distincts': len(b['user_profiles']),
         })
     # tri : heures totales desc, puis réservations desc
     rows.sort(key=lambda x: (-x['heures_totales'], -x['reservations'], x['name']))
@@ -1307,13 +1307,13 @@ def stats_query(request):
             par_eq[key]['min_usage']    += mu
             par_eq[key]['min_assist']   += ma
 
-        if getattr(r, 'accounts', None) and getattr(r.user_profile, 'laboratoire', None):
-            key = (r.user_profile.laboratoire.id, r.user_profile.laboratoire.name)
+        if getattr(r, 'user_profile', None) and getattr(r.user_profile, 'laboratory', None):
+            key = (r.user_profile.laboratory.id, r.user_profile.laboratory.name)
             par_labo[key]['reservations'] += 1
             par_labo[key]['min_usage']    += mu
             par_labo[key]['min_assist']   += ma
 
-        if getattr(r, 'accounts', None):
+        if getattr(r, 'user_profile', None):
             key = (r.user_profile.id, f"{r.user_profile.name} {r.user_profile.first_name}")
             par_usr[key]['reservations'] += 1
             par_usr[key]['min_usage']    += mu
@@ -1345,8 +1345,8 @@ def stats_query(request):
 
     tables = {
         'equipment':  _tabify(par_eq),
-        'laboratoires': _tabify(par_labo),
-        'usagers':      _tabify(par_usr),
+        'laboratories': _tabify(par_labo),
+        'user_profiles':      _tabify(par_usr),
     }
 
     ts_weekly = [{'semaine': k, 'reservations': v['reservations'], 'heures': round(v['minutes']/60.0, 2)}
@@ -1388,8 +1388,8 @@ def stats_query(request):
 def stats_zone1(request):
     """
     Statistiques globales plateforme (zone 1) :
-    - Nombre d usagers actifs
-    - Nombre de laboratoires representes (au moins un user_profile is_active)
+    - Nombre d user_profiles actifs
+    - Nombre de laboratories representes (au moins un user_profile is_active)
     - Nombre de nouveaux inscrits sur la periode (reglement accepte)
     """
     from accounts.models import UserProfile, Laboratory
@@ -1441,7 +1441,7 @@ def calendrier_global_admin(request):
 def calendrier_global_admin_data(request):
     """
     Endpoint JSON pour FullCalendar.
-    Attend des params GET optionnels: start, end (ISO8601) et filtres.
+    Attend des params GET optionals: start, end (ISO8601) et filtres.
     """
     # Fenêtre demandée par FullCalendar (UTC ISO) -> on prend des dates locales
     start = request.GET.get("start")  # ex: 2025-10-01T00:00:00Z
@@ -1516,7 +1516,7 @@ def stats_export_unified_xlsx(request):
     filters = _extract_filters(request)
     
     # On reconstruit la query pour éviter le .only() de _filtered_reservations_for_exports
-    # qui bloque le select_related sur user_profile__laboratoire
+    # qui bloque le select_related sur user_profile__laboratory
     qs = Reservation.objects.filter(status='past')
     
     d1 = filters.get('start_date') or ''
@@ -1539,16 +1539,16 @@ def stats_export_unified_xlsx(request):
     if filters['equipment']:
         qs = qs.filter(equipement_id__in=filters['equipment'])
     if filters['affiliations']:
-        qs = qs.filter(user_profile__laboratoire__affiliation_id__in=filters['affiliations'])
-    if filters['laboratoires']:
-        qs = qs.filter(user_profile__laboratoire_id__in=filters['laboratoires'])
-    if filters['fonctions']:
-        qs = qs.filter(user_profile__fonction_id__in=filters['fonctions'])
-    if filters['usagers']:
-        qs = qs.filter(usager_id__in=filters['usagers'])
+        qs = qs.filter(user_profile__laboratory__affiliation_id__in=filters['affiliations'])
+    if filters['laboratories']:
+        qs = qs.filter(user_profile__laboratory_id__in=filters['laboratories'])
+    if filters['roles']:
+        qs = qs.filter(user_profile__role_id__in=filters['roles'])
+    if filters['user_profiles']:
+        qs = qs.filter(usager_id__in=filters['user_profiles'])
 
     reservations = qs.select_related(
-        'accounts', 'user_profile__laboratoire', 'user_profile__laboratoire__affiliation', 'equipment'
+        'accounts', 'user_profile__laboratory', 'user_profile__laboratory__affiliation', 'equipment'
     ).order_by('start_date')
 
     # 2. Création du classeur
@@ -1583,7 +1583,7 @@ def stats_export_unified_xlsx(request):
     
     # Dictionnaires agrégés
     data_by_affiliation = {}  # affiliation_nom -> total_heures
-    data_by_labo = {}         # labo_nom -> total_heures
+    data_by_labo = {}         # lab_name -> total_heures
     data_by_usager = {}       # usager_nom -> total_heures
     data_by_type = {'Formation': 0.0, 'Assistance': 0.0, 'Usage': 0.0}
     data_by_nature = {'Recherche': 0.0, 'Maintenance': 0.0, 'Enseignement': 0.0}
@@ -1644,16 +1644,16 @@ def stats_export_unified_xlsx(request):
             data_by_type['Usage'] += duree_h
         
         # Affiliation
-        aff_nom = "Inconnu"
-        if r.user_profile and r.user_profile.laboratoire and r.user_profile.laboratoire.affiliation:
-            aff_nom = r.user_profile.laboratoire.affiliation.name
+        aff_nom = "Unknown"
+        if r.user_profile and r.user_profile.laboratory and r.user_profile.laboratory.affiliation:
+            aff_nom = r.user_profile.laboratory.affiliation.name
         data_by_affiliation[aff_nom] = data_by_affiliation.get(aff_nom, 0.0) + duree_h
         
         # Laboratory
-        labo_nom = "Inconnu"
-        if r.user_profile and r.user_profile.laboratoire:
-            labo_nom = r.user_profile.laboratoire.name
-        data_by_labo[labo_nom] = data_by_labo.get(labo_nom, 0.0) + duree_h
+        lab_name = "Unknown"
+        if r.user_profile and r.user_profile.laboratory:
+            lab_name = r.user_profile.laboratory.name
+        data_by_labo[lab_name] = data_by_labo.get(lab_name, 0.0) + duree_h
         
         if r.user_profile:
             usager_nom = f"{r.user_profile.first_name} {r.user_profile.name}"
@@ -1696,7 +1696,7 @@ def stats_export_unified_xlsx(request):
             'end_date': r.end_date,
             'equipment': r.equipment.name,
             'accounts': usager_nom,
-            'laboratoire': labo_nom,
+            'laboratory': lab_name,
             'affiliation': aff_nom,
             'type': type_resa,
             'duree_h': duree_h,
@@ -1718,7 +1718,7 @@ def stats_export_unified_xlsx(request):
             data['end_date'],
             data['equipment'],
             data['accounts'],
-            data['laboratoire'],
+            data['laboratory'],
             data['affiliation'],
             data['type'],
             round(data['duree_h'], 2),
@@ -1898,8 +1898,8 @@ def stats_export_unified_xlsx(request):
     autres_heures = sum(h for _, h in sorted_labos[5:])
     
     row_idx = data_start_row + 1
-    for labo_nom, heures in top5_labos:
-        ws_dash.cell(row=row_idx, column=col_lab, value=labo_nom)
+    for lab_name, heures in top5_labos:
+        ws_dash.cell(row=row_idx, column=col_lab, value=lab_name)
         c = ws_dash.cell(row=row_idx, column=col_lab+1, value=heures)
         c.number_format = '#,##0.00"h"'
         row_idx += 1
@@ -2040,7 +2040,7 @@ def stats_export_unified_xlsx(request):
     if d_debut and d_fin:
         periode_jours = (d_fin - d_debut).days
     else:
-        periode_jours = 30  # Par défaut
+        periode_jours = 30  # By default
     
     col_evo = 13 # M
     

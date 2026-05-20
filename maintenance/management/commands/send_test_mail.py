@@ -10,7 +10,7 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument("--to", required=True, help="Destinataire (email).")
         parser.add_argument("--subject", default="Test Calendrier — SMTP & PDF", help="Sujet.")
-        parser.add_argument("--pdf", help="Chemin vers un PDF à joindre (optionnel).")
+        parser.add_argument("--pdf", help="Chemin vers un PDF à joindre (optional).")
 
     def handle(self, *args, **opts):
         to_addr = opts["to"]

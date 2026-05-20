@@ -1,13 +1,13 @@
 # Copyright (c) 2025 Author Author
-# Licensed under the Creative Commons Attribution-NonCommercial 4.0 International License (CC BY-NC 4.0)
+# Licensed under the Creative Commons Attribution-NoCommercial 4.0 International License (CC BY-NC 4.0)
 # See the LICENSE file or https://creativecommons.org/licenses/by-nc/4.0/legalcode for details.
 
 """
-Module : reserv.admin
+Module: reserv.admin
 ---------------------
 Configuration de l’interface d’administration pour les réservations.
 
-Rolenalités :
+Functionality:
 - Affichage et filtrage des réservations dans l’admin.
 - Actions personnalisées pour accepter ou refuser les demandes
   de réservations exceptionnelles.
@@ -27,9 +27,9 @@ class AssistanceFilter(admin.SimpleListFilter):
 
     def lookups(self, request, model_admin):
         return (
-            ('oui', 'Oui (Avec durée)'),
-            ('non', 'Non'),
-            ('erreur', '⚠️ Oui (Durée manquante)'),
+            ('oui', 'Yes (Avec durée)'),
+            ('non', 'No'),
+            ('erreur', '⚠️ Yes (Durée manquante)'),
         )
 
     def queryset(self, request, queryset):
@@ -50,7 +50,7 @@ class ReservationAdmin(admin.ModelAdmin):
     """
     Configuration de l’affichage des réservations dans l’admin.
 
-    Options :
+    Options:
         - list_display : colonnes affichées dans la liste
         - list_filter  : filtres disponibles sur le côté
         - actions      : actions groupées (accepter/refuser)
@@ -80,7 +80,7 @@ class ReservationAdmin(admin.ModelAdmin):
     
     def affichage_statut(self, obj):
         """
-        Retourne le libellé lisible du status (via get_status_display()).
+        Returns le libellé lisible du status (via get_status_display()).
         """
         return obj.get_status_display()
     affichage_statut.short_description = 'Statut'
@@ -110,7 +110,7 @@ class ReservationAdmin(admin.ModelAdmin):
             reservation.exception_request = False
             reservation.save()
 
-            # Notification par email
+            # Email notification
             email = reservation.user_profile.user.email
             send_mail(
                 subject="Votre réservation a été acceptée",
@@ -138,7 +138,7 @@ class ReservationAdmin(admin.ModelAdmin):
         count = refus.count()
 
         for reservation in refus:
-            # Notification par email (avant suppression)
+            # Email notification (avant suppression)
             email = reservation.user_profile.user.email
             send_mail(
                 subject="Votre réservation a été refusée",

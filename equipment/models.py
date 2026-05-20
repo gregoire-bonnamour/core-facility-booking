@@ -1,9 +1,9 @@
 # Copyright (c) 2025 Author Author
-# Licensed under the Creative Commons Attribution-NonCommercial 4.0 International License (CC BY-NC 4.0)
+# Licensed under the Creative Commons Attribution-NoCommercial 4.0 International License (CC BY-NC 4.0)
 # See the LICENSE file or https://creativecommons.org/licenses/by-nc/4.0/legalcode for details.
 
 """
-Module : equipment_set.models
+Module: equipment_set.models
 ---------------------------
 Ce module définit les modèles de base liés à la gestion des équipements :
 - Equipment : objet principal (microscope, cytomètre, etc.)
@@ -16,20 +16,20 @@ from django.db import models
 
 class Equipment(models.Model):
     """
-    Représente un équipement qui peut être réservé.
+    Represents un équipement qui peut être réservé.
     
     Attributs :
         name (str)                : name unique de l’équipement
         description (str)        : description libre de l’équipement
         type (str)               : catégorie (microscope, cytomètre, etc.)
         location (str)       : salle ou lieu de l’équipement
-        is_active (bool)             : permet de désactiver l’équipement (masqué des usagers)
+        is_active (bool)             : permet de désactiver l’équipement (masqué des user_profiles)
     """
     name = models.CharField(max_length=100, unique=True)
     description = models.TextField(blank=True)
 
     max_duration_hours = models.PositiveIntegerField(
-        default=72,  # valeur par défaut
+        default=72,  # valeur by default
         help_text="Durée max d'une réservation en heures (sauf demande exceptionnelle)."
     )
     
@@ -75,7 +75,7 @@ class TimeSlot(models.Model):
         doit obligatoirement être entièrement contenue dans ce créneau.
     
     Attributs :
-        equipment (Equipment) : lien vers l’équipement concerné
+        equipment (Equipment) : link to l’équipement concerné
         day_of_week (int)              : day_of_week de la semaine (0 = Lundi)
         start_time (time)      : début du créneau
         end_time (time)        : fin du créneau
@@ -107,12 +107,12 @@ class UsageQuota(models.Model):
     Définit une plage horaire hebdomadaire où la durée totale de réservation
     est limitée pour chaque user_profile.
     
-    Exemple :
+    Example:
         - Microscope, lundi 8h–12h
         - Limite à 120 minutes → un user_profile ne peut pas réserver plus de 2h au total dans cette plage
     
     Attributs :
-        equipment (Equipment) : lien vers l’équipement
+        equipment (Equipment) : link to l’équipement
         day_of_week (int)              : day_of_week de la semaine (0 = Lundi)
         start_time (time)      : début de la plage
         end_time (time)        : fin de la plage
@@ -151,8 +151,8 @@ class Rate(models.Model):
         affiliation (Affiliation) : affiliation de l’user_profile (YourUniversity, McGill, UdeM…)
         hourly_rate (Decimal)   : tarif standard en CAD/h
 
-    Contraintes :
-        - UniqueConstraint : empêche de définir deux rates différents
+    Constraints:
+        - UniqueConstraint : prevents de définir deux rates différents
           pour le même couple (équipement, affiliation).
     """
 
@@ -179,7 +179,7 @@ class TrainingRate(models.Model):
         affiliation (Affiliation) : affiliation de l’user_profile (YourUniversity, McGill, etc.)
         training_fee (Decimal) : prix fixe (CAD) facturé pour la formation
 
-    Contraintes :
+    Constraints:
         - UniqueConstraint : un (équipement, affiliation) ne peut avoir qu’un seul tarif de formation.
     """
     equipment = models.ForeignKey("Equipment", on_delete=models.CASCADE, related_name="training_rates")

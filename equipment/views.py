@@ -1,13 +1,13 @@
 # Copyright (c) 2025 Author Author
-# Licensed under the Creative Commons Attribution-NonCommercial 4.0 International License (CC BY-NC 4.0)
+# Licensed under the Creative Commons Attribution-NoCommercial 4.0 International License (CC BY-NC 4.0)
 # See the LICENSE file or https://creativecommons.org/licenses/by-nc/4.0/legalcode for details.
 
 """
-Module : equipment_set.views
+Module: equipment_set.views
 --------------------------
 Vues (endpoints) liées à l’application `equipment_set`.
 
-À ce stade, aucune vue publique n’est exposée : l’administration des
+À ce stade, noe vue publique n’est exposée : l’administration des
 équipements, créneaux, plages limites et rates se fait via le site
 d’administration Django.
 
@@ -25,8 +25,8 @@ Exemples de futures vues possibles (non implémentées) :
 
 from django.shortcuts import render
 
-# Aucune vue n’est définie pour le moment.
-# Ajouter ici les fonctions/CBV (Class-Based Views) au fur et à mesure des besoins.
+# None vue n’est définie pour le moment.
+# Ajouter ici les roles/CBV (Class-Based Views) au fur et à mesure des besoins.
 #
 # Exemple de squelette à réutiliser :
 #

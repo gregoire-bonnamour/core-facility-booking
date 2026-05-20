@@ -1,18 +1,18 @@
 {% extends "base.html" %}
 
 {% block content %}
-  <h2>Mon profil</h2>
+  <h2>My profile</h2>
 
   {% if user_profile %}
-    <p><strong>Prénom :</strong> {{ user_profile.first_name }}</p>
+    <p><strong>First name :</strong> {{ user_profile.first_name }}</p>
     <p><strong>Nom :</strong> {{ user_profile.name }}</p>
     <p><strong>Adresse email :</strong> {{ user_profile.email }}</p>
 
     <p><strong>Role :</strong>
-      {% if user_profile.fonction %}
-        {{ user_profile.fonction }}
+      {% if user_profile.role %}
+        {{ user_profile.role }}
       {% else %}
-        <em>Non spécifiée</em>
+        <em>No spécifiée</em>
       {% endif %}
     </p>
 
@@ -20,27 +20,27 @@
       {% if user_profile.affiliation %}
         {{ user_profile.affiliation.name }}
       {% else %}
-        <em>Non renseignée</em>
+        <em>No renseignée</em>
       {% endif %}
     </p>
 
     <p><strong>Laboratory :</strong>
-      {% if user_profile.laboratoire %}
-        {{ user_profile.laboratoire.name }}
+      {% if user_profile.laboratory %}
+        {{ user_profile.laboratory.name }}
       {% else %}
-        <em>Non renseigné</em>
+        <em>No renseigné</em>
       {% endif %}
     </p>
 
     <p><strong>Compte is_active :</strong>
-      {% if user_profile.is_active %}Oui{% else %}Non{% endif %}
+      {% if user_profile.is_active %}Yes{% else %}No{% endif %}
     </p>
 
     <p><strong>Rôle :</strong>
       {% if user_profile.is_platform_admin %}
         Administrateur de la plateforme
       {% else %}
-        UserProfile standard
+        UserProfilee standard
       {% endif %}
     </p>
 
@@ -48,7 +48,7 @@
       {% if user_profile.activation_date %}
         {{ user_profile.activation_date|date:"d/m/Y H:i" }}
       {% else %}
-        <em>Non disponible</em>
+        <em>No disponible</em>
       {% endif %}
     </p>
 
@@ -62,7 +62,7 @@
     </p>
 
   {% else %}
-    <p><em>Aucun profil user_profile lié à ce compte.</em></p>
+    <p><em>Tocun profil user_profile lié à ce compte.</em></p>
   {% endif %}
 
   <footer>

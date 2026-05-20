@@ -10,35 +10,35 @@
   <h3>🔧 Administration</h3>
   <ul>
     <li><a href="{% url 'admin:index' %}">⚙️ Interface Django admin</a></li>
-    <li><a href="{% url 'accounts:inviter_usager' %}">📨 Inviter un user_profile</a></li>
-    <li><a href="{% url 'booking:stats_admin' %}">📊 Statistiques</a></li>
-    <li><a href="{% url 'billing:page_facturation' %}">💰 Facturation</a></li>
-    <li><a href="{% url 'booking:calendrier_global_admin' %}">📅 Calendrier global (tous équipements)</a></li>
+    <li><a href="{% url 'accounts:invite_usager' %}">📨 Invite un user_profile</a></li>
+    <li><a href="{% url 'booking:stats_admin' %}">📊 Statistics</a></li>
+    <li><a href="{% url 'billing:page_facturation' %}">💰 Billing</a></li>
+    <li><a href="{% url 'booking:calendar_global_admin' %}">📅 Calendar global (tous équipements)</a></li>
   </ul>
 </section>
 {% endif %}
 
-{# --- Alerte admin si réservations en attente de validation --- #}
+{# --- Alerte admin si bookings en attente de validation --- #}
 {% if user.is_staff and nb_reservations_en_attente %}
 <section class="alert-admin">
-  <h3>🚨 Réservations en attente</h3>
+  <h3>🚨 Bookings en attente</h3>
   <p><a href="{% url 'admin:reserv_reservation_changelist' %}?status=en_attente">
-    {{ nb_reservations_en_attente }} réservation(s) à valider
+    {{ nb_reservations_en_attente }} booking(s) à valider
   </a></p>
 </section>
 {% endif %}
 
-<div class="accueil-layout">
+<div class="home-layout">
 
   {# ── Colonne principale ── #}
-  <div class="accueil-main stack">
+  <div class="home-main stack">
 
     {# --- Accès user_profile standard --- #}
     <section>
       <h3>🔧 Accès user_profile</h3>
       <ul>
-        <li><a href="{% url 'accounts:profil' %}">👤 Mon profil</a></li>
-        <li><a href="{% url 'accounts:reglement_lecture' %}">📋 Règlement de la plateforme</a></li>
+        <li><a href="{% url 'accounts:profil' %}">👤 My profile</a></li>
+        <li><a href="{% url 'accounts:reglement_lecture' %}">📋 Terms & Conditions de la plateforme</a></li>
         <li><a href="{{ MAILTO_SIGNALER_PROBLEME }}">Signaler un problème</a></li>
       </ul>
     </section>
@@ -49,12 +49,12 @@
       <ul>
         {% for equipment in equipment_set %}
         <li>
-          <a href="{% url 'booking:calendrier_equipement' equipment.id %}?semaine={{ lundi|date:'Y-m-d' }}">
+          <a href="{% url 'booking:calendar_equipement' equipment.id %}?semaine={{ lundi|date:'Y-m-d' }}">
             📅 {{ equipment.name }}
           </a>
         </li>
         {% empty %}
-        <li>Aucun équipement accessible.</li>
+        <li>Tocun équipement accessible.</li>
         {% endfor %}
       </ul>
     </section>
@@ -63,8 +63,8 @@
 
   {# ── Fil d'actualités (sidebar droite) ── #}
   {% if news_list %}
-  <aside class="accueil-news">
-    <h3 class="news-title">📰 Actualités</h3>
+  <aside class="home-news">
+    <h3 class="news-title">📰 News</h3>
     <ul class="news-feed">
       {% for news in news_list %}
       <li class="news-item news-cat-{{ news.category }}">
@@ -90,8 +90,8 @@
 <script>
 (function () {
   function syncNewsHeight() {
-    var main = document.querySelector('.accueil-main');
-    var news = document.querySelector('.accueil-news');
+    var main = document.querySelector('.home-main');
+    var news = document.querySelector('.home-news');
     if (!main || !news) return;
     if (window.innerWidth > 720) {
       news.style.maxHeight = main.offsetHeight + 'px';

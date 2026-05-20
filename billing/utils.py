@@ -1,9 +1,9 @@
 # Copyright (c) 2025 Author Author
-# Licensed under the Creative Commons Attribution-NonCommercial 4.0 International License (CC BY-NC 4.0)
+# Licensed under the Creative Commons Attribution-NoCommercial 4.0 International License (CC BY-NC 4.0)
 # See the LICENSE file or https://creativecommons.org/licenses/by-nc/4.0/legalcode for details.
 
 """
-Module : facturation.utils
+Module: facturation.utils
 --------------------------
 Roles utilitaires pour la génération des données de facturation
 (filtrage des réservations, calcul des coûts, exports CSV et PDF).
@@ -17,10 +17,10 @@ Modèle métier
 
 Roles publiques (API)
 -------------------------
-- filtrer_reservations_par_laboratoire(start_date, end_date) -> dict[labo:str, list[Reservation]]
+- filter_reservations_by_laboratory(start_date, end_date) -> dict[lab:str, list[Reservation]]
 - calculer_cout(reservation) -> float
-- generer_csv_par_laboratoire(groupes_par_labo) -> io.BytesIO (ZIP)
-- generer_pdfs_par_labo(groupes_par_labo, start_date=None, end_date=None) -> dict[nom_pdf:str, bytes]
+- generate_csv_by_laboratory(groups_by_lab) -> io.BytesIO (ZIP)
+- generer_pdfs_par_labo(groups_by_lab, start_date=None, end_date=None) -> dict[nom_pdf:str, bytes]
 
 Dépendances clés
 ----------------
@@ -79,8 +79,8 @@ def get_assistance_rate(affiliation):
 #Lecture du tarif fixe de formation
 def get_training_fee(equipment, affiliation):
     """
-    Retourne le tarif fixe de formation pour un couple (équipement, affiliation).
-    Si aucun tarif n’est défini, retourne None.
+    Returns le tarif fixe de formation pour un couple (équipement, affiliation).
+    Si no tarif n’est défini, retourne None.
     """
     try:
         tf = TrainingRate.objects.get(equipment=equipment, affiliation=affiliation)
@@ -93,37 +93,37 @@ def get_training_fee(equipment, affiliation):
 #  Filtrage / groupement
 # -------------------------------------------------------------------
 
-def filtrer_reservations_par_laboratoire(start_date, end_date):
+def filter_reservations_by_laboratory(start_date, end_date):
     reservations = Reservation.objects.filter(
         start_date__gte=start_date,
         end_date__lte=end_date,
         end_date__lt=now()
-    ).select_related('user_profile__laboratoire', 'user_profile__affiliation', 'equipment')
+    ).select_related('user_profile__laboratory', 'user_profile__affiliation', 'equipment')
 
-    groupes_par_labo = defaultdict(list)
+    groups_by_lab = defaultdict(list)
     for resa in reservations:
         # [NEW LOGIC] Pour les formations, on regarde les PARTICIPANTS
         if resa.is_training:
              participants = get_usagers_facturables(resa)
              for u in participants:
-                 labo = u.laboratoire.name if u and u.laboratoire else "Inconnu"
+                 lab = u.laboratory.name if u and u.laboratory else "Unknown"
                  # On stocke des tuples (reservation, usager_a_facturer) pour savoir qui facturer
-                 # Mais les fonctions existantes attendent une liste de 'Reservation'.
-                 # TASTY TRICK: On ajoute la reservation dans la liste du labo du PARTICIPANT.
-                 # Lors du découpage, 'generer_lignes_facturation' saura filtrer que ce labo ne doit payer QUE pour ce participant.
-                 groupes_par_labo[labo].append(resa)
+                 # Mais les roles existantes attendent une liste de 'Reservation'.
+                 # TASTY TRICK: On ajoute la reservation dans la liste du lab du PARTICIPANT.
+                 # Lors du découpage, 'generer_lignes_facturation' saura filtrer que ce lab ne doit payer QUE pour ce participant.
+                 groups_by_lab[lab].append(resa)
              
-             # Si aucun participant trouvé, fall-back sur l'organisateur (comportement par défaut) ?
+             # Si no participant trouvé, fall-back sur l'organisateur (comportement by default) ?
              if not participants:
-                 labo = resa.user_profile.laboratoire.name if resa.user_profile and resa.user_profile.laboratoire else "Inconnu"
-                 groupes_par_labo[labo].append(resa)
+                 lab = resa.user_profile.laboratory.name if resa.user_profile and resa.user_profile.laboratory else "Unknown"
+                 groups_by_lab[lab].append(resa)
                  
         else:
             # Cas standard : Organisateur
-            labo = resa.user_profile.laboratoire.name if resa.user_profile and resa.user_profile.laboratoire else "Inconnu"
-            groupes_par_labo[labo].append(resa)
+            lab = resa.user_profile.laboratory.name if resa.user_profile and resa.user_profile.laboratory else "Unknown"
+            groups_by_lab[lab].append(resa)
 
-    return groupes_par_labo
+    return groups_by_lab
 
 
 # -------------------------------------------------------------------
@@ -151,7 +151,7 @@ def decouper_reservation(reservation):
         tarif_fixe = get_training_fee(equipment, affiliation)
         return {
             "equipment": equipment,
-            "accounts": user_profile,
+            "user_profile": user_profile,
             "affiliation": affiliation,
             "type": "formation",
             "usage_heures": Decimal("0.0"),
@@ -179,7 +179,7 @@ def decouper_reservation(reservation):
 
     return {
         "equipment": equipment,
-        "accounts": user_profile,
+        "user_profile": user_profile,
         "affiliation": affiliation,
         "type": "reservation",
         "usage_heures": usage_h,
@@ -194,7 +194,7 @@ def decouper_reservation(reservation):
 
 def generer_lignes_facturation(reservation):
     """
-    Nouveau standard : Retourne une LISTE de lignes de facturation.
+    Nouveau standard : Returns une LISTE de lignes de facturation.
     Gère le cas 1 réservation -> N participants (formation).
     """
     lignes = []
@@ -203,13 +203,13 @@ def generer_lignes_facturation(reservation):
         participants = get_usagers_facturables(reservation)
         
         if not participants:
-            # Fallback : Si aucun participant, on ne facture PERSONNE (demande utilisateur).
+            # Fallback : Si no participant, on ne facture PERSONNE (demande utilisateur).
             # On génère quand même une ligne pour la traçabilité (Organizer, 0$), avec une note explicite.
             user_profile = reservation.user_profile
             affiliation = user_profile.affiliation if user_profile else None
             lignes.append({
                 "equipment": reservation.equipment,
-                "accounts": user_profile,
+                "user_profile": user_profile,
                 "affiliation": affiliation,
                 "type": "formation",
                 "usage_heures": Decimal("0.0"),
@@ -219,7 +219,7 @@ def generer_lignes_facturation(reservation):
                 "assistance_taux": Decimal("0.00"),
                 "assistance_cout": Decimal("0.00"),
                 "total": Decimal("0.00"),
-                "note": "Formation sans participants (Non facturée)",
+                "note": "Formation sans participants (No facturée)",
             })
         else:
             for u in participants:
@@ -228,7 +228,7 @@ def generer_lignes_facturation(reservation):
                 
                 lignes.append({
                     "equipment": reservation.equipment,
-                    "accounts": u, # LE PARTICIPANT
+                    "user_profile": u, # LE PARTICIPANT
                     "affiliation": affiliation,
                     "type": "formation",
                     "usage_heures": Decimal("0.0"),
@@ -252,7 +252,7 @@ def generer_lignes_facturation(reservation):
 
 def calculer_cout(reservation):
     """
-    Retourne le coût TOTAL de la réservation (somme de tous les participants).
+    Returns le coût TOTAL de la réservation (somme de tous les participants).
     """
     lignes = generer_lignes_facturation(reservation)
     return float(sum(l["total"] for l in lignes))
@@ -262,14 +262,14 @@ def calculer_cout(reservation):
 #  Exports (CSV / PDF)
 # -------------------------------------------------------------------
 
-def generer_csv_par_laboratoire(groupes_par_labo):
+def generate_csv_by_laboratory(groups_by_lab):
     """
-    Génère un ZIP contenant un CSV par laboratoire.
+    Génère un ZIP contenant un CSV par laboratory.
     """
     zip_buffer = io.BytesIO()
 
     with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zip_file:
-        for labo_nom, reservations in groupes_par_labo.items():
+        for lab_name, reservations in groups_by_lab.items():
             csv_buffer = io.StringIO(newline='')  
             writer = csv.writer(csv_buffer)
             csv_buffer.write('\ufeff')
@@ -282,34 +282,34 @@ def generer_csv_par_laboratoire(groupes_par_labo):
                 "Total ($)",
             ])
             
-            # Pour éviter les doublons si 'reservation' apparait 2 fois dans la liste (ex: 2 participants du même labo)
-            # On doit itérer sur les RÉSERVATIONS, mais générer les LIGNES pertinentes pour CE labo.
+            # Pour éviter les doublons si 'reservation' apparait 2 fois dans la liste (ex: 2 participants du même lab)
+            # On doit itérer sur les RÉSERVATIONS, mais générer les LIGNES pertinentes pour CE lab.
             
             # Problème : 'reservations' contient la réservation brute.
             # generer_lignes_facturation(r) retourne TOUS les participants (Lab A, Lab B...).
-            # On ne veut garder que les lignes qui concernent 'labo_nom'.
+            # On ne veut garder que les lignes qui concernent 'lab_name'.
             
 
             
-            # Set unique de réservations pour ce labo
+            # Set unique de réservations pour ce lab
             unique_resas = set(reservations)
             
             for resa in unique_resas:
                 all_lines = generer_lignes_facturation(resa)
                 for d in all_lines:
                     # Filtre Labo effectif
-                    u_labo = "Inconnu"
-                    if d['accounts'] and d['accounts'].laboratoire:
-                        u_labo = d['accounts'].laboratoire.name
+                    u_labo = "Unknown"
+                    if d['user_profile'] and d['user_profile'].laboratory:
+                        u_labo = d['user_profile'].laboratory.name
                     
-                    if u_labo == labo_nom:
-                         user_profile = d['accounts']
+                    if u_labo == lab_name:
+                         user_profile = d['user_profile']
                          type_lib = "Formation" if d['type'] == 'formation' else "Réservation"
                          
                          writer.writerow([
-                            labo_nom,
-                            f"{user_profile.first_name} {user_profile.name}" if user_profile else "Inconnu",
-                            user_profile.affiliation.name if user_profile and user_profile.affiliation else "Inconnue",
+                            lab_name,
+                            f"{user_profile.first_name} {user_profile.name}" if user_profile else "Unknown",
+                            user_profile.affiliation.name if user_profile and user_profile.affiliation else "Unknowne",
                             d['equipment'].name,
                             type_lib,
                             resa.start_date.strftime("%Y-%m-%d"),
@@ -321,23 +321,23 @@ def generer_csv_par_laboratoire(groupes_par_labo):
                             f"{d['total']:.2f}",
                         ])
             
-            safe_labo = re.sub(r'[^A-Za-z0-9_\-]+', '_', labo_nom)
+            safe_labo = re.sub(r'[^A-Za-z0-9_\-]+', '_', lab_name)
             zip_file.writestr(f"Facture_Laboratory_{safe_labo}.csv", csv_buffer.getvalue())
 
     zip_buffer.seek(0)
     return zip_buffer
 
 
-def generer_pdfs_par_labo(groupes_par_labo, start_date=None, end_date=None):
+def generer_pdfs_par_labo(groups_by_lab, start_date=None, end_date=None):
     """
-    Génère des PDFs (un par laboratoire) récapitulant l'activité et les coûts.
+    Génère des PDFs (un par laboratory) récapitulant l'activité et les coûts.
     """
     pdfs = {}
     if HTML is None:
         raise RuntimeError("WeasyPrint n'est pas installé.")
     from decimal import Decimal
 
-    for labo, reservations in groupes_par_labo.items():
+    for lab, reservations in groups_by_lab.items():
         total_labo = Decimal("0.00")
         usagers_context = []
 
@@ -351,15 +351,15 @@ def generer_pdfs_par_labo(groupes_par_labo, start_date=None, end_date=None):
             all_lines = generer_lignes_facturation(resa)
             
             for d in all_lines:
-                # Filtre : cette ligne appartient-elle à ce labo ?
-                u_labo = "Inconnu"
-                if d['accounts'] and d['accounts'].laboratoire:
-                    u_labo = d['accounts'].laboratoire.name
+                # Filtre : cette ligne appartient-elle à ce lab ?
+                u_labo = "Unknown"
+                if d['user_profile'] and d['user_profile'].laboratory:
+                    u_labo = d['user_profile'].laboratory.name
                 
-                if u_labo != labo:
+                if u_labo != lab:
                     continue
 
-                user_profile = d['accounts']
+                user_profile = d['user_profile']
                 equipement_nom = d['equipment'].name
 
                 if d['type'] == 'formation':
@@ -427,22 +427,22 @@ def generer_pdfs_par_labo(groupes_par_labo, start_date=None, end_date=None):
                 })
 
             usagers_context.append({
-                "accounts": user_profile,
+                "user_profile": user_profile,
                 "equipment": equipements_context,
                 "total_usager": round(total_usager, 2),
             })
 
         # --- Étape 3 : préparer contexte ---
         context = {
-            "laboratoire": {"name": labo},
+            "laboratory": {"name": lab},
             "start_date": start_date,
             "end_date": end_date,
-            "usagers": usagers_context,
+            "user_profiles": usagers_context,
             "total_laboratoire": round(total_labo, 2),
-            "logo_path": f"file://{settings.BASE_DIR}/facturation/static/facturation/images/YourUniversity.png",
+            "logo_path": f"file://{settings.BASE_DIR}/billing/static/billing/images/YourUniversity.png",
         }
 
-        rendered_html = render_to_string("facturation/facture_labo.html", context)
+        rendered_html = render_to_string("billing/facture_labo.html", context)
 
         with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as tmpfile:
             tmpfile_path = tmpfile.name
@@ -454,7 +454,7 @@ def generer_pdfs_par_labo(groupes_par_labo, start_date=None, end_date=None):
 
         os.remove(tmpfile_path)
 
-        nom_fichier = f"Facture_Laboratory_{labo.replace(' ', '_')}.pdf"
+        nom_fichier = f"Facture_Laboratory_{lab.replace(' ', '_')}.pdf"
         pdfs[nom_fichier] = pdf_content
 
     return pdfs
@@ -463,10 +463,10 @@ def generer_pdfs_par_labo(groupes_par_labo, start_date=None, end_date=None):
 
 def get_usagers_facturables(reservation):
     """
-    Retourne les usagers qui doivent être facturés pour une réservation.
+    Returns les user_profiles qui doivent être facturés pour une réservation.
 
     - Cas normal → l’user_profile lié à la réservation.
-    - Cas formation → uniquement les usagers listés dans trained_emails
+    - Cas formation → uniquement les user_profiles listés dans trained_emails
       (s’ils existent dans la base UserProfile).
     """
     # Cas normal (réservation classique)
@@ -474,7 +474,7 @@ def get_usagers_facturables(reservation):
         return [reservation.user_profile]
 
     # Cas formation
-    usagers = []
+    user_profiles = []
     if reservation.is_training and reservation.trained_emails:
         # [MODIF] Parsing robuste (virgule, point-virgule, newline)
         raw = reservation.trained_emails
@@ -482,9 +482,9 @@ def get_usagers_facturables(reservation):
         
         for email in emails:
             u = UserProfile.objects.filter(email__iexact=email).first()
-            if u and u not in usagers:
-                usagers.append(u)
-        logger.info(f"[FACTURATION] Formation {reservation.id} – {len(usagers)} usagers facturables trouvés")
+            if u and u not in user_profiles:
+                user_profiles.append(u)
+        logger.info(f"[FACTURATION] Formation {reservation.id} – {len(user_profiles)} user_profiles facturables trouvés")
 
-    return usagers
+    return user_profiles
 

@@ -1,13 +1,13 @@
 # Copyright (c) 2025 Author Author
-# Licensed under the Creative Commons Attribution-NonCommercial 4.0 International License (CC BY-NC 4.0)
+# Licensed under the Creative Commons Attribution-NoCommercial 4.0 International License (CC BY-NC 4.0)
 # See the LICENSE file or https://creativecommons.org/licenses/by-nc/4.0/legalcode for details.
 
 """
-Module : reserv.models
+Module: reserv.models
 ----------------------
 Modèles liés aux réservations d'équipements.
 
-Contenu :
+Content:
 - Reservation : représente une réservation d'un équipement par un user_profile,
   avec informations de période, assistance, formation, status, etc.
 
@@ -64,7 +64,7 @@ class Reservation(models.Model):
 
     is_teaching = models.BooleanField(
         default=False,
-        help_text="Réservation pour enseignement (cours de labo)"
+        help_text="Réservation pour enseignement (cours de lab)"
     )
 
     # --- Statut ---
@@ -140,7 +140,7 @@ class Reservation(models.Model):
 
         if not skip_invitations and self.is_training and self.status != "cancelled":
             try:
-                # Empêcher l'envoi d'invitations pour des formations passées (archivage)
+                # Preventsr l'envoi d'invitations pour des formations passées (archivage)
                 # Si la formation se termine avant aujourd'hui, on ne fait rien.
                 now_local = timezone.localtime(timezone.now())
                 dt_fin = timezone.make_aware(datetime.combine(self.end_date, self.end_time), now_local.tzinfo)

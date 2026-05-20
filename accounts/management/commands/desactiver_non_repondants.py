@@ -1,12 +1,12 @@
 # Copyright (c) 2025 Author Author
-# Licensed under the Creative Commons Attribution-NonCommercial 4.0 International License (CC BY-NC 4.0)
+# Licensed under the Creative Commons Attribution-NoCommercial 4.0 International License (CC BY-NC 4.0)
 # See the LICENSE file or https://creativecommons.org/licenses/by-nc/4.0/legalcode for details.
 
 """
 Commande : desactiver_non_repondants
 
 Objectif :
-    Desactiver les usagers qui n'ont pas confirme leur activite dans les 30 jours
+    Desactiver les user_profiles qui n'ont pas confirme leur activite dans les 30 jours
     suivant l'envoi du email de re-verification (usagers_a_revalider).
 
     Logique : un user_profile est concerne si :
@@ -32,7 +32,7 @@ from accounts.models import UserProfile
 
 
 class Command(BaseCommand):
-    help = "Desactive les usagers qui n'ont pas repondu au email de re-verification (>= 30j)."
+    help = "Desactive les user_profiles qui n'ont pas repondu au email de re-verification (>= 30j)."
 
     def handle(self, *args, **options):
         # Seuil : 5 ans + 30 jours (le email a ete envoye il y a 30j min)
@@ -43,20 +43,20 @@ class Command(BaseCommand):
             | Q(last_reverification_date__lte=seuil)
         )
 
-        usagers = (
+        user_profiles = (
             UserProfile.objects
-            .select_related("laboratoire", "affiliation", "user")
+            .select_related("laboratory", "affiliation", "user")
             .filter(q_due)
             .order_by("name", "first_name")
         )
 
-        nb = usagers.count()
+        nb = user_profiles.count()
         if nb == 0:
-            self.stdout.write(self.style.SUCCESS("Aucun user_profile a desactiver."))
+            self.stdout.write(self.style.SUCCESS("No user_profile a desactiver."))
             return
 
         desactives = []
-        for u in usagers:
+        for u in user_profiles:
             u.is_active = False
             u.save(update_fields=["is_active"])
             # Desactiver aussi le User Django pour bloquer la connexion
@@ -71,12 +71,12 @@ class Command(BaseCommand):
         if dests_admin:
             lignes = []
             for u in desactives:
-                labo = getattr(u.laboratoire, "name", "—")
+                lab = getattr(u.laboratory, "name", "—")
                 aff  = getattr(u.affiliation, "name", "—")
                 date_act = u.activation_date.astimezone(timezone.get_current_timezone()).strftime("%Y-%m-%d")
                 lignes.append(
                     f"- {u.name} {u.first_name} <{u.email}> | "
-                    f"Affiliation: {aff} | Labo: {labo} | Activation: {date_act}"
+                    f"Affiliation: {aff} | Labo: {lab} | Activation: {date_act}"
                 )
 
             corps_admin = (
@@ -84,7 +84,7 @@ class Command(BaseCommand):
                 + "\n".join(lignes)
                 + "\n\n"
                 "Ces comptes peuvent etre reactives manuellement dans l'admin si necessaire.\n"
-                "Les usagers concernes ont ete prevus de contacter l'administrateur s'ils "
+                "Les user_profiles concernes ont ete prevus de contacter l'administrateur s'ils "
                 "souhaitent reactiver leur compte."
             )
             send_mail(

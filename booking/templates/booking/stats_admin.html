@@ -2,7 +2,7 @@
 {% load static %}
 
 {% block content %}
-<h1>Statistiques</h1>
+<h1>Statistics</h1>
 <style>
 /* Filtres */
 .filtre-header .meta{ margin-left:6px; color:#6b7280; font-weight:400; font-size:.9em; }
@@ -59,7 +59,7 @@
   <div class="zone-title">Core Facility — Overview</div>
   <div style="display:flex; gap:12px; align-items:flex-end; flex-wrap:wrap; margin-bottom:12px;">
     <div class="filtre">
-      <label style="font-size:.9em; color:#374151;">Période (inscrits)</label><br>
+      <label style="font-size:.9em; color:#374151;">Period (inscrits)</label><br>
       <input type="date" id="z1-debut" style="padding:4px 8px; border:1px solid #d1d5db; border-radius:6px;">
       <span style="margin:0 4px; color:#9ca3af;">→</span>
       <input type="date" id="z1-fin" style="padding:4px 8px; border:1px solid #d1d5db; border-radius:6px;">
@@ -67,7 +67,7 @@
     <button type="button" id="btn-z1" class="btn primary">Actualiser</button>
   </div>
   <div class="kpis">
-    <div class="kpi"><span class="kpi-val" id="z1-usagers-actifs">—</span><span class="kpi-lbl">UserProfiles actifs</span></div>
+    <div class="kpi"><span class="kpi-val" id="z1-user_profiles-actifs">—</span><span class="kpi-lbl">UserProfilees actifs</span></div>
     <div class="kpi"><span class="kpi-val" id="z1-labos">—</span><span class="kpi-lbl">Labos représentés</span></div>
     <div class="kpi"><span class="kpi-val" id="z1-inscrits">—</span><span class="kpi-lbl">Nouveaux inscrits<br><small id="z1-inscrits-periode" style="color:#9ca3af;"></small></span></div>
   </div>
@@ -79,7 +79,7 @@
 <form id="stats-form" class="stats-filtres">
   <div style="display:flex; gap:12px; align-items:flex-end; flex-wrap:wrap; margin-bottom:12px;">
     <div class="filtre">
-      <label style="font-size:.9em; color:#374151;">Période</label><br>
+      <label style="font-size:.9em; color:#374151;">Period</label><br>
       <input type="date" name="start_date" id="start_date" style="padding:4px 8px; border:1px solid #d1d5db; border-radius:6px;">
       <span style="margin:0 4px; color:#9ca3af;">→</span>
       <input type="date" name="end_date" id="end_date" style="padding:4px 8px; border:1px solid #d1d5db; border-radius:6px;">
@@ -105,21 +105,21 @@
 <div id="zone2-loader"><span class="spinner"></span>Chargement…</div>
 
 <div class="zone" id="zone2" style="display:none;">
-  <div class="zone-title">Statistiques équipements</div>
+  <div class="zone-title">Statistics équipements</div>
   <div class="kpis">
-    <div class="kpi"><span class="kpi-val" id="z2-reservations">—</span><span class="kpi-lbl">Réservations</span></div>
+    <div class="kpi"><span class="kpi-val" id="z2-reservations">—</span><span class="kpi-lbl">Bookings</span></div>
     <div class="kpi"><span class="kpi-val" id="z2-heures">—</span><span class="kpi-lbl">Heures d'usage</span></div>
-    <div class="kpi"><span class="kpi-val" id="z2-usagers">—</span><span class="kpi-lbl">UserProfiles distincts</span></div>
+    <div class="kpi"><span class="kpi-val" id="z2-user_profiles">—</span><span class="kpi-lbl">UserProfilees distincts</span></div>
     <div class="kpi"><span class="kpi-val" id="z2-formations">—</span><span class="kpi-lbl">Formations données</span></div>
   </div>
 
   <div class="charts-row">
     <div class="chart-box">
-      <h4>Top 5 usagers — temps d'usage</h4>
-      <canvas id="chart-usagers" height="220"></canvas>
+      <h4>Top 5 user_profiles — temps d'usage</h4>
+      <canvas id="chart-user_profiles" height="220"></canvas>
     </div>
     <div class="chart-box">
-      <h4>Top 5 laboratoires — temps d'usage</h4>
+      <h4>Top 5 laboratories — temps d'usage</h4>
       <canvas id="chart-labos" height="220"></canvas>
     </div>
   </div>
@@ -131,11 +131,11 @@
         <thead>
           <tr>
             <th>Équipement</th>
-            <th>Réservations</th>
+            <th>Bookings</th>
             <th>H usage</th>
             <th>H assistance</th>
             <th>H totales</th>
-            <th>Durée moy.</th>
+            <th>Fromrée moy.</th>
           </tr>
         </thead>
         <tbody id="tbody-equipment_set"></tbody>
@@ -153,7 +153,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const URL_XLSX    = "{% url 'booking:stats_export_unified_xlsx' %}";
   const URL_Z1      = "{% url 'booking:stats_zone1' %}";
 
-  let chartUserProfiles = null;
+  let chartUserProfilees = null;
   let chartLabos   = null;
 
   const COLORS = [
@@ -221,7 +221,7 @@ document.addEventListener('DOMContentLoaded', () => {
     fetch(`${URL_Z1}?${params.toString()}`)
       .then(r => r.json())
       .then(data => {
-        document.getElementById('z1-usagers-actifs').textContent = data.usagers_actifs ?? '—';
+        document.getElementById('z1-user_profiles-actifs').textContent = data.usagers_actifs ?? '—';
         document.getElementById('z1-labos').textContent          = data.labos_representes ?? '—';
         document.getElementById('z1-inscrits').textContent       = data.nouveaux_inscrits ?? '—';
         const lbl = (d1 || d2) ? `${d1 || '…'} → ${d2 || '…'}` : 'toutes périodes';
@@ -248,21 +248,21 @@ document.addEventListener('DOMContentLoaded', () => {
         const k = data.kpis;
         document.getElementById('z2-reservations').textContent = k.reservations;
         document.getElementById('z2-heures').textContent       = k.heures_usage + ' h';
-        document.getElementById('z2-usagers').textContent      = k.usagers_distincts;
+        document.getElementById('z2-user_profiles').textContent      = k.usagers_distincts;
         document.getElementById('z2-formations').textContent   = k.nb_formations;
 
-        // Camembert usagers
-        const top5u = (data.tables.usagers || []).slice(0, 5);
+        // Camembert user_profiles
+        const top5u = (data.tables.user_profiles || []).slice(0, 5);
         if (top5u.length) {
-          chartUserProfiles = renderPie(
-            'chart-usagers', chartUserProfiles,
+          chartUserProfilees = renderPie(
+            'chart-user_profiles', chartUserProfilees,
             top5u.map(u => u.name),
             top5u.map(u => u.heures_usage)
           );
         }
 
         // Camembert labos
-        const top5l = (data.tables.laboratoires || []).slice(0, 5);
+        const top5l = (data.tables.laboratories || []).slice(0, 5);
         if (top5l.length) {
           chartLabos = renderPie(
             'chart-labos', chartLabos,

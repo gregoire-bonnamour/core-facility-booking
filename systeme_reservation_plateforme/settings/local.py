@@ -4,7 +4,7 @@ from pathlib import Path
 
 try:
     from dotenv import load_dotenv
-    load_dotenv(BASE_DIR / ".env.local")   # optionnel pour ton confort
+    load_dotenv(BASE_DIR / ".env.local")   # optional pour ton confort
 except Exception:
     pass
 

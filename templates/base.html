@@ -82,7 +82,7 @@
   .messages .msg{padding:10px 12px;border-radius:10px;margin-bottom:8px}
   .msg.info{background:var(--brand-weak)}
   .msg.err{background:#fee2e2;color:#991b1b}
-  /* Calendrier (simplifié) */
+  /* Calendar (simplifié) */
   .legend{display:flex;gap:8px;align-items:center;margin:8px 0 16px}
   .legend .swatch{width:12px;height:12px;border-radius:3px;border:1px solid var(--bd)}
   .slot{border:1px dashed #e2e8f0;border-radius:8px;padding:8px;background:#fff}
@@ -93,15 +93,15 @@
     table{font-size:14px}
   }
 
-  /* ── Layout accueil 2 colonnes ── */
-  .accueil-layout{display:grid;grid-template-columns:1fr 468px;gap:32px;align-items:start}
+  /* ── Layout home 2 colonnes ── */
+  .home-layout{display:grid;grid-template-columns:1fr 468px;gap:32px;align-items:start}
   @media (max-width:720px){
-    .accueil-layout{grid-template-columns:1fr}
-    .accueil-news{overflow-y:visible !important;max-height:none !important}
+    .home-layout{grid-template-columns:1fr}
+    .home-news{overflow-y:visible !important;max-height:none !important}
   }
 
   /* ── Fil d'actualités ── */
-  .accueil-news{overflow-y:auto}
+  .home-news{overflow-y:auto}
   .news-title{margin:0 0 12px;font-size:15px;font-weight:700;color:var(--ink)}
   .news-feed{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:12px}
   .news-item{padding:12px 14px;border-radius:12px;border-left:4px solid var(--bd);background:var(--card);box-shadow:0 1px 2px rgba(20,30,50,.04)}
@@ -125,14 +125,14 @@
     <header class="site">
       <h1>{% block page_title %}Core Facility Booking System{% endblock %}</h1>
       <nav class="row">
-        <a class="btn" href="{% url 'accueil' %}">Accueil</a>
+        <a class="btn" href="{% url 'home' %}">Home</a>
         {% if user.is_staff %}
           <a class="btn" href="{% url 'admin:index' %}">Admin</a>
         {% endif %}
         {% if user.is_authenticated %}
-          <a class="btn" href="{% url 'logout' %}">Se déconnecter</a>
+          <a class="btn" href="{% url 'logout' %}">Log out</a>
         {% else %}
-          <a class="btn primary" href="{% url 'login' %}">Se connecter</a>
+          <a class="btn primary" href="{% url 'login' %}">Log in</a>
         {% endif %}
       </nav>
     </header>
@@ -189,7 +189,7 @@ async function postJSON(url, data) {
   return res.json();
 }
 
-/* Optionnel : GET JSON cohérent (mêmes erreurs) */
+/* Optional : GET JSON cohérent (mêmes erreurs) */
 async function getJSON(url) {
   const res = await fetch(url, { credentials: 'same-origin' });
   if (!res.ok) {
