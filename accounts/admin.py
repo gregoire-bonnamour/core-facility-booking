@@ -3,20 +3,20 @@
 # See the LICENSE file or https://creativecommons.org/licenses/by-nc/4.0/legalcode for details.
 
 """
-Module : usager.admin
+Module : user_profile.admin
 ---------------------
-Configuration de l’interface d’administration Django pour l’application `usager`.
+Configuration de l’interface d’administration Django pour l’application `user_profile`.
 
 Permet :
-- la gestion des tables de référence (Fonction, Affiliation, Laboratoire),
-- la gestion complète des usagers (modèle Usager),
-- l’utilisation d’un formulaire personnalisé (UsagerAdminForm) pour
+- la gestion des tables de référence (Role, Affiliation, Laboratory),
+- la gestion complète des usagers (modèle UserProfile),
+- l’utilisation d’un formulaire personnalisé (UserProfileAdminForm) pour
   améliorer la saisie des usagers dans l’admin.
 """
 
 from django.contrib import admin
-from .models import Fonction, Affiliation, Laboratoire, Usager,  News, InvitationFormation
-from .forms import UsagerAdminForm
+from .models import Role, Affiliation, Laboratory, UserProfile,  News, TrainingInvitation
+from .forms import UserProfileAdminForm
 from django.utils import timezone
 from django.db.models import Q
 from dateutil.relativedelta import relativedelta
@@ -24,20 +24,20 @@ from django.urls import reverse
 from django.http import HttpResponseRedirect
 
 # === Enregistrements simples ===
-# On peut utiliser admin.site.register(Fonction) directement
-admin.site.register(Fonction)
+# On peut utiliser admin.site.register(Role) directement
+admin.site.register(Role)
 
 
-# === Laboratoire ===
-@admin.register(Laboratoire)
-class LaboratoireAdmin(admin.ModelAdmin):
+# === Laboratory ===
+@admin.register(Laboratory)
+class LaboratoryAdmin(admin.ModelAdmin):
     """
     Interface d’administration pour les laboratoires.
     Affiche et filtre par affiliation.
     """
-    list_display = ('nom', 'affiliation')
+    list_display = ('name', 'affiliation')
     list_filter = ('affiliation',)
-    search_fields = ('nom',)
+    search_fields = ('name',)
 
 
 # === Affiliation ===
@@ -46,8 +46,8 @@ class AffiliationAdmin(admin.ModelAdmin):
     """
     Interface d’administration pour les affiliations (universités, compagnies, etc.).
     """
-    list_display = ('nom', 'tarif_assistance')
-    search_fields = ('nom',)
+    list_display = ('name', 'assistance_rate')
+    search_fields = ('name',)
 
     # + Filtre latéral : À revalider (≥5 ans)
 class ARevaliderFilter(admin.SimpleListFilter):
@@ -59,9 +59,9 @@ class ARevaliderFilter(admin.SimpleListFilter):
 
     def queryset(self, request, qs):
         seuil = timezone.now() - relativedelta(years=5)
-        q_due = Q(est_actif=True) & (
-            Q(date_derniere_reverification__isnull=True, date_activation__lte=seuil)
-            | Q(date_derniere_reverification__lte=seuil)
+        q_due = Q(is_active=True) & (
+            Q(last_reverification_date__isnull=True, activation_date__lte=seuil)
+            | Q(last_reverification_date__lte=seuil)
         )
         if self.value() == "oui":
             return qs.filter(q_due)
@@ -72,40 +72,40 @@ class ARevaliderFilter(admin.SimpleListFilter):
 # + Action : marquer revalidé aujourd'hui
 @admin.action(description="Marquer revalidé aujourd'hui")
 def marquer_revalide(modeladmin, request, queryset):
-    queryset.update(date_derniere_reverification=timezone.now())
+    queryset.update(last_reverification_date=timezone.now())
     
 
 
-# === Usager ===
-@admin.register(Usager)
-class UsagerAdmin(admin.ModelAdmin):
-    form = UsagerAdminForm
+# === UserProfile ===
+@admin.register(UserProfile)
+class UserProfileAdmin(admin.ModelAdmin):
+    form = UserProfileAdminForm
 
     # Colonnes affichées
     list_display = (
-        'prenom', 'nom', 'courriel',
+        'first_name', 'name', 'email',
         'fonction', 'affiliation', 'laboratoire',
-        'est_actif', 'est_admin',
-        'date_activation', 
+        'is_active', 'is_platform_admin',
+        'activation_date', 
     )
 
     # Recherche
-    search_fields = ('prenom', 'nom', 'courriel', 'affiliation__nom', 'laboratoire__nom')
+    search_fields = ('first_name', 'name', 'email', 'affiliation__nom', 'laboratoire__nom')
 
     # Filtres latéraux
-    list_filter = ('affiliation', 'laboratoire', 'fonction', 'est_actif', 'est_admin', ARevaliderFilter)
+    list_filter = ('affiliation', 'laboratoire', 'fonction', 'is_active', 'is_platform_admin', ARevaliderFilter)
 
     # Sélection multiple M2M
-    filter_horizontal = ['equipements_autorises']
+    filter_horizontal = ['authorized_equipment']
 
     # Champs dans le formulaire
     fields = [
-        'compte_utilisateur',
-        'prenom', 'nom', 'courriel',
+        'user',
+        'first_name', 'name', 'email',
         'fonction', 'affiliation', 'laboratoire',
-        'equipements_autorises',
-        'est_actif', 'est_admin',
-        'date_activation', 'date_derniere_reverification',  # ✅ visibles/éditables
+        'authorized_equipment',
+        'is_active', 'is_platform_admin',
+        'activation_date', 'last_reverification_date',  # ✅ visibles/éditables
     ]
 
     # Actions en masse
@@ -128,18 +128,18 @@ class ProfilCompletFilter(admin.SimpleListFilter):
 
     def queryset(self, request, queryset):
         if self.value() == "oui":
-            return queryset.exclude(prenom="").exclude(nom="")
+            return queryset.exclude(first_name="").exclude(name="")
         if self.value() == "non":
-            return queryset.filter(prenom="").filter(nom="")
+            return queryset.filter(first_name="").filter(name="")
         return queryset
         
 @admin.register(News)
 class NewsAdmin(admin.ModelAdmin):
-    list_display = ('titre', 'date_publication', 'actif')
-    list_filter = ('actif',)
-    search_fields = ('titre', 'contenu')
+    list_display = ('title', 'published_at', 'is_active')
+    list_filter = ('is_active',)
+    search_fields = ('title', 'content')
     
-class InvitationFormationAdmin(admin.ModelAdmin):
+class TrainingInvitationAdmin(admin.ModelAdmin):
     """
     Proxy utilisé uniquement pour afficher une entrée
     'Validation des formations' dans le menu admin.
@@ -159,8 +159,8 @@ class InvitationFormationAdmin(admin.ModelAdmin):
 
     # Au clic sur le lien dans le menu, on redirige vers la vue custom
     def changelist_view(self, request, extra_context=None):
-        url = reverse("admin_valider_formation")  # nom défini dans urls.py
+        url = reverse("admin_valider_formation")  # name défini dans urls.py
         return HttpResponseRedirect(url)
 
 
-admin.site.register(InvitationFormation, InvitationFormationAdmin)
+admin.site.register(TrainingInvitation, TrainingInvitationAdmin)

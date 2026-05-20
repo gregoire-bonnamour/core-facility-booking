@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 
 {% block content %}
-<h2>Inviter un usager</h2>
+<h2>Inviter un user_profile</h2>
 
 {# ✅ Affichage des messages de succès ou d’erreur #}
 {% if messages %}
@@ -17,11 +17,11 @@
   {% csrf_token %}
 
   <div>
-    {{ form.courriel.label_tag }}
-    {{ form.courriel }}
-    {% if form.courriel.errors %}
+    {{ form.email.label_tag }}
+    {{ form.email }}
+    {% if form.email.errors %}
     <div class="error">
-      {% for error in form.courriel.errors %}
+      {% for error in form.email.errors %}
       <p>{{ error }}</p>
       {% endfor %}
     </div>
@@ -30,8 +30,8 @@
 
   <div>
     <p>Équipements accessibles :</p>
-    {{ form.equipements }}
-    {{ form.equipements.errors }}
+    {{ form.equipment_set }}
+    {{ form.equipment_set.errors }}
   </div>
 
   <button type="submit">Envoyer l'invitation</button>
@@ -63,13 +63,13 @@
           <td style="padding: 10px; text-align: center;">
             <input type="checkbox" name="invitation_ids" value="{{ inv.id }}">
           </td>
-          <td style="padding: 10px;">{{ inv.courriel }}</td>
-          <td style="padding: 10px; white-space: nowrap;">{{ inv.date_envoi|date:"Y-m-d H:i" }}</td>
+          <td style="padding: 10px;">{{ inv.email }}</td>
+          <td style="padding: 10px; white-space: nowrap;">{{ inv.sent_at|date:"Y-m-d H:i" }}</td>
           <td style="padding: 10px;">
             <div style="max-height: 100px; overflow-y: auto; display: flex; flex-wrap: wrap; gap: 4px;">
-              {% for eq in inv.equipements.all %}
+              {% for eq in inv.equipment_set.all %}
               <span style="background-color: #e0e0e0; padding: 2px 5px; border-radius: 3px; font-size: 0.9em;">
-                {{ eq.nom }}
+                {{ eq.name }}
               </span>
               {% endfor %}
             </div>

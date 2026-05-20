@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <title>Facture — {{ laboratoire.nom }}</title>
+    <title>Facture — {{ laboratoire.name }}</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -14,7 +14,7 @@
             text-align: center;
             margin: 4px 0;
         }
-        .usager-section {
+        .user_profile-section {
             margin-bottom: 25px;
         }
         table {
@@ -53,22 +53,22 @@
     <div style="text-align: center; margin-bottom: 20px;">
         <h2>Université du Québec à Montréal</h2>
         <h3>Core Facility Booking System</h3>
-        <h4>Facture — Laboratoire : {{ laboratoire.nom }}</h4>
-        <p>Période : {{ date_debut|date:"j F Y" }} au {{ date_fin|date:"j F Y" }}</p>
+        <h4>Facture — Laboratory : {{ laboratoire.name }}</h4>
+        <p>Période : {{ start_date|date:"j F Y" }} au {{ end_date|date:"j F Y" }}</p>
     </div>
 
-    {% for usager in usagers %}
-        <div class="usager-section">
-            <h3>{{ usager.usager.prenom }} {{ usager.usager.nom }}</h3>
+    {% for user_profile in usagers %}
+        <div class="user_profile-section">
+            <h3>{{ user_profile.user_profile.first_name }} {{ user_profile.user_profile.name }}</h3>
 
-            {% for eq in usager.equipements %}
-                <h4>{{ eq.nom }}</h4>
+            {% for eq in user_profile.equipment_set %}
+                <h4>{{ eq.name }}</h4>
                 <table>
                     <thead>
                         <tr>
                             <th>Type</th>
                             <th>Durée (h)</th>
-                            <th>Tarif ($)</th>
+                            <th>Rate ($)</th>
                             <th>Coût ($)</th>
                         </tr>
                     </thead>
@@ -84,14 +84,14 @@
                             </tr>
                         {% endfor %}
                         <tr>
-                            <td colspan="3" class="total-eq">Total {{ eq.nom }}</td>
+                            <td colspan="3" class="total-eq">Total {{ eq.name }}</td>
                             <td><strong>{{ eq.total_equipement|floatformat:2 }}</strong></td>
                         </tr>
                     </tbody>
                 </table>
             {% endfor %}
 
-            <p class="sous-total">Sous-total usager : {{ usager.total_usager|floatformat:2 }} $</p>
+            <p class="sous-total">Sous-total user_profile : {{ user_profile.total_usager|floatformat:2 }} $</p>
         </div>
     {% endfor %}
 

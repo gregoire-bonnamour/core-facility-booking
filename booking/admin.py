@@ -7,11 +7,11 @@ Module : reserv.admin
 ---------------------
 Configuration de l’interface d’administration pour les réservations.
 
-Fonctionnalités :
+Rolenalités :
 - Affichage et filtrage des réservations dans l’admin.
 - Actions personnalisées pour accepter ou refuser les demandes
   de réservations exceptionnelles.
-- Envoi automatique d’un courriel à l’usager lors de l’acceptation/refus.
+- Envoi automatique d’un email à l’user_profile lors de l’acceptation/refus.
 """
 
 from django.contrib import admin
@@ -35,13 +35,13 @@ class AssistanceFilter(admin.SimpleListFilter):
     def queryset(self, request, queryset):
         from django.db.models import Q
         if self.value() == 'oui':
-            return queryset.filter(assistance=True, duree_assistance_minutes__gt=0)
+            return queryset.filter(assistance=True, assistance_duration_minutes__gt=0)
         
         if self.value() == 'non':
             return queryset.filter(assistance=False)
             
         if self.value() == 'erreur':
-            return queryset.filter(assistance=True).filter(Q(duree_assistance_minutes__isnull=True) | Q(duree_assistance_minutes=0))
+            return queryset.filter(assistance=True).filter(Q(assistance_duration_minutes__isnull=True) | Q(assistance_duration_minutes=0))
             
         return queryset
 
@@ -55,69 +55,69 @@ class ReservationAdmin(admin.ModelAdmin):
         - list_filter  : filtres disponibles sur le côté
         - actions      : actions groupées (accepter/refuser)
     """
-    list_display = ('usager', 'equipement', 'date_debut', 'date_fin', 'affichage_statut')
-    list_filter = ('statut', 'usager', 'equipement', 'usager__affiliation', AssistanceFilter)
-    search_fields = ("usager__prenom", "usager__nom", "usager__courriel")  # barre de recherche
+    list_display = ('user_profile', 'equipment', 'start_date', 'end_date', 'affichage_statut')
+    list_filter = ('status', 'user_profile', 'equipment', 'user_profile__affiliation', AssistanceFilter)
+    search_fields = ("user_profile__first_name", "user_profile__name", "user_profile__email")  # barre de recherche
     actions = ['accepter_reservations', 'refuser_reservations']
-    #autocomplete_fields = ["accounts", "equipement"]
+    #autocomplete_fields = ["accounts", "equipment"]
     
     # 👇 Force the logical order in the edit/view form
     fieldsets = (
         ("Infos", {
-            "fields": (('equipement', 'usager'),)
+            "fields": (('equipment', 'user_profile'),)
         }),
         ("Période", {
-            "fields": (("date_debut", "heure_debut"),
-                       ("date_fin", "heure_fin")),
+            "fields": (("start_date", "start_time"),
+                       ("end_date", "end_time")),
         }),
         ("Options", {
-            "fields": ("demande_exception", "justification",
-                       "est_formation", "courriels_formes",
-                       "assistance", "duree_assistance_minutes",
-                       "statut"),
+            "fields": ("exception_request", "justification",
+                       "is_training", "trained_emails",
+                       "assistance", "assistance_duration_minutes",
+                       "status"),
         }),
     )
     
     def affichage_statut(self, obj):
         """
-        Retourne le libellé lisible du statut (via get_statut_display()).
+        Retourne le libellé lisible du status (via get_status_display()).
         """
-        return obj.get_statut_display()
+        return obj.get_status_display()
     affichage_statut.short_description = 'Statut'
 
-    # ⬇️ Respecter la valeur choisie en admin, sans renvoyer les courriels de formation
+    # ⬇️ Respecter la valeur choisie en admin, sans renvoyer les emails de formation
     def save_model(self, request, obj, form, change):
-        obj.save(force_statut=True, skip_invitations=True)
+        obj.save(force_status=True, skip_invitations=True)
 
     @admin.action(description="🚫 Marquer 'annulée' (sans recalcul)")
     def annuler_reservations(self, request, queryset):
         ids = list(queryset.values_list('pk', flat=True))
-        updated = Reservation.objects.filter(pk__in=ids).exclude(statut='annulee').update(statut='annulee')
+        updated = Reservation.objects.filter(pk__in=ids).exclude(status='cancelled').update(status='cancelled')
         self.message_user(request, f"{updated} réservation(s) marquée(s) comme annulée(s).")
 
     @admin.action(description="✅ Accepter les demandes d'exception sélectionnées")
     def accepter_reservations(self, request, queryset):
         """
         Action admin pour accepter des réservations en attente :
-        - Met à jour le statut → 'a_venir'
+        - Met à day_of_week le status → 'upcoming'
         - Sauvegarde la réservation
-        - Envoie un courriel à l’usager pour confirmation
+        - Envoie un email à l’user_profile pour confirmation
         """
 
        	accepted = 0
 
-        for reservation in queryset.filter(statut='en_attente'):
-            reservation.demande_exception = False
+        for reservation in queryset.filter(status='pending'):
+            reservation.exception_request = False
             reservation.save()
 
             # Notification par email
-            email = reservation.usager.compte_utilisateur.email
+            email = reservation.user_profile.user.email
             send_mail(
                 subject="Votre réservation a été acceptée",
                 message=(
                     f"Bonjour,\n\nVotre demande de réservation exceptionnelle pour "
-                    f"{reservation.equipement.nom} le {reservation.date_debut} "
-                    f"de {reservation.heure_debut} à {reservation.heure_fin} a été acceptée.\n\n"
+                    f"{reservation.equipment.name} le {reservation.start_date} "
+                    f"de {reservation.start_time} à {reservation.end_time} a été acceptée.\n\n"
                     f"Cordialement,\nL’équipe de la plateforme"
                 ),
                 from_email=settings.DEFAULT_FROM_EMAIL,
@@ -131,21 +131,21 @@ class ReservationAdmin(admin.ModelAdmin):
     def refuser_reservations(self, request, queryset):
         """
         Action admin pour refuser et supprimer des réservations en attente :
-        - Envoie un courriel de refus à l’usager
+        - Envoie un email de refus à l’user_profile
         - Supprime la réservation de la base
         """
-        refus = queryset.filter(statut='en_attente')
+        refus = queryset.filter(status='pending')
         count = refus.count()
 
         for reservation in refus:
             # Notification par email (avant suppression)
-            email = reservation.usager.compte_utilisateur.email
+            email = reservation.user_profile.user.email
             send_mail(
                 subject="Votre réservation a été refusée",
                 message=(
                     f"Bonjour,\n\nVotre demande de réservation exceptionnelle pour "
-                    f"{reservation.equipement.nom} le {reservation.date_debut} "
-                    f"de {reservation.heure_debut} à {reservation.heure_fin} a été refusée.\n\n"
+                    f"{reservation.equipment.name} le {reservation.start_date} "
+                    f"de {reservation.start_time} à {reservation.end_time} a été refusée.\n\n"
                     f"Cordialement,\nL’équipe de la plateforme"
                 ),
                 from_email=settings.DEFAULT_FROM_EMAIL,

@@ -3,12 +3,12 @@ from django.utils import timezone
 from booking.models import Reservation
 
 class Command(BaseCommand):
-    help = "Met à jour le statut des réservations expirées -> 'passee'"
+    help = "Met à day_of_week le status des réservations expirées -> 'past'"
 
     def handle(self, *args, **options):
         today = timezone.localdate()
         n = (Reservation.objects
-             .filter(date_fin__lt=today)
-             .exclude(statut__in=['passee','annulee'])
-             .update(statut='passee'))
-        self.stdout.write(self.style.SUCCESS(f"{n} réservation(s) mises à jour"))
+             .filter(end_date__lt=today)
+             .exclude(statut__in=['past','cancelled'])
+             .update(status='past'))
+        self.stdout.write(self.style.SUCCESS(f"{n} réservation(s) mises à day_of_week"))

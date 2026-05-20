@@ -8,7 +8,7 @@ Module : accounts.backends
 Backend d'authentification personnalise pour Django.
 
 Objectif :
-    Permettre l'authentification via l'adresse courriel
+    Permettre l'authentification via l'adresse email
     plutot que par le `username` par defaut de Django.
 
 A activer dans `settings.py` :
@@ -29,7 +29,7 @@ RATE_LIMIT_LOCKOUT  = 300  # secondes de blocage (5 minutes)
 
 class EmailAuthBackend(ModelBackend):
     """
-    Authentification par adresse courriel.
+    Authentification par adresse email.
     N'autorise PAS les utilisateurs inactifs (is_active=False).
     Bloque une IP apres 5 tentatives echouees pendant 5 minutes.
     """

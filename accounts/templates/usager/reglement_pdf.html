@@ -81,7 +81,7 @@
 <body>
   <h1>Règlement de la plateforme</h1>
   <p class="meta">
-    Usager : {{ user.get_full_name|default:user.username }}<br>
+    UserProfile : {{ user.get_full_name|default:user.username }}<br>
     Date d’acceptation : {{ date|date:"Y-m-d H:i" }}<br>
     Site : {{ site_url }}
   </p>
@@ -181,7 +181,7 @@
   </div>
 
   <p class="footer">
-    En acceptant le règlement sur la plateforme, l’usager atteste avoir pris connaissance de
+    En acceptant le règlement sur la plateforme, l’user_profile atteste avoir pris connaissance de
     l’ensemble des conditions et s’engage à les respecter.
   </p>
 

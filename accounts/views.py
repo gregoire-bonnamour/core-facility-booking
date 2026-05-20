@@ -3,18 +3,18 @@
 # See the LICENSE file or https://creativecommons.org/licenses/by-nc/4.0/legalcode for details.
 
 """
-Module : usager.views
+Module : user_profile.views
 ---------------------
-Vues de l’application `usager` :
-- inscription d’un nouvel utilisateur (User + Usager) et confirmation par email,
+Vues de l’application `user_profile` :
+- inscription d’un nouvel utilisateur (User + UserProfile) et confirmation par email,
 - invitation d’usagers (admin),
-- profil de l’usager connecté,
+- profil de l’user_profile connecté,
 - endpoint AJAX pour récupérer les laboratoires d’une affiliation.
 
 Notes :
 - L’authentification se fait par email (voir accounts.backends.EmailAuthBackend).
 - L’inscription crée un User inactif puis envoie un lien de confirmation.
-- La confirmation active le User + l’Usager.
+- La confirmation active le User + l’UserProfile.
 """
 
 
@@ -35,8 +35,8 @@ from django.views.decorators.http import require_GET
 from django.http import JsonResponse
 from urllib.parse import urlencode
 
-from .forms import InvitationForm, InscriptionForm
-from .models import Usager, Invitation, Laboratoire, News
+from .forms import InvitationForm, RegistrationForm
+from .models import UserProfile, Invitation, Laboratory, News
 from django.views.decorators.http import require_http_methods
 from django.utils import timezone
 from django.contrib.auth.decorators import login_required
@@ -45,46 +45,46 @@ import logging
 logger = logging.getLogger(__name__)
 from django.core.mail import EmailMessage
 from django.core.mail import EmailMultiAlternatives
-from .utils import est_admin_plateforme
+from .utils import is_platform_admin_plateforme
 import tempfile, os
 
 
 def inscription(request):
     """
-    Inscription d'un nouvel utilisateur + création du profil Usager.
+    Inscription d'un nouvel utilisateur + création du profil UserProfile.
 
     GET :
-        - Affiche le formulaire d’inscription (pré-remplit email via ?courriel= si présent).
+        - Affiche le formulaire d’inscription (pré-remplit email via ?email= si présent).
 
     POST :
-        - Valide le formulaire `InscriptionForm` :
-            * crée un User (inactif) + un Usager lié,
+        - Valide le formulaire `RegistrationForm` :
+            * crée un User (inactif) + un UserProfile lié,
             * tente d’associer les équipements autorisés depuis une éventuelle Invitation,
             * génère un lien de confirmation (uidb64 + token),
-            * envoie le courriel de confirmation.
+            * envoie le email de confirmation.
 
         - Rend la page de confirmation d’envoi (`inscription_confirmation.html`).
 
     Contexte rendu :
-        - form : InscriptionForm
+        - form : RegistrationForm
     """
     lang = (request.GET.get("lang") or "").lower()
-    tpl = "usager/inscription_en.html" if lang == "en" else "usager/inscription.html"
+    tpl = "user_profile/inscription_en.html" if lang == "en" else "user_profile/inscription.html"
 
     if request.method == 'POST':
-        form = InscriptionForm(request.POST, request=request, language=lang)
+        form = RegistrationForm(request.POST, request=request, language=lang)
         if form.is_valid():
-            # Création User (inactif) + Usager (lié)
+            # Création User (inactif) + UserProfile (lié)
             user = form.save()
 
             # Génération du lien de confirmation
             token = default_token_generator.make_token(user)
             uid = urlsafe_base64_encode(force_bytes(user.pk))
-            activation_url = request.build_absolute_uri(f"/usager/confirmation/{uid}/{token}/")
+            activation_url = request.build_absolute_uri(f"/user_profile/confirmation/{uid}/{token}/")
 
-            # Envoi du courriel de confirmation
+            # Envoi du email de confirmation
             subject = "Confirmation de votre inscription"
-            message = render_to_string("usager/email_confirmation.html", {
+            message = render_to_string("user_profile/email_confirmation.html", {
                 'user': user,
                 'activation_url': activation_url,
             })
@@ -96,12 +96,12 @@ def inscription(request):
                 fail_silently=False,
             )
 
-            return render(request, 'usager/inscription_confirmation.html', {'email': user.email})
+            return render(request, 'user_profile/inscription_confirmation.html', {'email': user.email})
         else:
             # Log structurée (passe par la config LOGGING des settings)
             logger.warning("Erreurs formulaire inscription: %s", form.errors)
     else:
-        form = InscriptionForm(request=request, language=lang)
+        form = RegistrationForm(request=request, language=lang)
 
     return render(request, tpl, {'form': form})
 
@@ -114,7 +114,7 @@ def confirmer_inscription(request, uidb64, token):
     - Vérification du token (time-based).
     - Si valide :
         * active `user.is_active = True`,
-        * si un profil Usager existe → `usager.est_actif = True`,
+        * si un profil UserProfile existe → `user_profile.is_active = True`,
         * redirige vers la page de login avec un message succès.
       Sinon :
         * message d’erreur + redirection vers l’inscription.
@@ -130,8 +130,8 @@ def confirmer_inscription(request, uidb64, token):
         user.is_active = True
         user.save()
         if hasattr(user, "accounts"):
-            user.usager.est_actif = True
-            user.usager.save()
+            user.user_profile.is_active = True
+            user.user_profile.save()
         messages.success(request, "Votre adresse a été confirmée. Vous pouvez maintenant vous connecter.")
         return redirect('login')  # URL de la vue de connexion
     else:
@@ -139,14 +139,14 @@ def confirmer_inscription(request, uidb64, token):
         return redirect('accounts:inscription')
 
 
-@user_passes_test(est_admin_plateforme)
+@user_passes_test(is_platform_admin_plateforme)
 def inviter_usager(request):
     """
-    Envoie une **invitation** à un courriel externe, avec sélection d’équipements autorisés.
+    Envoie une **invitation** à un email externe, avec sélection d’équipements autorisés.
 
     GET :
         - Affiche le formulaire `InvitationForm`.
-        - Liste les invitations en attente (courriels invités sans compte Usager créé).
+        - Liste les invitations en attente (emails invités sans compte UserProfile créé).
 
     POST :
         - Cas 1 (Formulaire) : Crée une nouvelle invitation.
@@ -161,7 +161,7 @@ def inviter_usager(request):
             try:
                 invitation = Invitation.objects.get(pk=invitation_id)
                 _envoyer_email_invitation(request, invitation, rappel=True)
-                messages.success(request, f"Rappel envoyé avec succès à {invitation.courriel}.")
+                messages.success(request, f"Rappel envoyé avec succès à {invitation.email}.")
             except Invitation.DoesNotExist:
                 messages.error(request, "L'invitation n'existe pas ou a été supprimée.")
             return redirect('accounts:inviter_usager')
@@ -188,7 +188,7 @@ def inviter_usager(request):
                 invitation_id = int(action.split('_')[1])
                 invitation = Invitation.objects.get(pk=invitation_id)
                 _envoyer_email_invitation(request, invitation, rappel=True)
-                messages.success(request, f"Rappel envoyé avec succès à {invitation.courriel}.")
+                messages.success(request, f"Rappel envoyé avec succès à {invitation.email}.")
             except (IndexError, ValueError, Invitation.DoesNotExist):
                 messages.error(request, "Erreur lors de la relance.")
             return redirect('accounts:inviter_usager')
@@ -198,31 +198,31 @@ def inviter_usager(request):
         if form.is_valid():
             # Enregistre l’invitation
             form.save(commit=False)
-            courriel = form.cleaned_data['courriel']
-            equipements = form.cleaned_data['equipment']
+            email = form.cleaned_data['email']
+            equipment_set = form.cleaned_data['equipment']
 
             # Déduplication : on garde la plus récente
-            Invitation.objects.filter(courriel__iexact=courriel).delete()
-            invitation = Invitation.objects.create(courriel=courriel)
-            invitation.equipements.set(equipements)
+            Invitation.objects.filter(email__iexact=email).delete()
+            invitation = Invitation.objects.create(email=email)
+            invitation.equipment_set.set(equipment_set)
             invitation.save()
 
-            # Envoi du courriel
+            # Envoi du email
             _envoyer_email_invitation(request, invitation, rappel=False)
 
-            messages.success(request, f"Invitation envoyée à {courriel}.")
+            messages.success(request, f"Invitation envoyée à {email}.")
             return redirect('accounts:inviter_usager')
 
     else:
         form = InvitationForm()
 
     # --- LISTE DES INVITATIONS EN ATTENTE ---
-    # On cherche les Invitations dont le courriel n'est PAS dans la table Usager
+    # On cherche les Invitations dont le email n'est PAS dans la table UserProfile
     # (i.e. les gens qui n'ont pas encore créé leur compte)
-    courriels_inscrits = Usager.objects.values_list('courriel', flat=True)
-    invitations_en_attente = Invitation.objects.exclude(courriel__in=courriels_inscrits).order_by('-date_envoi')
+    emails_inscrits = UserProfile.objects.values_list('email', flat=True)
+    invitations_en_attente = Invitation.objects.exclude(email__in=emails_inscrits).order_by('-sent_at')
 
-    return render(request, 'usager/inviter_usager.html', {
+    return render(request, 'user_profile/inviter_usager.html', {
         'form': form,
         'invitations_en_attente': invitations_en_attente
     })
@@ -230,11 +230,11 @@ def inviter_usager(request):
 
 def _envoyer_email_invitation(request, invitation, rappel=False):
     """
-    Fonction utilitaire pour envoyer (ou renvoyer) le courriel d'invitation.
+    Role utilitaire pour envoyer (ou renvoyer) le email d'invitation.
     """
     # Lien d’inscription pré-rempli
     lien_inscription = request.build_absolute_uri(
-        reverse("accounts:inscription") + "?" + urlencode({"courriel": invitation.courriel})
+        reverse("accounts:inscription") + "?" + urlencode({"email": invitation.email})
     )
 
     prefixe = "RAPPEL : " if rappel else ""
@@ -252,7 +252,7 @@ def _envoyer_email_invitation(request, invitation, rappel=False):
         f"{intro}\n\n"
         "Pour créer votre compte (ou finaliser votre inscription), veuillez cliquer sur le lien suivant :\n"
         f"{lien_inscription}\n\n"
-        "Ceci est un courriel automatique.\n\n"
+        "Ceci est un email automatique.\n\n"
         "Cordialement,\n"
         "L’équipe de la plateforme de microscopie et cytométrie du YourFacility\n"
     )
@@ -261,7 +261,7 @@ def _envoyer_email_invitation(request, invitation, rappel=False):
         sujet,
         message,
         settings.DEFAULT_FROM_EMAIL,
-        [invitation.courriel],
+        [invitation.email],
         fail_silently=False,
     )
 
@@ -274,10 +274,10 @@ def profil(request):
 
     Contexte rendu :
         - user  : request.user (Django User)
-        - usager: profil Usager lié (peut être None si non créé)
+        - user_profile: profil UserProfile lié (peut être None si non créé)
     """
-    usager = getattr(request.user, 'accounts', None)
-    return render(request, 'usager/profil.html', {'user': request.user, 'accounts': usager})
+    user_profile = getattr(request.user, 'accounts', None)
+    return render(request, 'user_profile/profil.html', {'user': request.user, 'accounts': user_profile})
 
 
 @require_GET
@@ -291,23 +291,23 @@ def get_laboratoires_par_affiliation(request):
     Réponse (JSON) :
         {
             "laboratoires": [
-                {"id": <int>, "nom": <str>}, ...
+                {"id": <int>, "name": <str>}, ...
             ]
         }
     """
     affiliation_id = request.GET.get('affiliation_id')
     if affiliation_id:
-        labos = Laboratoire.objects.filter(affiliation_id=affiliation_id).order_by('nom')
-        data = [{'id': l.id, 'nom': l.nom} for l in labos]
+        labos = Laboratory.objects.filter(affiliation_id=affiliation_id).order_by('name')
+        data = [{'id': l.id, 'name': l.name} for l in labos]
         return JsonResponse({'laboratoires': data})
     return JsonResponse({'laboratoires': []})
 
 
-@user_passes_test(est_admin_plateforme)
+@user_passes_test(is_platform_admin_plateforme)
 def valider_formations(request):
     invitations_qs = (Invitation.objects
                       .select_related('reservation__equipement')
-                      .filter(reservation__est_formation=True, date_validation__isnull=True))
+                      .filter(reservation__is_training=True, validated_at__isnull=True))
 
     if request.method == "POST":
         action = request.POST.get("action")  # "validate" ou "delete"
@@ -319,7 +319,7 @@ def valider_formations(request):
 
         # 1) SUPPRIMER LA SÉLECTION
         if action == "delete":
-            deleted, _ = Invitation.objects.filter(id__in=ids, date_validation__isnull=True).delete()
+            deleted, _ = Invitation.objects.filter(id__in=ids, validated_at__isnull=True).delete()
             if deleted:
                 messages.success(request, f"{deleted} invitation(s) supprimée(s).")
             else:
@@ -329,19 +329,19 @@ def valider_formations(request):
         # 2) VALIDER LA SÉLECTION
         ok, skip, errors = 0, 0, []
         for inv in invitations_qs.filter(id__in=ids):
-            courriel = inv.courriel
+            email = inv.email
             resa = inv.reservation
-            equipement = resa.equipement if resa else None
-            usager = Usager.objects.filter(courriel__iexact=courriel).first()
+            equipment = resa.equipment if resa else None
+            user_profile = UserProfile.objects.filter(email__iexact=email).first()
 
-            if not usager or not equipement:
+            if not user_profile or not equipment:
                 skip += 1
-                errors.append(f"{courriel} (usager inexistant ou réservation manquante)")
+                errors.append(f"{email} (user_profile inexistant ou réservation manquante)")
                 continue
 
-            usager.equipements_autorises.add(equipement)
-            inv.date_validation = timezone.now()
-            inv.save(update_fields=["date_validation"])
+            user_profile.authorized_equipment.add(equipment)
+            inv.validated_at = timezone.now()
+            inv.save(update_fields=["validated_at"])
             ok += 1
 
         if ok:
@@ -356,17 +356,17 @@ def valider_formations(request):
     # GET : construire les lignes
     lignes = []
     for inv in invitations_qs:
-        courriel = inv.courriel
-        user_exists = User.objects.filter(email__iexact=courriel).exists()
-        usager_exists = Usager.objects.filter(courriel__iexact=courriel).exists()
+        email = inv.email
+        user_exists = User.objects.filter(email__iexact=email).exists()
+        usager_exists = UserProfile.objects.filter(email__iexact=email).exists()
         etat = "✅ Inscrit" if user_exists and usager_exists else "❌ Non inscrit"
-        equipement = inv.reservation.equipement.nom if inv.reservation else "—"
-        date_formation = inv.reservation.date_debut.strftime("%Y-%m-%d") if inv.reservation else "—"
+        equipment = inv.reservation.equipment.name if inv.reservation else "—"
+        date_formation = inv.reservation.start_date.strftime("%Y-%m-%d") if inv.reservation else "—"
         lignes.append({
             "id": inv.id,
-            "courriel": courriel,
+            "email": email,
             "etat": etat,
-            "equipement": equipement,
+            "equipment": equipment,
             "date_formation": date_formation,
         })
 
@@ -377,7 +377,7 @@ def valider_formations(request):
 
 def confirmer_activite(request, token):
     """
-    Confirmation d'activite via le lien envoye par courriel (re-verification 5 ans).
+    Confirmation d'activite via le lien envoye par email (re-verification 5 ans).
     Le token est signe avec django.core.signing (max_age=30 jours).
     """
     from django.core import signing
@@ -387,54 +387,54 @@ def confirmer_activite(request, token):
         data = signing.loads(token, max_age=30 * 86400, salt="reverification")
         usager_id = data["usager_id"]
     except signing.SignatureExpired:
-        return render(request, "usager/confirmer_activite.html", {
-            "statut": "expire",
+        return render(request, "user_profile/confirmer_activite.html", {
+            "status": "expire",
         })
     except (signing.BadSignature, KeyError):
-        return render(request, "usager/confirmer_activite.html", {
-            "statut": "invalide",
+        return render(request, "user_profile/confirmer_activite.html", {
+            "status": "invalide",
         })
 
     try:
-        usager = Usager.objects.get(pk=usager_id)
-    except Usager.DoesNotExist:
-        return render(request, "usager/confirmer_activite.html", {
-            "statut": "invalide",
+        user_profile = UserProfile.objects.get(pk=usager_id)
+    except UserProfile.DoesNotExist:
+        return render(request, "user_profile/confirmer_activite.html", {
+            "status": "invalide",
         })
 
-    if not usager.est_actif:
-        return render(request, "usager/confirmer_activite.html", {
-            "statut": "desactive",
+    if not user_profile.is_active:
+        return render(request, "user_profile/confirmer_activite.html", {
+            "status": "desactive",
         })
 
-    usager.date_derniere_reverification = timezone.now()
-    usager.save(update_fields=["date_derniere_reverification"])
+    user_profile.last_reverification_date = timezone.now()
+    user_profile.save(update_fields=["last_reverification_date"])
 
-    return render(request, "usager/confirmer_activite.html", {
-        "statut": "ok",
-        "accounts": usager,
+    return render(request, "user_profile/confirmer_activite.html", {
+        "status": "ok",
+        "accounts": user_profile,
     })
 
 
 def accueil(request):
     is_admin = request.user.is_staff
-    equipements = request.user.equipements.all()
+    equipment_set = request.user.equipment_set.all()
     nb_reservations_en_attente = 0
 
     if is_admin:
         from booking.models import Reservation
-        nb_reservations_en_attente = Reservation.objects.filter(statut='en_attente').count()
+        nb_reservations_en_attente = Reservation.objects.filter(status='pending').count()
 
     news_list = (News.objects
-                 .filter(actif=True)
-                 .only('id', 'titre', 'contenu', 'date_publication')  # optionnel
-                 .order_by('-date_publication')[:5])
+                 .filter(is_active=True)
+                 .only('id', 'title', 'content', 'published_at')  # optionnel
+                 .order_by('-published_at')[:5])
                  
 
     
-    return render(request, 'usager/accueil.html', {
+    return render(request, 'user_profile/accueil.html', {
         'is_admin': is_admin,
-        'equipment': equipements,
+        'equipment': equipment_set,
         'nb_reservations_en_attente': nb_reservations_en_attente,
         'news_list': news_list,
     })
@@ -464,7 +464,7 @@ def reglement_view(request):
 
     # — NEW: choisir le template d'affichage selon ?lang=en (FR par défaut)
     lang = (request.GET.get("lang") or "").lower()
-    tpl = "usager/reglement_en.html" if lang == "en" else "usager/reglement.html"
+    tpl = "user_profile/reglement_en.html" if lang == "en" else "user_profile/reglement.html"
 
     if request.method == "POST":
         acks = request.POST.getlist("ack")
@@ -478,11 +478,11 @@ def reglement_view(request):
         if len(set(acks)) >= expected > 0:
             # Marque l'acceptation côté profil
             u = request.user
-            profil = Usager.objects.filter(compte_utilisateur=u).first()
+            profil = UserProfile.objects.filter(user=u).first()
             if profil:
-                profil.reglement_accepte = True
-                profil.reglement_accepte_at = timezone.now()
-                profil.save(update_fields=["reglement_accepte", "reglement_accepte_at"])
+                profil.terms_accepted = True
+                profil.terms_accepted_at = timezone.now()
+                profil.save(update_fields=["terms_accepted", "terms_accepted_at"])
 
             # 1) Générer le PDF (optionnel) — ne bloque jamais
             pdf_bytes = None
@@ -496,7 +496,7 @@ def reglement_view(request):
                     "site_url": getattr(settings, "SITE_URL", ""),
                     "points": REGLEMENT_POINTS,
                 }
-                pdf_tpl = "usager/reglement_pdf_en.html" if lang == "en" else "usager/reglement_pdf.html"
+                pdf_tpl = "user_profile/reglement_pdf_en.html" if lang == "en" else "user_profile/reglement_pdf.html"
                 html = render_to_string(pdf_tpl, ctx)
 
                 # IMPORTANT: base_url en file:// absolu (Windows-safe)
@@ -554,7 +554,7 @@ def reglement_view(request):
                 email.send(fail_silently=False)
                 messages.success(
                     request,
-                    "Règlement accepté. " + ("Un PDF vous a été envoyé par courriel." if pdf_bytes else "Courriel envoyé sans PDF.")
+                    "Règlement accepté. " + ("Un PDF vous a été envoyé par email." if pdf_bytes else "Courriel envoyé sans PDF.")
                 )
             except Exception:
                 logger.exception("WeasyPrint: génération PDF KO")
@@ -585,7 +585,7 @@ def reglement_lecture(request):
     """
     lang = (request.GET.get("lang") or "").lower()
 
-    tpl = "usager/reglement_lecture_en.html" if lang == "en" else "usager/reglement_lecture.html"
+    tpl = "user_profile/reglement_lecture_en.html" if lang == "en" else "user_profile/reglement_lecture.html"
 
     return render(request, tpl)
 
@@ -593,15 +593,15 @@ def reglement_lecture(request):
 
 def _envoyer_reglement_pdf(request):
     """
-    Rend un PDF à partir d'un template (usager/reglement_pdf.html) et l'envoie à l'usager.
+    Rend un PDF à partir d'un template (user_profile/reglement_pdf.html) et l'envoie à l'user_profile.
     """
     if not HTML:
         raise RuntimeError("WeasyPrint n'est pas disponible dans l'environnement.")
 
     user = request.user
-    usager_email = getattr(user, "email", "") or getattr(getattr(user, "accounts", None), "courriel", "")
+    usager_email = getattr(user, "email", "") or getattr(getattr(user, "accounts", None), "email", "")
     if not usager_email:
-        raise RuntimeError("Aucune adresse courriel n'est associée à votre compte.")
+        raise RuntimeError("Aucune adresse email n'est associée à votre compte.")
 
     contexte_pdf = {
         "user": user,
@@ -609,7 +609,7 @@ def _envoyer_reglement_pdf(request):
         "date": timezone.now(),
         "site_url": getattr(settings, "SITE_URL", ""),
     }
-    html_string = render_to_string("usager/reglement_pdf.html", contexte_pdf)
+    html_string = render_to_string("user_profile/reglement_pdf.html", contexte_pdf)
     pdf_bytes = HTML(string=html_string, base_url=getattr(settings, "SITE_URL", "")).write_pdf()
 
     subject = "Règlement de la plateforme – confirmation d’acceptation"

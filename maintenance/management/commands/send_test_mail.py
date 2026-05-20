@@ -5,7 +5,7 @@ from django.core.mail import EmailMessage
 from django.core.management.base import BaseCommand, CommandError
 
 class Command(BaseCommand):
-    help = "Envoie un courriel de test (avec option --pdf pour joindre un fichier PDF)."
+    help = "Envoie un email de test (avec option --pdf pour joindre un fichier PDF)."
 
     def add_arguments(self, parser):
         parser.add_argument("--to", required=True, help="Destinataire (email).")

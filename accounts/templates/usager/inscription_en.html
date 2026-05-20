@@ -129,8 +129,8 @@
 
     <form method="post" novalidate>
         {% csrf_token %}
-        <p>{{ form.prenom.errors }}{{ form.prenom.label_tag }}{{ form.prenom }}</p>
-        <p>{{ form.nom.errors }}{{ form.nom.label_tag }}{{ form.nom }}</p>
+        <p>{{ form.first_name.errors }}{{ form.first_name.label_tag }}{{ form.first_name }}</p>
+        <p>{{ form.name.errors }}{{ form.name.label_tag }}{{ form.name }}</p>
         <p>{{ form.fonction.errors }}{{ form.fonction.label_tag }}{{ form.fonction }}</p>
         <p>{{ form.affiliation.errors }}{{ form.affiliation.label_tag }}{{ form.affiliation }}</p>
         <p>{{ form.laboratoire.errors }}{{ form.laboratoire.label_tag }}{{ form.laboratoire }}</p>
@@ -139,19 +139,19 @@
         <p>{{ form.password_confirmation.errors }}{{ form.password_confirmation.label_tag }}{{ form.password_confirmation }}</p>
 
         <div class="acknowledgment-block">
-            <span class="ack-label">{{ form.acknowledgment_inscription.label }}</span>
+            <span class="ack-label">{{ form.registration_acknowledged.label }}</span>
             <blockquote>
                 "We acknowledge Author Author (YourUniversity) for training and technical/scientific
                 assistance with microscope/cytometer, and the YourFacility core facility for access
                 to the equipment."
             </blockquote>
             <div class="ack-checkbox-row">
-                {{ form.acknowledgment_inscription }}
-                <label for="{{ form.acknowledgment_inscription.id_for_label }}">Read and approved *</label>
+                {{ form.registration_acknowledged }}
+                <label for="{{ form.registration_acknowledged.id_for_label }}">Read and approved *</label>
             </div>
-            {% if form.acknowledgment_inscription.errors %}
+            {% if form.registration_acknowledged.errors %}
             <ul class="errorlist">
-                {% for error in form.acknowledgment_inscription.errors %}<li>{{ error }}</li>{% endfor %}
+                {% for error in form.registration_acknowledged.errors %}<li>{{ error }}</li>{% endfor %}
             </ul>
             {% endif %}
         </div>
@@ -182,7 +182,7 @@
                         data.laboratoires.forEach(function (labo) {
                             laboSelect.append($('<option>', {
                                 value: labo.id,
-                                text: labo.nom
+                                text: labo.name
                             }));
                         });
                     }

@@ -8,19 +8,19 @@ Module : reserv.models
 Modèles liés aux réservations d'équipements.
 
 Contenu :
-- Reservation : représente une réservation d'un équipement par un usager,
-  avec informations de période, assistance, formation, statut, etc.
+- Reservation : représente une réservation d'un équipement par un user_profile,
+  avec informations de période, assistance, formation, status, etc.
 
 Notes & bonnes pratiques :
 - Les règles de validation se trouvent côté formulaires (reserv/forms.py) et/ou vues.
-- Le statut évolue selon la vie de la réservation (à venir → passée/annulée…).
+- Le status évolue selon la vie de la réservation (à venir → passée/annulée…).
 - Les champs d'assistance permettent d'ajouter un coût d'assistance séparé
   (voir facturation/utils.py pour l'usage).
 """
 
 from django.db import models
-from equipment.models import Equipement
-from accounts.models import Usager
+from equipment.models import Equipment
+from accounts.models import UserProfile
 from datetime import datetime
 from django.utils import timezone
 from django.core.exceptions import ValidationError
@@ -31,87 +31,87 @@ logger = logging.getLogger(__name__)
 
 class Reservation(models.Model):
     # --- Liens ---
-    usager = models.ForeignKey(Usager, on_delete=models.CASCADE)
-    equipement = models.ForeignKey(Equipement, on_delete=models.CASCADE)
+    user_profile = models.ForeignKey(UserProfile, on_delete=models.CASCADE)
+    equipment = models.ForeignKey(Equipment, on_delete=models.CASCADE)
 
     # --- Période ---
-    date_debut = models.DateField()
-    heure_fin = models.TimeField()
-    heure_debut = models.TimeField()
-    date_fin = models.DateField()
+    start_date = models.DateField()
+    end_time = models.TimeField()
+    start_time = models.TimeField()
+    end_date = models.DateField()
 
     # --- Assistance & formation ---
     assistance = models.BooleanField(default=False)
-    duree_assistance_minutes = models.PositiveIntegerField(
+    assistance_duration_minutes = models.PositiveIntegerField(
         null=True, blank=True,
         help_text="Durée de l'assistance technique en minutes (rempli par un admin)"
     )
-    est_formation = models.BooleanField(default=False)
-    courriels_formes = models.TextField(
+    is_training = models.BooleanField(default=False)
+    trained_emails = models.TextField(
         blank=True,
-        help_text="Uniquement pour les réservations de type formation. Séparer les courriels par des virgules."
+        help_text="Uniquement pour les réservations de type formation. Séparer les emails par des virgules."
     )
 
     # --- Demande exceptionnelle ---
-    demande_exception = models.BooleanField(default=False)
+    exception_request = models.BooleanField(default=False)
     justification = models.TextField(blank=True)
 
     # --- Maintenance / Hors service ---
-    est_maintenance = models.BooleanField(
+    is_maintenance = models.BooleanField(
         default=False,
         help_text="Réservation pour maintenance/hors service (bloque l'équipement)"
     )
 
-    est_enseignement = models.BooleanField(
+    is_teaching = models.BooleanField(
         default=False,
         help_text="Réservation pour enseignement (cours de labo)"
     )
 
     # --- Statut ---
     STATUT_CHOIX = [
-        ('a_venir', 'À venir'),
-        ('passee', 'Passée'),
-        ('annulee', 'Annulée'),
-        ('en_attente', 'En attente (exception)'),
+        ('upcoming', 'À venir'),
+        ('past', 'Passée'),
+        ('cancelled', 'Annulée'),
+        ('pending', 'En attente (exception)'),
     ]
-    statut = models.CharField(max_length=20, choices=STATUT_CHOIX, default='a_venir')
+    status = models.CharField(max_length=20, choices=STATUT_CHOIX, default='upcoming')
 
-    date_creation = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        ordering = ['-date_debut', 'heure_debut']
+        ordering = ['-start_date', 'start_time']
         verbose_name = "Réservation"
         verbose_name_plural = "Réservations"
 
     def __str__(self):
-        return f"{self.equipement.nom} - {self.date_debut} ({self.heure_debut}-{self.heure_fin})"
+        return f"{self.equipment.name} - {self.start_date} ({self.start_time}-{self.end_time})"
 
     # ---------- Validations métier ----------
     def clean(self):
         errors = {}
         try:
-            dt_debut = datetime.combine(self.date_debut, self.heure_debut)
-            dt_fin = datetime.combine(self.date_fin, self.heure_fin)
+            dt_debut = datetime.combine(self.start_date, self.start_time)
+            dt_fin = datetime.combine(self.end_date, self.end_time)
         except Exception:
             dt_debut = dt_fin = None
 
         if dt_debut and dt_fin and dt_fin <= dt_debut:
-            errors['date_fin'] = "La fin doit être strictement postérieure au début."
+            errors['end_date'] = "La fin doit être strictement postérieure au début."
 
         if dt_debut and dt_fin and self.equipement_id:
             candidats = (
                 Reservation.objects
                 .filter(equipement_id=self.equipement_id)
                 .exclude(pk=self.pk)
-                .exclude(statut='annulee')
-                .filter(date_debut__lte=self.date_fin, date_fin__gte=self.date_debut)
+                .exclude(status='cancelled')
+                .filter(start_date__lte=self.end_date, end_date__gte=self.start_date)
             )
             for other in candidats:
-                o_debut = datetime.combine(other.date_debut, other.heure_debut)
-                o_fin = datetime.combine(other.date_fin, other.heure_fin)
+                o_debut = datetime.combine(other.start_date, other.start_time)
+                o_fin = datetime.combine(other.end_date, other.end_time)
                 if dt_debut < o_fin and dt_fin > o_debut:
-                    errors['date_debut'] = (
+                    errors['start_date'] = (
                         "Chevauchement détecté avec une autre réservation de cet équipement."
                     )
                     break
@@ -120,30 +120,30 @@ class Reservation(models.Model):
             raise ValidationError(errors)
 
     # ---------- Statut auto ----------
-    def save(self, *args, force_statut: bool = False, skip_invitations: bool = False, **kwargs):
-        if self.statut == "annulee":
-            force_statut = True
+    def save(self, *args, force_status: bool = False, skip_invitations: bool = False, **kwargs):
+        if self.status == "cancelled":
+            force_status = True
 
-        if not force_statut:
+        if not force_status:
             try:
                 now_local = timezone.localtime(timezone.now())
-                dt_fin = timezone.make_aware(datetime.combine(self.date_fin, self.heure_fin), now_local.tzinfo)
+                dt_fin = timezone.make_aware(datetime.combine(self.end_date, self.end_time), now_local.tzinfo)
                 if now_local >= dt_fin:
-                    if self.statut != "passee":
-                        self.statut = "passee"
+                    if self.status != "past":
+                        self.status = "past"
                 else:
-                    self.statut = "en_attente" if self.demande_exception else "a_venir"
+                    self.status = "pending" if self.exception_request else "upcoming"
             except Exception:
-                logger.exception("Erreur recalcul statut réservation %s", self.pk)
+                logger.exception("Erreur recalcul status réservation %s", self.pk)
 
         super().save(*args, **kwargs)
 
-        if not skip_invitations and self.est_formation and self.statut != "annulee":
+        if not skip_invitations and self.is_training and self.status != "cancelled":
             try:
                 # Empêcher l'envoi d'invitations pour des formations passées (archivage)
                 # Si la formation se termine avant aujourd'hui, on ne fait rien.
                 now_local = timezone.localtime(timezone.now())
-                dt_fin = timezone.make_aware(datetime.combine(self.date_fin, self.heure_fin), now_local.tzinfo)
+                dt_fin = timezone.make_aware(datetime.combine(self.end_date, self.end_time), now_local.tzinfo)
 
                 if dt_fin >= now_local:
                     from accounts.utils import creer_invitations_pour_formation
@@ -153,10 +153,10 @@ class Reservation(models.Model):
                         try:
                             old = Reservation.objects.get(pk=self.pk)
                             force_resend = (
-                                old.date_debut != self.date_debut or
-                                old.date_fin != self.date_fin or
-                                old.heure_debut != self.heure_debut or
-                                old.heure_fin != self.heure_fin
+                                old.start_date != self.start_date or
+                                old.end_date != self.end_date or
+                                old.start_time != self.start_time or
+                                old.end_time != self.end_time
                             )
                         except Reservation.DoesNotExist:
                             force_resend = True
@@ -166,6 +166,6 @@ class Reservation(models.Model):
 
     @property
     def duree_heures(self) -> float:
-        dt_debut = datetime.combine(self.date_debut, self.heure_debut)
-        dt_fin = datetime.combine(self.date_fin, self.heure_fin)
+        dt_debut = datetime.combine(self.start_date, self.start_time)
+        dt_fin = datetime.combine(self.end_date, self.end_time)
         return max((dt_fin - dt_debut).total_seconds() / 3600.0, 0.0)

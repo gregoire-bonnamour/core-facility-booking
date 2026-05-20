@@ -7,12 +7,12 @@ Commande : desactiver_non_repondants
 
 Objectif :
     Desactiver les usagers qui n'ont pas confirme leur activite dans les 30 jours
-    suivant l'envoi du courriel de re-verification (usagers_a_revalider).
+    suivant l'envoi du email de re-verification (usagers_a_revalider).
 
-    Logique : un usager est concerne si :
-      - il est encore actif
+    Logique : un user_profile est concerne si :
+      - il est encore is_active
       - son seuil de re-verification est depasse depuis >= 5 ans + 30 jours
-        (c'est-a-dire que usagers_a_revalider aurait du lui envoyer un courriel
+        (c'est-a-dire que usagers_a_revalider aurait du lui envoyer un email
          il y a au moins 30 jours, et il n'a pas clique)
 
     Si la commande usagers_a_revalider tourne le 31 janvier,
@@ -28,54 +28,54 @@ from django.core.mail import send_mail
 from django.conf import settings
 from django.db.models import Q
 
-from accounts.models import Usager
+from accounts.models import UserProfile
 
 
 class Command(BaseCommand):
-    help = "Desactive les usagers qui n'ont pas repondu au courriel de re-verification (>= 30j)."
+    help = "Desactive les usagers qui n'ont pas repondu au email de re-verification (>= 30j)."
 
     def handle(self, *args, **options):
-        # Seuil : 5 ans + 30 jours (le courriel a ete envoye il y a 30j min)
+        # Seuil : 5 ans + 30 jours (le email a ete envoye il y a 30j min)
         seuil = timezone.now() - timezone.timedelta(days=5 * 365 + 30)
 
-        q_due = Q(est_actif=True) & (
-            Q(date_derniere_reverification__isnull=True, date_activation__lte=seuil)
-            | Q(date_derniere_reverification__lte=seuil)
+        q_due = Q(is_active=True) & (
+            Q(last_reverification_date__isnull=True, activation_date__lte=seuil)
+            | Q(last_reverification_date__lte=seuil)
         )
 
         usagers = (
-            Usager.objects
+            UserProfile.objects
             .select_related("laboratoire", "affiliation", "user")
             .filter(q_due)
-            .order_by("nom", "prenom")
+            .order_by("name", "first_name")
         )
 
         nb = usagers.count()
         if nb == 0:
-            self.stdout.write(self.style.SUCCESS("Aucun usager a desactiver."))
+            self.stdout.write(self.style.SUCCESS("Aucun user_profile a desactiver."))
             return
 
         desactives = []
         for u in usagers:
-            u.est_actif = False
-            u.save(update_fields=["est_actif"])
+            u.is_active = False
+            u.save(update_fields=["is_active"])
             # Desactiver aussi le User Django pour bloquer la connexion
             if hasattr(u, "user") and u.user:
                 u.user.is_active = False
                 u.user.save(update_fields=["is_active"])
             desactives.append(u)
-            self.stdout.write(f"  Desactive : {u.nom} {u.prenom} <{u.courriel}>")
+            self.stdout.write(f"  Desactive : {u.name} {u.first_name} <{u.email}>")
 
         # Notifier l'admin
         dests_admin = [email for (_nom, email) in getattr(settings, "ADMINS", [])]
         if dests_admin:
             lignes = []
             for u in desactives:
-                labo = getattr(u.laboratoire, "nom", "—")
-                aff  = getattr(u.affiliation, "nom", "—")
-                date_act = u.date_activation.astimezone(timezone.get_current_timezone()).strftime("%Y-%m-%d")
+                labo = getattr(u.laboratoire, "name", "—")
+                aff  = getattr(u.affiliation, "name", "—")
+                date_act = u.activation_date.astimezone(timezone.get_current_timezone()).strftime("%Y-%m-%d")
                 lignes.append(
-                    f"- {u.nom} {u.prenom} <{u.courriel}> | "
+                    f"- {u.name} {u.first_name} <{u.email}> | "
                     f"Affiliation: {aff} | Labo: {labo} | Activation: {date_act}"
                 )
 

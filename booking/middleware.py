@@ -5,13 +5,13 @@
 """
 Module : booking.middleware
 --------------------------
-Middleware personnalisé pour mettre à jour automatiquement
-le statut des réservations expirées.
+Middleware personnalisé pour mettre à day_of_week automatiquement
+le status des réservations expirées.
 
-Fonctionnement :
+Rolenement :
 - À chaque requête HTTP reçue par Django :
-    → Vérifie toutes les réservations dont la date_fin est passée.
-    → Si leur statut n’est pas déjà "terminée", il est mis à jour.
+    → Vérifie toutes les réservations dont la end_date est passée.
+    → Si leur status n’est pas déjà "terminée", il est mis à day_of_week.
 - Permet de garantir que l’état des réservations reste cohérent,
   même si aucun batch/cron n’est exécuté.
 
@@ -30,16 +30,16 @@ logger = logging.getLogger(__name__)
 
 class MiseAJourReservationTermineeMiddleware:
     """
-    Middleware Django : met automatiquement à jour les statuts de réservations.
+    Middleware Django : met automatiquement à day_of_week les statuts de réservations.
 
     Étapes :
         1. Récupère la date/heure actuelle.
-        2. Filtre toutes les réservations dont la date_fin est passée.
-        3. Met leur statut à "terminée" si ce n’est pas déjà le cas.
+        2. Filtre toutes les réservations dont la end_date est passée.
+        3. Met leur status à "terminée" si ce n’est pas déjà le cas.
         4. Passe la main au middleware suivant.
     """
 
-    logger.info("Middleware de mise à jour des réservations activé")
+    logger.info("Middleware de mise à day_of_week des réservations activé")
 
     def __init__(self, get_response):
         """
@@ -52,7 +52,7 @@ class MiseAJourReservationTermineeMiddleware:
     def __call__(self, request):
         """
         Exécuté pour chaque requête :
-        - Met à jour les réservations expirées.
+        - Met à day_of_week les réservations expirées.
         - Retourne la réponse du middleware suivant.
         """
         if cache.add('statuts_updated', True, 60):
@@ -60,12 +60,12 @@ class MiseAJourReservationTermineeMiddleware:
             maintenant  = timezone.localtime().time()
             # Reservations terminees avant aujourd'hui
             (Reservation.objects
-                .filter(date_fin__lt=aujourd_hui)
-                .exclude(statut__in=['passee', 'annulee'])
-                .update(statut='passee'))
-            # Reservations terminees aujourd'hui (heure_fin passee)
+                .filter(end_date__lt=aujourd_hui)
+                .exclude(statut__in=['past', 'cancelled'])
+                .update(status='past'))
+            # Reservations terminees aujourd'hui (end_time passee)
             (Reservation.objects
-                .filter(date_fin=aujourd_hui, heure_fin__lte=maintenant)
-                .exclude(statut__in=['passee', 'annulee'])
-                .update(statut='passee'))
+                .filter(end_date=aujourd_hui, end_time__lte=maintenant)
+                .exclude(statut__in=['past', 'cancelled'])
+                .update(status='past'))
         return self.get_response(request)

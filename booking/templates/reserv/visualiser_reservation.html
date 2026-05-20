@@ -4,24 +4,24 @@
 <h2>Détails de la réservation</h2>
 
 <ul>
-    <li><strong>Équipement :</strong> {{ reservation.equipement.nom }}</li>
-    <li><strong>Date de début :</strong> {{ reservation.date_debut }}</li>
-    <li><strong>Heure de début :</strong> {{ reservation.heure_debut }}</li>
-    <li><strong>Date de fin :</strong> {{ reservation.date_fin }}</li>
-    <li><strong>Heure de fin :</strong> {{ reservation.heure_fin }}</li>
-    <li><strong>Réservée par :</strong> {{ reservation.usager.prenom }} {{ reservation.usager.nom }}</li>
+    <li><strong>Équipement :</strong> {{ reservation.equipment.name }}</li>
+    <li><strong>Date de début :</strong> {{ reservation.start_date }}</li>
+    <li><strong>Heure de début :</strong> {{ reservation.start_time }}</li>
+    <li><strong>Date de fin :</strong> {{ reservation.end_date }}</li>
+    <li><strong>Heure de fin :</strong> {{ reservation.end_time }}</li>
+    <li><strong>Réservée par :</strong> {{ reservation.user_profile.first_name }} {{ reservation.user_profile.name }}</li>
 </ul>
 
 {# Lien mailto vers l'email du compte utilisateur, avec CC à l'administration et sujet pré-rempli #}
-<a href="mailto:{{ reservation.usager.compte_utilisateur.email }}?cc=admin@youruniversity.ca&subject=R%C3%A9servation%20%23{{ reservation.id }}%20%E2%80%93%20{{ reservation.equipement.nom }}">
-    <button>Contacter {{ reservation.usager.prenom }} {{ reservation.usager.nom }}</button>
+<a href="mailto:{{ reservation.user_profile.user.email }}?cc=admin@youruniversity.ca&subject=R%C3%A9servation%20%23{{ reservation.id }}%20%E2%80%93%20{{ reservation.equipment.name }}">
+    <button>Contacter {{ reservation.user_profile.first_name }} {{ reservation.user_profile.name }}</button>
 </a>
 <p><small>ℹ️ Par défaut l'administrateur de la plateforme est en CC de ce message.</small></p>
 
 <br>
 
 {# Retour vers le calendrier, centré sur la semaine de la date de début #}
-<a href="{% url 'booking:calendrier_equipement' reservation.equipement.id %}?semaine={{ reservation.date_debut }}">
+<a href="{% url 'booking:calendrier_equipement' reservation.equipment.id %}?semaine={{ reservation.start_date }}">
     ⬅ Retour au calendrier
 </a>
 <footer>

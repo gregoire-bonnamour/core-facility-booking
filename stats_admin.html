@@ -67,7 +67,7 @@
     <button type="button" id="btn-z1" class="btn primary">Actualiser</button>
   </div>
   <div class="kpis">
-    <div class="kpi"><span class="kpi-val" id="z1-usagers-actifs">—</span><span class="kpi-lbl">Usagers actifs</span></div>
+    <div class="kpi"><span class="kpi-val" id="z1-usagers-actifs">—</span><span class="kpi-lbl">UserProfiles actifs</span></div>
     <div class="kpi"><span class="kpi-val" id="z1-labos">—</span><span class="kpi-lbl">Labos représentés</span></div>
     <div class="kpi"><span class="kpi-val" id="z1-inscrits">—</span><span class="kpi-lbl">Nouveaux inscrits<br><small id="z1-inscrits-periode" style="color:#9ca3af;"></small></span></div>
   </div>
@@ -80,9 +80,9 @@
   <div style="display:flex; gap:12px; align-items:flex-end; flex-wrap:wrap; margin-bottom:12px;">
     <div class="filtre">
       <label style="font-size:.9em; color:#374151;">Période</label><br>
-      <input type="date" name="date_debut" id="date_debut" style="padding:4px 8px; border:1px solid #d1d5db; border-radius:6px;">
+      <input type="date" name="start_date" id="start_date" style="padding:4px 8px; border:1px solid #d1d5db; border-radius:6px;">
       <span style="margin:0 4px; color:#9ca3af;">→</span>
-      <input type="date" name="date_fin" id="date_fin" style="padding:4px 8px; border:1px solid #d1d5db; border-radius:6px;">
+      <input type="date" name="end_date" id="end_date" style="padding:4px 8px; border:1px solid #d1d5db; border-radius:6px;">
     </div>
     <button type="button" id="btn-stats" class="btn primary">Actualiser</button>
     <button type="button" id="export-XLSX-unified" class="btn" style="background:#2563eb; color:#fff; font-weight:600;">Exporter (.xlsx)</button>
@@ -90,13 +90,13 @@
 
   <div class="filtre">
     <div class="filtre-header">
-      <strong>Équipement <span class="meta" id="meta-equipements"></span></strong>
-      <button type="button" class="check-all" data-target="#equipements">Cocher tout</button>
-      <button type="button" class="uncheck-all" data-target="#equipements">Tout décocher</button>
+      <strong>Équipement <span class="meta" id="meta-equipment_set"></span></strong>
+      <button type="button" class="check-all" data-target="#equipment_set">Cocher tout</button>
+      <button type="button" class="uncheck-all" data-target="#equipment_set">Tout décocher</button>
     </div>
     <div id="equipment" class="list cols-2">
-      {% for e in equipements %}
-        <label><input type="checkbox" name="equipment" value="{{ e.id }}"> {{ e.nom }}</label>
+      {% for e in equipment_set %}
+        <label><input type="checkbox" name="equipment" value="{{ e.id }}"> {{ e.name }}</label>
       {% endfor %}
     </div>
   </div>
@@ -109,7 +109,7 @@
   <div class="kpis">
     <div class="kpi"><span class="kpi-val" id="z2-reservations">—</span><span class="kpi-lbl">Réservations</span></div>
     <div class="kpi"><span class="kpi-val" id="z2-heures">—</span><span class="kpi-lbl">Heures d'usage</span></div>
-    <div class="kpi"><span class="kpi-val" id="z2-usagers">—</span><span class="kpi-lbl">Usagers distincts</span></div>
+    <div class="kpi"><span class="kpi-val" id="z2-usagers">—</span><span class="kpi-lbl">UserProfiles distincts</span></div>
     <div class="kpi"><span class="kpi-val" id="z2-formations">—</span><span class="kpi-lbl">Formations données</span></div>
   </div>
 
@@ -124,10 +124,10 @@
     </div>
   </div>
 
-  <div id="table-equipements-wrap" style="margin-top:16px; display:none;">
+  <div id="table-equipment_set-wrap" style="margin-top:16px; display:none;">
     <div class="zone-title" style="margin-top:0;">Détail par équipement</div>
     <div class="table-wrap">
-      <table class="table" id="table-equipements">
+      <table class="table" id="table-equipment_set">
         <thead>
           <tr>
             <th>Équipement</th>
@@ -138,7 +138,7 @@
             <th>Durée moy.</th>
           </tr>
         </thead>
-        <tbody id="tbody-equipements"></tbody>
+        <tbody id="tbody-equipment_set"></tbody>
       </table>
     </div>
   </div>
@@ -153,7 +153,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const URL_XLSX    = "{% url 'booking:stats_export_unified_xlsx' %}";
   const URL_Z1      = "{% url 'booking:stats_zone1' %}";
 
-  let chartUsagers = null;
+  let chartUserProfiles = null;
   let chartLabos   = null;
 
   const COLORS = [
@@ -168,10 +168,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function qsFromForm() {
     const params = new URLSearchParams();
-    const d1 = document.getElementById('date_debut').value;
-    const d2 = document.getElementById('date_fin').value;
-    if (d1) params.set('date_debut', d1);
-    if (d2) params.set('date_fin', d2);
+    const d1 = document.getElementById('start_date').value;
+    const d2 = document.getElementById('end_date').value;
+    if (d1) params.set('start_date', d1);
+    if (d2) params.set('end_date', d2);
     const eq = getChecked('equipment');
     if (eq.length) params.set('equipment', eq.join(','));
     return params.toString();
@@ -215,8 +215,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const params = new URLSearchParams();
     const d1 = document.getElementById('z1-debut').value;
     const d2 = document.getElementById('z1-fin').value;
-    if (d1) params.set('date_debut', d1);
-    if (d2) params.set('date_fin', d2);
+    if (d1) params.set('start_date', d1);
+    if (d2) params.set('end_date', d2);
 
     fetch(`${URL_Z1}?${params.toString()}`)
       .then(r => r.json())
@@ -254,9 +254,9 @@ document.addEventListener('DOMContentLoaded', () => {
         // Camembert usagers
         const top5u = (data.tables.usagers || []).slice(0, 5);
         if (top5u.length) {
-          chartUsagers = renderPie(
-            'chart-usagers', chartUsagers,
-            top5u.map(u => u.nom),
+          chartUserProfiles = renderPie(
+            'chart-usagers', chartUserProfiles,
+            top5u.map(u => u.name),
             top5u.map(u => u.heures_usage)
           );
         }
@@ -266,19 +266,19 @@ document.addEventListener('DOMContentLoaded', () => {
         if (top5l.length) {
           chartLabos = renderPie(
             'chart-labos', chartLabos,
-            top5l.map(l => l.nom),
+            top5l.map(l => l.name),
             top5l.map(l => l.heures_usage)
           );
         }
 
         // Table équipements (si plusieurs équipements)
-        const eqRows = data.tables.equipements || [];
-        const wrap   = document.getElementById('table-equipements-wrap');
+        const eqRows = data.tables.equipment_set || [];
+        const wrap   = document.getElementById('table-equipment_set-wrap');
         if (eqRows.length > 1) {
-          const tbody = document.getElementById('tbody-equipements');
+          const tbody = document.getElementById('tbody-equipment_set');
           tbody.innerHTML = eqRows.map(e => `
             <tr>
-              <td>${e.nom}</td>
+              <td>${e.name}</td>
               <td>${e.reservations}</td>
               <td>${e.heures_usage}</td>
               <td>${e.heures_assistance}</td>
@@ -313,15 +313,15 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!container) return;
     const checked = b.classList.contains('check-all');
     container.querySelectorAll('input[type="checkbox"]').forEach(cb => { cb.checked = checked; });
-    setMeta('#equipements', 'meta-equipements');
+    setMeta('#equipment_set', 'meta-equipment_set');
   });
 
   document.getElementById('equipment').addEventListener('change', () => {
-    setMeta('#equipements', 'meta-equipements');
+    setMeta('#equipment_set', 'meta-equipment_set');
   });
 
   // Chargement initial
-  setMeta('#equipements', 'meta-equipements');
+  setMeta('#equipment_set', 'meta-equipment_set');
   loadZone1();
   loadZone2();
 

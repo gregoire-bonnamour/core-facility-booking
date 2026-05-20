@@ -1,4 +1,4 @@
-from accounts.utils import est_admin_plateforme
+from accounts.utils import is_platform_admin_plateforme
 # Copyright (c) 2025 Author Author
 # Licensed under the Creative Commons Attribution-NonCommercial 4.0 International License (CC BY-NC 4.0)
 # See the LICENSE file or https://creativecommons.org/licenses/by-nc/4.0/legalcode for details.
@@ -28,10 +28,10 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-def est_admin_plateforme(user):
-    return user.is_staff or user.is_superuser or (hasattr(user, 'accounts') and user.usager.est_admin)
+def is_platform_admin_plateforme(user):
+    return user.is_staff or user.is_superuser or (hasattr(user, 'accounts') and user.user_profile.is_platform_admin)
 
-@user_passes_test(est_admin_plateforme)
+@user_passes_test(is_platform_admin_plateforme)
 def generer_factures(request):
     """
     Génère les factures (PDF/CSV) regroupées par laboratoire
@@ -40,13 +40,13 @@ def generer_factures(request):
     if request.method == 'POST':
         form = FacturationForm(request.POST)
         if form.is_valid():
-            date_debut = form.cleaned_data['date_debut']
-            date_fin = form.cleaned_data['date_fin']
+            start_date = form.cleaned_data['start_date']
+            end_date = form.cleaned_data['end_date']
             affiliations = form.cleaned_data['affiliations']
             inclure_csv = form.cleaned_data['inclure_csv']
 
             # --- Étape 1 : Filtrage initial ---
-            groupes = filtrer_reservations_par_laboratoire(date_debut, date_fin)
+            groupes = filtrer_reservations_par_laboratoire(start_date, end_date)
             logger.debug(f"Réservations brutes par labo : "
                          f"{[(l, len(r)) for l, r in groupes.items()]}")
 
@@ -64,12 +64,12 @@ def generer_factures(request):
                     # 2. On cherche le payeur qui appartient à 'labo_nom'
                     # (car 'resa' est dans le bucket 'labo_nom')
                     for u in payeurs:
-                        if u and u.laboratoire and u.laboratoire.nom == labo_nom:
+                        if u and u.laboratoire and u.laboratoire.name == labo_nom:
                             return u.affiliation in affiliations_demandees
                             
                     # Fallback (si pas trouvé, ex: labo changé entre temps ? ou cas standard)
-                    if resa.usager and resa.usager.affiliation:
-                        return resa.usager.affiliation in affiliations_demandees
+                    if resa.user_profile and resa.user_profile.affiliation:
+                        return resa.user_profile.affiliation in affiliations_demandees
                     return False
 
                 new_groupes = {}
@@ -91,14 +91,14 @@ def generer_factures(request):
                          f"{[(l, len(r)) for l, r in groupes.items()]}")
 
             # --- Étape 4 : Génération des PDF ---
-            pdfs = generer_pdfs_par_labo(groupes, date_debut, date_fin)
+            pdfs = generer_pdfs_par_labo(groupes, start_date, end_date)
 
             # --- Étape 5 : Construction du ZIP ---
             zip_buffer = io.BytesIO()
             with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zip_file:
                 # PDFs
-                for nom_fichier, contenu in pdfs.items():
-                    zip_file.writestr(nom_fichier, contenu)
+                for nom_fichier, content in pdfs.items():
+                    zip_file.writestr(nom_fichier, content)
 
                 # CSVs optionnels
                 if inclure_csv:
@@ -109,7 +109,7 @@ def generer_factures(request):
 
             # --- Étape 6 : Réponse HTTP ---
             zip_buffer.seek(0)
-            filename = f"factures_labos_{date_debut}_{date_fin}.zip"
+            filename = f"factures_labos_{start_date}_{end_date}.zip"
             response = HttpResponse(zip_buffer, content_type='application/zip')
             response['Content-Disposition'] = f'attachment; filename="{filename}"'
             return response

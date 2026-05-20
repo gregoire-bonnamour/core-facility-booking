@@ -3,50 +3,50 @@
 {% block content %}
   <h2>Mon profil</h2>
 
-  {% if usager %}
-    <p><strong>Prénom :</strong> {{ usager.prenom }}</p>
-    <p><strong>Nom :</strong> {{ usager.nom }}</p>
-    <p><strong>Adresse courriel :</strong> {{ usager.courriel }}</p>
+  {% if user_profile %}
+    <p><strong>Prénom :</strong> {{ user_profile.first_name }}</p>
+    <p><strong>Nom :</strong> {{ user_profile.name }}</p>
+    <p><strong>Adresse email :</strong> {{ user_profile.email }}</p>
 
-    <p><strong>Fonction :</strong>
-      {% if usager.fonction %}
-        {{ usager.fonction }}
+    <p><strong>Role :</strong>
+      {% if user_profile.fonction %}
+        {{ user_profile.fonction }}
       {% else %}
         <em>Non spécifiée</em>
       {% endif %}
     </p>
 
     <p><strong>Affiliation :</strong>
-      {% if usager.affiliation %}
-        {{ usager.affiliation.nom }}
+      {% if user_profile.affiliation %}
+        {{ user_profile.affiliation.name }}
       {% else %}
         <em>Non renseignée</em>
       {% endif %}
     </p>
 
-    <p><strong>Laboratoire :</strong>
-      {% if usager.laboratoire %}
-        {{ usager.laboratoire.nom }}
+    <p><strong>Laboratory :</strong>
+      {% if user_profile.laboratoire %}
+        {{ user_profile.laboratoire.name }}
       {% else %}
         <em>Non renseigné</em>
       {% endif %}
     </p>
 
-    <p><strong>Compte actif :</strong>
-      {% if usager.est_actif %}Oui{% else %}Non{% endif %}
+    <p><strong>Compte is_active :</strong>
+      {% if user_profile.is_active %}Oui{% else %}Non{% endif %}
     </p>
 
     <p><strong>Rôle :</strong>
-      {% if usager.est_admin %}
+      {% if user_profile.is_platform_admin %}
         Administrateur de la plateforme
       {% else %}
-        Usager standard
+        UserProfile standard
       {% endif %}
     </p>
 
     <p><strong>Date d’activation :</strong>
-      {% if usager.date_activation %}
-        {{ usager.date_activation|date:"d/m/Y H:i" }}
+      {% if user_profile.activation_date %}
+        {{ user_profile.activation_date|date:"d/m/Y H:i" }}
       {% else %}
         <em>Non disponible</em>
       {% endif %}
@@ -62,7 +62,7 @@
     </p>
 
   {% else %}
-    <p><em>Aucun profil usager lié à ce compte.</em></p>
+    <p><em>Aucun profil user_profile lié à ce compte.</em></p>
   {% endif %}
 
   <footer>

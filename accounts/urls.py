@@ -3,11 +3,11 @@
 # See the LICENSE file or https://creativecommons.org/licenses/by-nc/4.0/legalcode for details.
 
 """
-Module : usager.urls
+Module : user_profile.urls
 --------------------
-Définit les routes de l’application `usager`.
+Définit les routes de l’application `user_profile`.
 
-Fonctionnalités couvertes :
+Rolenalités couvertes :
 - Inscription et confirmation par email
 - Invitation par administrateur
 - Gestion du profil
@@ -26,7 +26,7 @@ urlpatterns = [
     path('inscription/', views.inscription, name='inscription'),
     path(
         "confirmation-envoyee/",
-        TemplateView.as_view(template_name="usager/inscription_confirmation.html"),
+        TemplateView.as_view(template_name="user_profile/inscription_confirmation.html"),
         name="inscription_confirmation"
     ),
     path('confirmation/<uidb64>/<token>/', views.confirmer_inscription, name='confirmation'),
@@ -36,7 +36,7 @@ urlpatterns = [
 
     # --- Profil ---
     path('profil/', views.profil, name='profil'),
-    path('admin/usager/valider-formations/', views.valider_formations, name='valider_formations'),
+    path('admin/user_profile/valider-formations/', views.valider_formations, name='valider_formations'),
 
     # --- AJAX ---
     path('ajax/labos/', views.get_laboratoires_par_affiliation, name='ajax_labos'),

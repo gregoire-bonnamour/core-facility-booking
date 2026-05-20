@@ -9,7 +9,7 @@ Définit les routes (URLs) de l’application `facturation`.
 
 Actuellement :
 - Vue principale : génération des factures (PDF + option CSV).
-- Préfixées avec `app_name` pour un usage clair de `reverse('billing:nom')`.
+- Préfixées avec `app_name` pour un usage clair de `reverse('billing:name')`.
 
 Futures évolutions possibles :
 - Export direct CSV

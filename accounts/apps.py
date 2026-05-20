@@ -3,11 +3,11 @@
 # See the LICENSE file or https://creativecommons.org/licenses/by-nc/4.0/legalcode for details.
 
 """
-Module : usager.apps
+Module : user_profile.apps
 --------------------
-Configuration de l’application `usager` pour Django.
+Configuration de l’application `user_profile` pour Django.
 
-La classe `UsagerConfig` est utilisée par Django pour
+La classe `UserProfileConfig` est utilisée par Django pour
 initialiser l’app lors du démarrage du projet.
 """
 
@@ -16,7 +16,7 @@ from django.apps import AppConfig
 
 class AccountsConfig(AppConfig):
     """
-    Configuration principale de l’app `usager`.
+    Configuration principale de l’app `user_profile`.
 
     Attributs :
         default_auto_field (str) : Définit le type de clé primaire par défaut
@@ -30,8 +30,8 @@ class AccountsConfig(AppConfig):
         """
         Méthode appelée automatiquement au démarrage de Django.
 
-        ➡ Ici, on importe `usager.signals` afin d’enregistrer
-        les signaux (ex. : création automatique de profil usager
+        ➡ Ici, on importe `user_profile.signals` afin d’enregistrer
+        les signaux (ex. : création automatique de profil user_profile
         lors de la création d’un compte utilisateur).
         """
         import accounts.signals

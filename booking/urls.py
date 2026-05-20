@@ -7,7 +7,7 @@ Module : reserv.urls
 --------------------
 Définit les routes (URLs) pour l'application `reserv`.
 
-Fonctionnalités couvertes :
+Rolenalités couvertes :
 - Réservation d'un équipement
 - Calendrier par équipement
 - Gestion d'une réservation (modifier, supprimer, visualiser, redirection)

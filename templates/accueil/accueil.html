@@ -10,7 +10,7 @@
   <h3>🔧 Administration</h3>
   <ul>
     <li><a href="{% url 'admin:index' %}">⚙️ Interface Django admin</a></li>
-    <li><a href="{% url 'accounts:inviter_usager' %}">📨 Inviter un usager</a></li>
+    <li><a href="{% url 'accounts:inviter_usager' %}">📨 Inviter un user_profile</a></li>
     <li><a href="{% url 'booking:stats_admin' %}">📊 Statistiques</a></li>
     <li><a href="{% url 'billing:page_facturation' %}">💰 Facturation</a></li>
     <li><a href="{% url 'booking:calendrier_global_admin' %}">📅 Calendrier global (tous équipements)</a></li>
@@ -22,7 +22,7 @@
 {% if user.is_staff and nb_reservations_en_attente %}
 <section class="alert-admin">
   <h3>🚨 Réservations en attente</h3>
-  <p><a href="{% url 'admin:reserv_reservation_changelist' %}?statut=en_attente">
+  <p><a href="{% url 'admin:reserv_reservation_changelist' %}?status=en_attente">
     {{ nb_reservations_en_attente }} réservation(s) à valider
   </a></p>
 </section>
@@ -33,9 +33,9 @@
   {# ── Colonne principale ── #}
   <div class="accueil-main stack">
 
-    {# --- Accès usager standard --- #}
+    {# --- Accès user_profile standard --- #}
     <section>
-      <h3>🔧 Accès usager</h3>
+      <h3>🔧 Accès user_profile</h3>
       <ul>
         <li><a href="{% url 'accounts:profil' %}">👤 Mon profil</a></li>
         <li><a href="{% url 'accounts:reglement_lecture' %}">📋 Règlement de la plateforme</a></li>
@@ -47,10 +47,10 @@
     <section>
       <h3>🗓️ Mes équipements</h3>
       <ul>
-        {% for equipement in equipements %}
+        {% for equipment in equipment_set %}
         <li>
-          <a href="{% url 'booking:calendrier_equipement' equipement.id %}?semaine={{ lundi|date:'Y-m-d' }}">
-            📅 {{ equipement.nom }}
+          <a href="{% url 'booking:calendrier_equipement' equipment.id %}?semaine={{ lundi|date:'Y-m-d' }}">
+            📅 {{ equipment.name }}
           </a>
         </li>
         {% empty %}
@@ -64,21 +64,21 @@
   {# ── Fil d'actualités (sidebar droite) ── #}
   {% if news_list %}
   <aside class="accueil-news">
-    <h3 class="news-titre">📰 Actualités</h3>
+    <h3 class="news-title">📰 Actualités</h3>
     <ul class="news-feed">
       {% for news in news_list %}
-      <li class="news-item news-cat-{{ news.categorie }}">
+      <li class="news-item news-cat-{{ news.category }}">
         <span class="news-badge">
-          {% if news.categorie == 'equipement' %}🔧 Équipement
-          {% elif news.categorie == 'evenement' %}📅 Événement
-          {% elif news.categorie == 'formation' %}🎓 Formation
-          {% elif news.categorie == 'emploi' %}💼 Offre d'emploi
+          {% if news.category == 'equipment' %}🔧 Équipement
+          {% elif news.category == 'evenement' %}📅 Événement
+          {% elif news.category == 'formation' %}🎓 Formation
+          {% elif news.category == 'emploi' %}💼 Offre d'emploi
           {% else %}📰 Actualité
           {% endif %}
         </span>
-        <strong class="news-item-titre">{{ news.titre }}</strong>
-        <p class="news-item-contenu">{{ news.contenu|linebreaksbr }}</p>
-        <small class="news-item-date">{{ news.date_publication|date:"d/m/Y" }}</small>
+        <strong class="news-item-title">{{ news.title }}</strong>
+        <p class="news-item-content">{{ news.content|linebreaksbr }}</p>
+        <small class="news-item-date">{{ news.published_at|date:"d/m/Y" }}</small>
       </li>
       {% endfor %}
     </ul>

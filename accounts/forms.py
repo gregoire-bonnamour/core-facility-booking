@@ -3,11 +3,11 @@
 # See the LICENSE file or https://creativecommons.org/licenses/by-nc/4.0/legalcode for details.
 
 """
-Module : usager.forms
+Module : user_profile.forms
 ---------------------
 Définit les formulaires liés à la gestion des usagers :
-- Création / modification d'usager (UsagerForm, UsagerAdminForm)
-- Inscription en autonomie (InscriptionForm)
+- Création / modification d'user_profile (UserProfileForm, UserProfileAdminForm)
+- Inscription en autonomie (RegistrationForm)
 - Connexion par email (EmailLoginForm)
 - Gestion des invitations (InvitationForm)
 """
@@ -15,16 +15,16 @@ Définit les formulaires liés à la gestion des usagers :
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
-from .models import Fonction, Usager, Affiliation, Laboratoire, Invitation
+from .models import Role, UserProfile, Affiliation, Laboratory, Invitation
 from django.contrib.auth import authenticate
-from equipment.models import Equipement
+from equipment.models import Equipment
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
 
-# === Formulaire usager standard ===
-class UsagerForm(forms.ModelForm):
+# === Formulaire user_profile standard ===
+class UserProfileForm(forms.ModelForm):
     """
-    Formulaire pour créer ou modifier un usager.
+    Formulaire pour créer ou modifier un user_profile.
 
     Champs spécifiques :
     - affiliation : choix obligatoire (liste complète).
@@ -35,63 +35,63 @@ class UsagerForm(forms.ModelForm):
         queryset=Affiliation.objects.all(),
         required=True,
         label="Affiliation",
-        help_text="Choisissez l'affiliation de l'usager."
+        help_text="Choisissez l'affiliation de l'user_profile."
     )
     laboratoire = forms.ModelChoiceField(
-        queryset=Laboratoire.objects.none(),
+        queryset=Laboratory.objects.none(),
         required=True,
-        label="Laboratoire",
+        label="Laboratory",
         help_text="Choisissez le laboratoire correspondant à l'affiliation."
     )
 
     class Meta:
-        model = Usager
+        model = UserProfile
         fields = [
-            "prenom", "nom", "courriel",
+            "first_name", "name", "email",
             "fonction", "affiliation", "laboratoire",
-            "equipements_autorises",
-            "est_actif", "est_admin",
-            "compte_utilisateur",
+            "authorized_equipment",
+            "is_active", "is_platform_admin",
+            "user",
         ]
 
     def __init__(self, *args, **kwargs):
         """Filtre les laboratoires selon l'affiliation déjà choisie ou l'instance."""
         super().__init__(*args, **kwargs)
-        self.fields['laboratoire'].label = "Laboratoire / Compagnie"
+        self.fields['laboratoire'].label = "Laboratory / Compagnie"
 
         if 'affiliation' in self.data:
             # Cas formulaire soumis : on filtre en fonction de la valeur choisie
             try:
                 affiliation_id = int(self.data.get('affiliation'))
-                self.fields['laboratoire'].queryset = Laboratoire.objects.filter(
+                self.fields['laboratoire'].queryset = Laboratory.objects.filter(
                     affiliation_id=affiliation_id
-                ).order_by('nom')
+                ).order_by('name')
             except (ValueError, TypeError):
-                self.fields['laboratoire'].queryset = Laboratoire.objects.none()
+                self.fields['laboratoire'].queryset = Laboratory.objects.none()
         elif self.instance.pk and self.instance.affiliation:
-            # Cas édition : on filtre avec l'affiliation de l'usager existant
-            self.fields['laboratoire'].queryset = Laboratoire.objects.filter(
+            # Cas édition : on filtre avec l'affiliation de l'user_profile existant
+            self.fields['laboratoire'].queryset = Laboratory.objects.filter(
                 affiliation=self.instance.affiliation
-            ).order_by('nom')
+            ).order_by('name')
         else:
             # Cas création : pas encore d'affiliation → labo vide
-            self.fields['laboratoire'].queryset = Laboratoire.objects.none()
+            self.fields['laboratoire'].queryset = Laboratory.objects.none()
 
-    def clean_courriel(self):
+    def clean_email(self):
         """
-        Vérifie l'unicité du courriel :
-        - pas déjà utilisé dans un autre Usager
+        Vérifie l'unicité du email :
+        - pas déjà utilisé dans un autre UserProfile
         - existe dans la table User (lié au système d'authentification Django)
         """
-        courriel = self.cleaned_data.get('courriel')
+        email = self.cleaned_data.get('email')
 
-        if Usager.objects.exclude(pk=self.instance.pk).filter(courriel__iexact=courriel).exists():
-            raise ValidationError("Cette adresse courriel est déjà utilisée par un autre usager.")
+        if UserProfile.objects.exclude(pk=self.instance.pk).filter(email__iexact=email).exists():
+            raise ValidationError("Cette adresse email est déjà utilisée par un autre user_profile.")
 
-        if not User.objects.filter(email__iexact=courriel).exists():
-            raise ValidationError("Aucun compte utilisateur associé à cette adresse courriel.")
+        if not User.objects.filter(email__iexact=email).exists():
+            raise ValidationError("Aucun compte utilisateur associé à cette adresse email.")
 
-        return courriel
+        return email
 
     def clean(self):
         """Validation croisée : cohérence affiliation ↔ laboratoire."""
@@ -105,57 +105,57 @@ class UsagerForm(forms.ModelForm):
 
 
 # === Formulaire admin (utilisé dans Django admin) ===
-class UsagerAdminForm(forms.ModelForm):
+class UserProfileAdminForm(forms.ModelForm):
     """
-    Version admin du formulaire usager.
-    Permet de limiter la liste des `compte_utilisateur` disponibles
-    aux Users non encore liés à un Usager.
+    Version admin du formulaire user_profile.
+    Permet de limiter la liste des `user` disponibles
+    aux Users non encore liés à un UserProfile.
     """
     class Meta:
-        model = Usager
+        model = UserProfile
         fields = '__all__'
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        if 'compte_utilisateur' in self.fields:
-            users_utilises = Usager.objects.exclude(
+        if 'user' in self.fields:
+            users_utilises = UserProfile.objects.exclude(
                 pk=self.instance.pk if self.instance and self.instance.pk else None
-            ).values_list('compte_utilisateur__id', flat=True)
+            ).values_list('user__id', flat=True)
 
-            self.fields['compte_utilisateur'].queryset = User.objects.exclude(id__in=users_utilises)
+            self.fields['user'].queryset = User.objects.exclude(id__in=users_utilises)
 
 
 # === Formulaire d'inscription publique ===
-class InscriptionForm(forms.ModelForm):
+class RegistrationForm(forms.ModelForm):
     """
-    Permet à un nouvel usager de s'inscrire :
-    - crée un User désactivé + un Usager lié
+    Permet à un nouvel user_profile de s'inscrire :
+    - crée un User désactivé + un UserProfile lié
     - vérifie la confirmation du mot de passe
-    - peut pré-remplir le champ email via l'URL (?courriel=...)
+    - peut pré-remplir le champ email via l'URL (?email=...)
     """
-    email = forms.EmailField(label="Adresse courriel")
+    email = forms.EmailField(label="Adresse email")
     password = forms.CharField(label="Mot de passe", widget=forms.PasswordInput)
     password_confirmation = forms.CharField(label="Confirmation du mot de passe", widget=forms.PasswordInput)
-    acknowledgment_inscription = forms.BooleanField(
+    registration_acknowledged = forms.BooleanField(
         required=True,
         label="Je m'engage à inclure la mention suivante dans mes publications scientifiques issues de "
               "données acquises sur la plateforme ou d'un soutien fourni par la plateforme :",
     )
 
     class Meta:
-        model = Usager
-        fields = ['prenom', 'nom', 'fonction', 'affiliation', 'laboratoire']
+        model = UserProfile
+        fields = ['first_name', 'name', 'fonction', 'affiliation', 'laboratoire']
 
     def __init__(self, *args, **kwargs):
         initial = kwargs.get("initial", {})
         request = kwargs.pop("request", None)
         language = kwargs.pop("language", "fr")
 
-        # Préremplissage depuis paramètre GET (?courriel=)
+        # Préremplissage depuis paramètre GET (?email=)
         if request:
-            courriel = request.GET.get("courriel")
-            if courriel:
-                initial["email"] = courriel
+            email = request.GET.get("email")
+            if email:
+                initial["email"] = email
         kwargs["initial"] = initial
         super().__init__(*args, **kwargs)
 
@@ -163,31 +163,31 @@ class InscriptionForm(forms.ModelForm):
             self.fields['email'].label = "Email Address"
             self.fields['password'].label = "Password"
             self.fields['password_confirmation'].label = "Confirm Password"
-            self.fields['prenom'].label = "First Name"
-            self.fields['nom'].label = "Last Name"
+            self.fields['first_name'].label = "First Name"
+            self.fields['name'].label = "Last Name"
             self.fields['fonction'].label = "Position"
             self.fields['affiliation'].label = "Affiliation"
             self.fields['laboratoire'].label = "Laboratory / Company"
-            self.fields['acknowledgment_inscription'].label = (
+            self.fields['registration_acknowledged'].label = (
                 "I commit to including the following acknowledgment in my scientific publications "
                 "resulting from data acquired on the platform or from support provided by the platform:"
             )
         else:
-            self.fields['laboratoire'].label = "Laboratoire / Compagnie"
+            self.fields['laboratoire'].label = "Laboratory / Compagnie"
 
-        if Fonction.objects.exists():
-            self.fields['fonction'].queryset = Fonction.objects.all()
+        if Role.objects.exists():
+            self.fields['fonction'].queryset = Role.objects.all()
         if Affiliation.objects.exists():
             self.fields['affiliation'].queryset = Affiliation.objects.all()
-        if Laboratoire.objects.exists():
-            self.fields['laboratoire'].queryset = Laboratoire.objects.all()
+        if Laboratory.objects.exists():
+            self.fields['laboratoire'].queryset = Laboratory.objects.all()
 
     def clean(self):
         """
         Validation du formulaire :
         - Vérifie la concordance des mots de passe.
-        - Vérifie qu'aucun profil usager complet n'existe déjà pour ce courriel.
-          (Un Usager "vide" créé automatiquement par le signal est toléré.)
+        - Vérifie qu'aucun profil user_profile complet n'existe déjà pour ce email.
+          (Un UserProfile "vide" créé automatiquement par le signal est toléré.)
         """
         cleaned_data = super().clean()
         password = cleaned_data.get("password")
@@ -198,26 +198,26 @@ class InscriptionForm(forms.ModelForm):
         if password and confirmation and password != confirmation:
             self.add_error('password_confirmation', "Les mots de passe ne correspondent pas.")
 
-        # 2. Vérification usager existant
+        # 2. Vérification user_profile existant
         if email:
-            usager = Usager.objects.filter(courriel__iexact=email).first()
-            if usager:
-                # On considère le profil "déjà complété" si prénom ET nom non vides
-                if usager.prenom or usager.nom:
-                    self.add_error("email", "Un usager avec cette adresse a déjà complété son inscription.")
+            user_profile = UserProfile.objects.filter(email__iexact=email).first()
+            if user_profile:
+                # On considère le profil "déjà complété" si prénom ET name non vides
+                if user_profile.first_name or user_profile.name:
+                    self.add_error("email", "Un user_profile avec cette adresse a déjà complété son inscription.")
 
         return cleaned_data
 
 
     def save(self, commit=True):
         """
-        Crée ou récupère le User associé, puis complète l'Usager déjà
+        Crée ou récupère le User associé, puis complète l'UserProfile déjà
         créé automatiquement par le signal post_save (creer_usager_associe).
 
         - Si le User existe déjà (via invitation ou admin), on le réutilise.
-        - Si c'est un nouveau User, le signal crée automatiquement un Usager
-          lié avec les infos minimales (nom, prénom, courriel vides).
-        - Dans tous les cas, on complète / met à jour l'Usager ici.
+        - Si c'est un nouveau User, le signal crée automatiquement un UserProfile
+          lié avec les infos minimales (name, prénom, email vides).
+        - Dans tous les cas, on complète / met à day_of_week l'UserProfile ici.
         """
         email = self.cleaned_data['email']
         password = self.cleaned_data['password']
@@ -231,35 +231,35 @@ class InscriptionForm(forms.ModelForm):
             }
         )
 
-        # Définir / mettre à jour le mot de passe
+        # Définir / mettre à day_of_week le mot de passe
         user.set_password(password)
         if commit:
             user.save()
 
-        # 2) Récupération de l'Usager lié (créé automatiquement par le signal)
-        usager = getattr(user, 'accounts', None)
-        if usager is None:
-            # Normalement le signal a déjà créé un Usager.
+        # 2) Récupération de l'UserProfile lié (créé automatiquement par le signal)
+        user_profile = getattr(user, 'accounts', None)
+        if user_profile is None:
+            # Normalement le signal a déjà créé un UserProfile.
             # Ce fallback est là juste par sécurité.
-            usager = Usager(compte_utilisateur=user, courriel=email)
+            user_profile = UserProfile(user=user, email=email)
 
-        # 3) Compléter / mettre à jour le profil Usager
-        usager.nom = self.cleaned_data['nom']
-        usager.prenom = self.cleaned_data['prenom']
-        usager.fonction = self.cleaned_data['fonction']
-        usager.affiliation = self.cleaned_data['affiliation']
-        usager.laboratoire = self.cleaned_data['laboratoire']
-        usager.courriel = email
-        usager.acknowledgment_inscription = self.cleaned_data.get('acknowledgment_inscription', False)
+        # 3) Compléter / mettre à day_of_week le profil UserProfile
+        user_profile.name = self.cleaned_data['name']
+        user_profile.first_name = self.cleaned_data['first_name']
+        user_profile.fonction = self.cleaned_data['fonction']
+        user_profile.affiliation = self.cleaned_data['affiliation']
+        user_profile.laboratoire = self.cleaned_data['laboratoire']
+        user_profile.email = email
+        user_profile.registration_acknowledged = self.cleaned_data.get('registration_acknowledged', False)
 
         if commit:
-            usager.save()
+            user_profile.save()
 
             # 4) Si une invitation existe, rattacher les équipements autorisés
-            invitation = Invitation.objects.filter(courriel__iexact=email).order_by('-date_envoi').first()
-            if invitation and invitation.equipements.exists():
-                usager.equipements_autorises.set(invitation.equipements.all())
-                usager.save()
+            invitation = Invitation.objects.filter(email__iexact=email).order_by('-sent_at').first()
+            if invitation and invitation.equipment_set.exists():
+                user_profile.authorized_equipment.set(invitation.equipment_set.all())
+                user_profile.save()
 
         # 5) Retourner le User (comme attendu par la vue d'inscription)
         return user
@@ -271,7 +271,7 @@ class EmailLoginForm(forms.Form):
     Formulaire d'authentification basé sur email + mot de passe.
     Utilise le backend `EmailAuthBackend` pour l'authentification.
     """
-    email = forms.EmailField(label="Adresse courriel")
+    email = forms.EmailField(label="Adresse email")
     password = forms.CharField(label="Mot de passe", widget=forms.PasswordInput)
 
     def __init__(self, *args, **kwargs):
@@ -286,7 +286,7 @@ class EmailLoginForm(forms.Form):
         if email and password:
             self.user = authenticate(username=email, password=password)
             if self.user is None:
-                raise ValidationError("Adresse courriel ou mot de passe invalide.")
+                raise ValidationError("Adresse email ou mot de passe invalide.")
         return self.cleaned_data
 
     def get_user(self):
@@ -297,15 +297,15 @@ class EmailLoginForm(forms.Form):
 # === Formulaire d'invitation ===
 class InvitationForm(forms.ModelForm):
     """
-    Permet d'inviter un nouvel usager :
+    Permet d'inviter un nouvel user_profile :
     - saisie d'un email
     - choix des équipements autorisés (via cases à cocher)
     """
     class Meta:
         model = Invitation
-        fields = ['courriel', 'equipements']
+        fields = ['email', 'equipment_set']
         widgets = {
-            'equipements': forms.CheckboxSelectMultiple,
+            'equipment_set': forms.CheckboxSelectMultiple,
         }
 
     def save(self, commit=True):

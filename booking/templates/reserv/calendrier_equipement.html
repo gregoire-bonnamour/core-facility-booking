@@ -119,9 +119,9 @@
 
 <a href="{% url 'accueil' %}" class="btn-retour">🏠 Retour à l'accueil</a>
 
-<h1>Calendrier – {{ equipement.nom }}</h1>
-<p><strong>Tarif horaire :</strong> {{ tarif_horaire }} $ CAD/h</p>
-<p><strong>Localisation :</strong> {{ equipement.localisation }}</p>
+<h1>Calendrier – {{ equipment.name }}</h1>
+<p><strong>Rate horaire :</strong> {{ hourly_rate }} $ CAD/h</p>
+<p><strong>Localisation :</strong> {{ equipment.location }}</p>
 
 <div class="navigation">
   <a href="?semaine={{ semaine_precedente|date:'Y-m-d' }}">← Semaine précédente</a>
@@ -132,9 +132,9 @@
 <div class="calendar-container">
   <div class="time-corner"></div>
 
-  {% for jour in jours_semaine %}
+  {% for day_of_week in jours_semaine %}
   <div class="day-header">
-    {{ jour|date:"l d/m" }}
+    {{ day_of_week|date:"l d/m" }}
   </div>
   {% endfor %}
 
@@ -142,8 +142,8 @@
   <div class="time-slot hour">
     {{ heure|stringformat:"02d" }}h
   </div>
-  {% for jour in jours_semaine %}
-  <div class="time-slot day-column" data-day="{{ jour|date:'Y-m-d' }}" data-hour="{{ heure }}">
+  {% for day_of_week in jours_semaine %}
+  <div class="time-slot day-column" data-day="{{ day_of_week|date:'Y-m-d' }}" data-hour="{{ heure }}">
   </div>
   {% endfor %}
   {% endfor %}
@@ -154,7 +154,7 @@
 {{ creneaux_json|json_script:"creneaux-json" }}
 
 <script>
-  const reserverBase = "{% url 'booking:reserver' equipement.id %}";
+  const reserverBase = "{% url 'booking:reserver' equipment.id %}";
   const pad2 = n => String(n).padStart(2, '0');
   const localYmd = d => `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
   const minutesOfDay = d => d.getHours() * 60 + d.getMinutes();
@@ -206,11 +206,11 @@
 
         // Détermine les classes CSS selon le type de réservation
         let cssClasses = "reservation";
-        if (resa.est_maintenance) cssClasses += " maintenance";
-        if (resa.est_enseignement) cssClasses += " enseignement";
+        if (resa.is_maintenance) cssClasses += " maintenance";
+        if (resa.is_teaching) cssClasses += " enseignement";
 
         renderDayBlock(
-          dayStr, startMin, endMin, cssClasses, resa.usager,
+          dayStr, startMin, endMin, cssClasses, resa.user_profile,
           (e) => { e.stopPropagation(); window.location.href = `/reserv/redirection/${resa.id}/`; }
         );
 
@@ -219,25 +219,25 @@
     });
 
     creneaux.forEach(cr => {
-      const idx = parseInt(cr.jour, 10);
+      const idx = parseInt(cr.day_of_week, 10);
       const dayStr = jours[idx];
       if (!dayStr) return;
-      const [hD, mD] = cr.heure_debut.split(':').map(Number);
-      const [hF, mF] = cr.heure_fin.split(':').map(Number);
-      renderDayBlock(dayStr, hD * 60 + (mD || 0), hF * 60 + (mF || 0), "creneau", `${cr.heure_debut} – ${cr.heure_fin}`);
+      const [hD, mD] = cr.start_time.split(':').map(Number);
+      const [hF, mF] = cr.end_time.split(':').map(Number);
+      renderDayBlock(dayStr, hD * 60 + (mD || 0), hF * 60 + (mF || 0), "creneau", `${cr.start_time} – ${cr.end_time}`);
     });
 
     document.querySelector(".calendar-container")?.addEventListener("click", (e) => {
       if (e.target.closest(".reservation")) return;
 
-      let jour, heure;
+      let day_of_week, heure;
       const creneau = e.target.closest(".creneau");
 
       if (creneau) {
         const cell = creneau.closest(".day-column");
         if (!cell) return;
 
-        jour = cell.dataset.day;
+        day_of_week = cell.dataset.day;
         const rect = cell.getBoundingClientRect();
         const relativeY = e.clientY - rect.top;
         const h = Math.floor(relativeY / 60);
@@ -246,17 +246,17 @@
         const cell = e.target.closest(".day-column");
         if (!cell) return;
 
-        jour = cell.dataset.day;
+        day_of_week = cell.dataset.day;
         heure = String(cell.dataset.hour || "0").padStart(2, "0");
       }
 
-      const startLocal = new Date(`${jour}T${heure}:00:00`);
+      const startLocal = new Date(`${day_of_week}T${heure}:00:00`);
       const endLocal = new Date(startLocal.getTime() + 60 * 60 * 1000);
 
       const params = new URLSearchParams({
         start: startLocal.toISOString(),
         end: endLocal.toISOString(),
-        date_debut: jour,
+        start_date: day_of_week,
         heure: `${heure}:00`,
       });
       window.location.href = `${reserverBase}?${params.toString()}`;

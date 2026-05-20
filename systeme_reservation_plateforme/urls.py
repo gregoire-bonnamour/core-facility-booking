@@ -7,7 +7,7 @@ Fichier : systeme_reservation_plateforme/urls.py
 ------------------------------------------------
 Définit toutes les routes principales du projet.
 
-Chaque app déclare ses propres `urls.py` (reserv, usager, facturation).
+Chaque app déclare ses propres `urls.py` (reserv, user_profile, facturation).
 Elles sont incluses ici pour centraliser la configuration.
 """
 
@@ -43,7 +43,7 @@ urlpatterns = [
     path('', core_views.accueil, name='accueil'),
 
     # App "accounts" (gestion inscriptions, profils, invitations…)
-    path('usager/', include('accounts.urls')),
+    path('user_profile/', include('accounts.urls')),
 
     # App "billing" (interface génération factures)
     path('facturation/', include('billing.urls')),

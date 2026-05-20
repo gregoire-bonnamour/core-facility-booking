@@ -5,21 +5,21 @@
 import random
 from datetime import date, time, datetime, timedelta
 from booking.models import Reservation
-from accounts.models import Usager
-from equipment.models import Equipement
+from accounts.models import UserProfile
+from equipment.models import Equipment
 
 random.seed(42)  # reproductible
 
 # Récupération des objets existants
-usagers = list(Usager.objects.all())
-equipements = list(
-    Equipement.objects.filter(nom__in=["CYTOFlex", "Stellaris 8 FALCON STED (Leica)"])
+usagers = list(UserProfile.objects.all())
+equipment_set = list(
+    Equipment.objects.filter(nom__in=["CYTOFlex", "Stellaris 8 FALCON STED (Leica)"])
 )
 
-if not usagers or not equipements:
+if not usagers or not equipment_set:
     print("⚠️ Pas assez de données existantes (usagers et équipements requis).")
 else:
-    print(f"✅ {len(usagers)} usagers et {len(equipements)} équipements trouvés")
+    print(f"✅ {len(usagers)} usagers et {len(equipment_set)} équipements trouvés")
 
 # Option : nettoyer les réservations de test avant génération
 # Reservation.objects.all().delete()
@@ -35,8 +35,8 @@ def random_duration():
 nb_reservations = 200
 
 for _ in range(nb_reservations):
-    usager = random.choice(usagers)
-    equipement = random.choice(equipements)
+    user_profile = random.choice(usagers)
+    equipment = random.choice(equipment_set)
 
     # Période : uniquement sur les 60 derniers jours
     start_date = date.today() - timedelta(days=random.randint(0, 60))
@@ -48,27 +48,27 @@ for _ in range(nb_reservations):
     resa_type = random.choice(["classique", "assistance", "formation"])
 
     kwargs = {
-        "accounts": usager,
-        "equipement": equipement,
-        "date_debut": start_date,
-        "date_fin": start_date,
-        "heure_debut": start_time,
-        "heure_fin": end_time,
+        "accounts": user_profile,
+        "equipment": equipment,
+        "start_date": start_date,
+        "end_date": start_date,
+        "start_time": start_time,
+        "end_time": end_time,
     }
 
     if resa_type == "assistance":
         kwargs.update({
             "assistance": True,
-            "duree_assistance_minutes": random.choice([30, 60, 90, 120]),
+            "assistance_duration_minutes": random.choice([30, 60, 90, 120]),
         })
     elif resa_type == "formation":
         participants = random.sample(usagers, k=min(len(usagers), random.randint(2, 5)))
-        emails = ",".join(u.courriel for u in participants if u.courriel)
+        emails = ",".join(u.email for u in participants if u.email)
         kwargs.update({
-            "est_formation": True,
-            "courriels_formes": emails,
+            "is_training": True,
+            "trained_emails": emails,
         })
 
     Reservation.objects.create(**kwargs)
 
-print(f"🎉 Généré {nb_reservations} réservations variées (2 derniers mois) sur {len(equipements)} équipements")
+print(f"🎉 Généré {nb_reservations} réservations variées (2 derniers mois) sur {len(equipment_set)} équipements")

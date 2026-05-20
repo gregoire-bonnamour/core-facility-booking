@@ -9,11 +9,11 @@ Modèles de données de l'application `facturation`.
 
 À ce stade, aucun modèle n'est défini ici. Les données de facturation
 sont probablement calculées à partir d'autres apps (réservations, usagers,
-tarifs par affiliation) et exposées via des vues/exports.
+rates par affiliation) et exposées via des vues/exports.
 
 Bonnes pratiques pour la suite :
 - Créer un modèle `Facture` si l'on souhaite persister les factures
-  (numéro, client/affiliation, période couverte, montant, statut, etc.).
+  (numéro, client/affiliation, période couverte, montant, status, etc.).
 - Créer un modèle `LigneFacture` si l'on veut détailler par réservation,
   équipement, ou prestation.
 - Prévoir des champs "trace" (date de génération, généré par, version).

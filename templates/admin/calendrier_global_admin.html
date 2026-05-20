@@ -24,7 +24,7 @@
     {% for e in legend %}
       <div class="legend-item">
         <span class="legend-color" style="background: {{ e.color }};"></span>
-        <span>{{ e.nom }}</span>
+        <span>{{ e.name }}</span>
       </div>
     {% endfor %}
   </div>
@@ -50,7 +50,7 @@
         },
         eventDidMount: function(info) {
           const p = info.event.extendedProps || {};
-          info.el.title = (p.usager || '') + " – " + (p.equipement || '') + " [" + (p.statut || '') + "]";
+          info.el.title = (p.user_profile || '') + " – " + (p.equipment || '') + " [" + (p.status || '') + "]";
         }
       });
       calendar.render();

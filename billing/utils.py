@@ -5,28 +5,28 @@
 """
 Module : facturation.utils
 --------------------------
-Fonctions utilitaires pour la génération des données de facturation
+Roles utilitaires pour la génération des données de facturation
 (filtrage des réservations, calcul des coûts, exports CSV et PDF).
 
 Modèle métier
 -------------
-- Tarif d'utilisation (horaire) = Tarif(equipement, affiliation).tarif_horaire
-- Tarif d'assistance            = Affiliation.tarif_assistance (unique par affiliation)
+- Rate d'utilisation (horaire) = Rate(equipment, affiliation).hourly_rate
+- Rate d'assistance            = Affiliation.assistance_rate (unique par affiliation)
 - Formation :
     * tarif fixe par couple (équipement, affiliation)
 
-Fonctions publiques (API)
+Roles publiques (API)
 -------------------------
-- filtrer_reservations_par_laboratoire(date_debut, date_fin) -> dict[labo:str, list[Reservation]]
+- filtrer_reservations_par_laboratoire(start_date, end_date) -> dict[labo:str, list[Reservation]]
 - calculer_cout(reservation) -> float
 - generer_csv_par_laboratoire(groupes_par_labo) -> io.BytesIO (ZIP)
-- generer_pdfs_par_labo(groupes_par_labo, date_debut=None, date_fin=None) -> dict[nom_pdf:str, bytes]
+- generer_pdfs_par_labo(groupes_par_labo, start_date=None, end_date=None) -> dict[nom_pdf:str, bytes]
 
 Dépendances clés
 ----------------
 - reserv.models.Reservation
-- equipements.models (Tarif, TarifFormation)
-- usager.models (Affiliation, Laboratoire via Reservation.usager)
+- equipment_set.models (Rate, TrainingRate)
+- user_profile.models (Affiliation, Laboratory via Reservation.user_profile)
 - weasyprint (HTML → PDF)
 """
 
@@ -42,8 +42,8 @@ except ImportError:
     HTML = None
 from datetime import datetime
 from django.conf import settings
-from accounts.models import Usager
-from equipment.models import TarifFormation
+from accounts.models import UserProfile
+from equipment.models import TrainingRate
 import logging
 
 logger = logging.getLogger(__name__)
@@ -51,41 +51,41 @@ DEBUG_FACTURATION = False
 
 
 # -------------------------------------------------------------------
-#  Tarifs
+#  Rates
 # -------------------------------------------------------------------
 
 # -------------------------------------------------------------------
-#  Tarifs
+#  Rates
 # -------------------------------------------------------------------
 
-def get_tarif_horaire(equipement, affiliation):
-    from equipment.models import Tarif  # import local pour prévenir import circulaire
-    if not equipement or not affiliation:
+def get_hourly_rate(equipment, affiliation):
+    from equipment.models import Rate  # import local pour prévenir import circulaire
+    if not equipment or not affiliation:
         return Decimal("0.00")
     try:
-        t = Tarif.objects.get(equipement=equipement, affiliation=affiliation)
-        return Decimal(t.tarif_horaire)
-    except Tarif.DoesNotExist:
+        t = Rate.objects.get(equipment=equipment, affiliation=affiliation)
+        return Decimal(t.hourly_rate)
+    except Rate.DoesNotExist:
         return Decimal("0.00")
 
 
-def get_tarif_assistance(affiliation):
+def get_assistance_rate(affiliation):
     if not affiliation:
         return Decimal("0.00")
-    value = getattr(affiliation, "tarif_assistance", None)
+    value = getattr(affiliation, "assistance_rate", None)
     return Decimal(value) if value is not None else Decimal("0.00")
 
 
 #Lecture du tarif fixe de formation
-def get_tarif_formation(equipement, affiliation):
+def get_training_fee(equipment, affiliation):
     """
     Retourne le tarif fixe de formation pour un couple (équipement, affiliation).
     Si aucun tarif n’est défini, retourne None.
     """
     try:
-        tf = TarifFormation.objects.get(equipement=equipement, affiliation=affiliation)
-        return tf.tarif_formation
-    except TarifFormation.DoesNotExist:
+        tf = TrainingRate.objects.get(equipment=equipment, affiliation=affiliation)
+        return tf.training_fee
+    except TrainingRate.DoesNotExist:
         return None
 
 
@@ -93,20 +93,20 @@ def get_tarif_formation(equipement, affiliation):
 #  Filtrage / groupement
 # -------------------------------------------------------------------
 
-def filtrer_reservations_par_laboratoire(date_debut, date_fin):
+def filtrer_reservations_par_laboratoire(start_date, end_date):
     reservations = Reservation.objects.filter(
-        date_debut__gte=date_debut,
-        date_fin__lte=date_fin,
-        date_fin__lt=now()
-    ).select_related('usager__laboratoire', 'usager__affiliation', 'equipement')
+        start_date__gte=start_date,
+        end_date__lte=end_date,
+        end_date__lt=now()
+    ).select_related('user_profile__laboratoire', 'user_profile__affiliation', 'equipment')
 
     groupes_par_labo = defaultdict(list)
     for resa in reservations:
         # [NEW LOGIC] Pour les formations, on regarde les PARTICIPANTS
-        if resa.est_formation:
+        if resa.is_training:
              participants = get_usagers_facturables(resa)
              for u in participants:
-                 labo = u.laboratoire.nom if u and u.laboratoire else "Inconnu"
+                 labo = u.laboratoire.name if u and u.laboratoire else "Inconnu"
                  # On stocke des tuples (reservation, usager_a_facturer) pour savoir qui facturer
                  # Mais les fonctions existantes attendent une liste de 'Reservation'.
                  # TASTY TRICK: On ajoute la reservation dans la liste du labo du PARTICIPANT.
@@ -115,12 +115,12 @@ def filtrer_reservations_par_laboratoire(date_debut, date_fin):
              
              # Si aucun participant trouvé, fall-back sur l'organisateur (comportement par défaut) ?
              if not participants:
-                 labo = resa.usager.laboratoire.nom if resa.usager and resa.usager.laboratoire else "Inconnu"
+                 labo = resa.user_profile.laboratoire.name if resa.user_profile and resa.user_profile.laboratoire else "Inconnu"
                  groupes_par_labo[labo].append(resa)
                  
         else:
             # Cas standard : Organisateur
-            labo = resa.usager.laboratoire.nom if resa.usager and resa.usager.laboratoire else "Inconnu"
+            labo = resa.user_profile.laboratoire.name if resa.user_profile and resa.user_profile.laboratoire else "Inconnu"
             groupes_par_labo[labo].append(resa)
 
     return groupes_par_labo
@@ -131,8 +131,8 @@ def filtrer_reservations_par_laboratoire(date_debut, date_fin):
 # -------------------------------------------------------------------
 
 def _heures_reservation(reservation):
-    debut = datetime.combine(reservation.date_debut, reservation.heure_debut)
-    fin = datetime.combine(reservation.date_fin, reservation.heure_fin)
+    debut = datetime.combine(reservation.start_date, reservation.start_time)
+    fin = datetime.combine(reservation.end_date, reservation.end_time)
     return Decimal(max((fin - debut).total_seconds() / 3600, 0))
 
 
@@ -143,15 +143,15 @@ def decouper_reservation(reservation):
     
     ATTENTION : Pour les formations, ne retourne que la ligne "organisateur".
     """
-    usager = reservation.usager
-    affiliation = usager.affiliation if usager else None
-    equipement = reservation.equipement
+    user_profile = reservation.user_profile
+    affiliation = user_profile.affiliation if user_profile else None
+    equipment = reservation.equipment
 
-    if reservation.est_formation:
-        tarif_fixe = get_tarif_formation(equipement, affiliation)
+    if reservation.is_training:
+        tarif_fixe = get_training_fee(equipment, affiliation)
         return {
-            "equipement": equipement,
-            "accounts": usager,
+            "equipment": equipment,
+            "accounts": user_profile,
             "affiliation": affiliation,
             "type": "formation",
             "usage_heures": Decimal("0.0"),
@@ -161,7 +161,7 @@ def decouper_reservation(reservation):
             "assistance_taux": Decimal("0.00"),
             "assistance_cout": Decimal("0.00"),
             "total": Decimal(tarif_fixe) if tarif_fixe else Decimal("0.00"),
-            "note": "Tarif fixe de formation appliqué (Organisateur)",
+            "note": "Rate fixe de formation appliqué (Organisateur)",
         }
 
     # --- Cas normal ---
@@ -169,24 +169,24 @@ def decouper_reservation(reservation):
     usage_h = Decimal(duree_heures)
     assistance_h = Decimal(0)
     if reservation.assistance:
-        assistance_h = Decimal(reservation.duree_assistance_minutes) / 60
+        assistance_h = Decimal(reservation.assistance_duration_minutes) / 60
 
-    tarif_usage = get_tarif_horaire(equipement, affiliation)
-    tarif_assistance = get_tarif_assistance(affiliation)
+    tarif_usage = get_hourly_rate(equipment, affiliation)
+    assistance_rate = get_assistance_rate(affiliation)
 
     cout_usage = usage_h * tarif_usage
-    cout_assistance = assistance_h * tarif_assistance
+    cout_assistance = assistance_h * assistance_rate
 
     return {
-        "equipement": equipement,
-        "accounts": usager,
+        "equipment": equipment,
+        "accounts": user_profile,
         "affiliation": affiliation,
         "type": "reservation",
         "usage_heures": usage_h,
         "usage_taux": tarif_usage,
         "usage_cout": cout_usage,
         "assistance_heures": assistance_h,
-        "assistance_taux": tarif_assistance,
+        "assistance_taux": assistance_rate,
         "assistance_cout": cout_assistance,
         "total": cout_usage + cout_assistance,
         "note": "",
@@ -199,17 +199,17 @@ def generer_lignes_facturation(reservation):
     """
     lignes = []
     
-    if reservation.est_formation:
+    if reservation.is_training:
         participants = get_usagers_facturables(reservation)
         
         if not participants:
             # Fallback : Si aucun participant, on ne facture PERSONNE (demande utilisateur).
             # On génère quand même une ligne pour la traçabilité (Organizer, 0$), avec une note explicite.
-            usager = reservation.usager
-            affiliation = usager.affiliation if usager else None
+            user_profile = reservation.user_profile
+            affiliation = user_profile.affiliation if user_profile else None
             lignes.append({
-                "equipement": reservation.equipement,
-                "accounts": usager,
+                "equipment": reservation.equipment,
+                "accounts": user_profile,
                 "affiliation": affiliation,
                 "type": "formation",
                 "usage_heures": Decimal("0.0"),
@@ -224,10 +224,10 @@ def generer_lignes_facturation(reservation):
         else:
             for u in participants:
                 affiliation = u.affiliation if u else None
-                tarif_fixe = get_tarif_formation(reservation.equipement, affiliation)
+                tarif_fixe = get_training_fee(reservation.equipment, affiliation)
                 
                 lignes.append({
-                    "equipement": reservation.equipement,
+                    "equipment": reservation.equipment,
                     "accounts": u, # LE PARTICIPANT
                     "affiliation": affiliation,
                     "type": "formation",
@@ -238,7 +238,7 @@ def generer_lignes_facturation(reservation):
                     "assistance_taux": Decimal("0.00"),
                     "assistance_cout": Decimal("0.00"),
                     "total": Decimal(tarif_fixe) if tarif_fixe else Decimal("0.00"),
-                    "note": f"Formation (Participant: {u.prenom} {u.nom})",
+                    "note": f"Formation (Participant: {u.first_name} {u.name})",
                 })
     else:
         # Cas classique : 1 ligne
@@ -275,7 +275,7 @@ def generer_csv_par_laboratoire(groupes_par_labo):
             csv_buffer.write('\ufeff')
 
             writer.writerow([
-                "Laboratoire", "Usager", "Affiliation", "Équipement", "Type",
+                "Laboratory", "UserProfile", "Affiliation", "Équipement", "Type",
                 "Date début", "Date fin",
                 "Durée usage (h)", "Coût usage ($)",
                 "Durée assistance (h)", "Coût assistance ($)",
@@ -300,20 +300,20 @@ def generer_csv_par_laboratoire(groupes_par_labo):
                     # Filtre Labo effectif
                     u_labo = "Inconnu"
                     if d['accounts'] and d['accounts'].laboratoire:
-                        u_labo = d['accounts'].laboratoire.nom
+                        u_labo = d['accounts'].laboratoire.name
                     
                     if u_labo == labo_nom:
-                         usager = d['accounts']
+                         user_profile = d['accounts']
                          type_lib = "Formation" if d['type'] == 'formation' else "Réservation"
                          
                          writer.writerow([
                             labo_nom,
-                            f"{usager.prenom} {usager.nom}" if usager else "Inconnu",
-                            usager.affiliation.nom if usager and usager.affiliation else "Inconnue",
-                            d['equipement'].nom,
+                            f"{user_profile.first_name} {user_profile.name}" if user_profile else "Inconnu",
+                            user_profile.affiliation.name if user_profile and user_profile.affiliation else "Inconnue",
+                            d['equipment'].name,
                             type_lib,
-                            resa.date_debut.strftime("%Y-%m-%d"),
-                            resa.date_fin.strftime("%Y-%m-%d"),
+                            resa.start_date.strftime("%Y-%m-%d"),
+                            resa.end_date.strftime("%Y-%m-%d"),
                             f"{d['usage_heures']:.2f}",
                             f"{d['usage_cout']:.2f}",
                             f"{d['assistance_heures']:.2f}",
@@ -322,13 +322,13 @@ def generer_csv_par_laboratoire(groupes_par_labo):
                         ])
             
             safe_labo = re.sub(r'[^A-Za-z0-9_\-]+', '_', labo_nom)
-            zip_file.writestr(f"Facture_Laboratoire_{safe_labo}.csv", csv_buffer.getvalue())
+            zip_file.writestr(f"Facture_Laboratory_{safe_labo}.csv", csv_buffer.getvalue())
 
     zip_buffer.seek(0)
     return zip_buffer
 
 
-def generer_pdfs_par_labo(groupes_par_labo, date_debut=None, date_fin=None):
+def generer_pdfs_par_labo(groupes_par_labo, start_date=None, end_date=None):
     """
     Génère des PDFs (un par laboratoire) récapitulant l'activité et les coûts.
     """
@@ -354,40 +354,40 @@ def generer_pdfs_par_labo(groupes_par_labo, date_debut=None, date_fin=None):
                 # Filtre : cette ligne appartient-elle à ce labo ?
                 u_labo = "Inconnu"
                 if d['accounts'] and d['accounts'].laboratoire:
-                    u_labo = d['accounts'].laboratoire.nom
+                    u_labo = d['accounts'].laboratoire.name
                 
                 if u_labo != labo:
                     continue
 
-                usager = d['accounts']
-                equipement_nom = d['equipement'].nom
+                user_profile = d['accounts']
+                equipement_nom = d['equipment'].name
 
                 if d['type'] == 'formation':
-                    regroupement[usager][equipement_nom]["Formation_duree"] += Decimal(0)
-                    regroupement[usager][equipement_nom]["Formation_tarif"] = d["total"] # Dernier tarif vu (supposons unique)
-                    regroupement[usager][equipement_nom]["Formation_cout"] += d["total"]
+                    regroupement[user_profile][equipement_nom]["Formation_duree"] += Decimal(0)
+                    regroupement[user_profile][equipement_nom]["Formation_tarif"] = d["total"] # Dernier tarif vu (supposons unique)
+                    regroupement[user_profile][equipement_nom]["Formation_cout"] += d["total"]
                     total_labo += d["total"]
                 else:
                     # Utilisation
                     if d["usage_heures"] > 0:
-                        regroupement[usager][equipement_nom]["Utilisation_duree"] += d["usage_heures"]
-                        regroupement[usager][equipement_nom]["Utilisation_tarif"] = d["usage_taux"]
-                        regroupement[usager][equipement_nom]["Utilisation_cout"] += d["usage_cout"]
+                        regroupement[user_profile][equipement_nom]["Utilisation_duree"] += d["usage_heures"]
+                        regroupement[user_profile][equipement_nom]["Utilisation_tarif"] = d["usage_taux"]
+                        regroupement[user_profile][equipement_nom]["Utilisation_cout"] += d["usage_cout"]
                         total_labo += d["usage_cout"]
 
                     # Assistance
                     if d["assistance_heures"] > 0:
-                        regroupement[usager][equipement_nom]["Assistance_duree"] += d["assistance_heures"]
-                        regroupement[usager][equipement_nom]["Assistance_tarif"] = d["assistance_taux"]
-                        regroupement[usager][equipement_nom]["Assistance_cout"] += d["assistance_cout"]
+                        regroupement[user_profile][equipement_nom]["Assistance_duree"] += d["assistance_heures"]
+                        regroupement[user_profile][equipement_nom]["Assistance_tarif"] = d["assistance_taux"]
+                        regroupement[user_profile][equipement_nom]["Assistance_cout"] += d["assistance_cout"]
                         total_labo += d["assistance_cout"]
 
         # --- Étape 2 : transformer regroupement en structure pour template ---
-        for usager, equipements in regroupement.items():
+        for user_profile, equipment_set in regroupement.items():
             equipements_context = []
             total_usager = Decimal("0.00")
 
-            for eq_nom, lignes in equipements.items():
+            for eq_nom, lignes in equipment_set.items():
                 lignes_context = []
 
                 # Utilisation
@@ -421,22 +421,22 @@ def generer_pdfs_par_labo(groupes_par_labo, date_debut=None, date_fin=None):
                     total_usager += lignes["Formation_cout"]
 
                 equipements_context.append({
-                    "nom": eq_nom,
+                    "name": eq_nom,
                     "lignes": lignes_context,
                     "total_equipement": round(sum(l["cout"] for l in lignes_context), 2),
                 })
 
             usagers_context.append({
-                "accounts": usager,
+                "accounts": user_profile,
                 "equipment": equipements_context,
                 "total_usager": round(total_usager, 2),
             })
 
         # --- Étape 3 : préparer contexte ---
         context = {
-            "laboratoire": {"nom": labo},
-            "date_debut": date_debut,
-            "date_fin": date_fin,
+            "laboratoire": {"name": labo},
+            "start_date": start_date,
+            "end_date": end_date,
             "usagers": usagers_context,
             "total_laboratoire": round(total_labo, 2),
             "logo_path": f"file://{settings.BASE_DIR}/facturation/static/facturation/images/YourUniversity.png",
@@ -454,7 +454,7 @@ def generer_pdfs_par_labo(groupes_par_labo, date_debut=None, date_fin=None):
 
         os.remove(tmpfile_path)
 
-        nom_fichier = f"Facture_Laboratoire_{labo.replace(' ', '_')}.pdf"
+        nom_fichier = f"Facture_Laboratory_{labo.replace(' ', '_')}.pdf"
         pdfs[nom_fichier] = pdf_content
 
     return pdfs
@@ -465,23 +465,23 @@ def get_usagers_facturables(reservation):
     """
     Retourne les usagers qui doivent être facturés pour une réservation.
 
-    - Cas normal → l’usager lié à la réservation.
-    - Cas formation → uniquement les usagers listés dans courriels_formes
-      (s’ils existent dans la base Usager).
+    - Cas normal → l’user_profile lié à la réservation.
+    - Cas formation → uniquement les usagers listés dans trained_emails
+      (s’ils existent dans la base UserProfile).
     """
     # Cas normal (réservation classique)
-    if not reservation.est_formation and reservation.usager:
-        return [reservation.usager]
+    if not reservation.is_training and reservation.user_profile:
+        return [reservation.user_profile]
 
     # Cas formation
     usagers = []
-    if reservation.est_formation and reservation.courriels_formes:
+    if reservation.is_training and reservation.trained_emails:
         # [MODIF] Parsing robuste (virgule, point-virgule, newline)
-        raw = reservation.courriels_formes
-        courriels = [c.strip() for c in re.split(r'[;,\n\r]+', raw) if c.strip()]
+        raw = reservation.trained_emails
+        emails = [c.strip() for c in re.split(r'[;,\n\r]+', raw) if c.strip()]
         
-        for email in courriels:
-            u = Usager.objects.filter(courriel__iexact=email).first()
+        for email in emails:
+            u = UserProfile.objects.filter(email__iexact=email).first()
             if u and u not in usagers:
                 usagers.append(u)
         logger.info(f"[FACTURATION] Formation {reservation.id} – {len(usagers)} usagers facturables trouvés")

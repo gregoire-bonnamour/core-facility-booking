@@ -1,6 +1,6 @@
 """
 Patch stats_query : nb_formations compte les personnes formees (Invitation validee)
-plutot que les sessions de formation (Reservation.est_formation).
+plutot que les sessions de formation (Reservation.is_training).
 """
 import os
 
@@ -26,15 +26,15 @@ print("OK: nb_form = 0 supprime de l'init")
 
 # 2. Remplacer nb_form += 1; continue par juste continue dans le loop
 old_loop = (
-    "        if getattr(r, 'est_formation', False):\n"
+    "        if getattr(r, 'is_training', False):\n"
     "            nb_form += 1\n"
     "            continue"
 )
 new_loop = (
-    "        if getattr(r, 'est_formation', False):\n"
+    "        if getattr(r, 'is_training', False):\n"
     "            continue"
 )
-assert old_loop in src, "ERREUR: bloc est_formation dans loop introuvable"
+assert old_loop in src, "ERREUR: bloc is_training dans loop introuvable"
 src = src.replace(old_loop, new_loop, 1)
 print("OK: nb_form += 1 supprime du loop")
 
@@ -45,10 +45,10 @@ old_kpis = (
 )
 new_kpis = (
     "    from accounts.models import Invitation\n"
-    "    _form_resa_ids = [r.pk for r in resas if r.est_formation]\n"
+    "    _form_resa_ids = [r.pk for r in resas if r.is_training]\n"
     "    nb_form = Invitation.objects.filter(\n"
     "        reservation_id__in=_form_resa_ids,\n"
-    "        date_validation__isnull=False,\n"
+    "        validated_at__isnull=False,\n"
     "    ).count()\n"
     "\n"
     "    kpis = {\n"

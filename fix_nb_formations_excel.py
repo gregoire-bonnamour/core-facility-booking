@@ -1,6 +1,6 @@
 """
 Patch views.py : nb_formations compte les personnes formees (Invitation validee)
-dans _agg_metrics (Excel par equipement) et dans le dashboard Excel stats.
+dans _agg_metrics (Excel par equipment) et dans le dashboard Excel stats.
 """
 import os
 
@@ -23,7 +23,7 @@ old_agg = (
     "            users.add(r.usager_id)\n"
     "        if r.assistance:\n"
     "            nb_ass += 1\n"
-    "        if r.est_formation:\n"
+    "        if r.is_training:\n"
     "            nb_form += 1\n"
     "\n"
     "    total_min = min_usage + min_ass"
@@ -39,12 +39,12 @@ new_agg = (
     "            users.add(r.usager_id)\n"
     "        if r.assistance:\n"
     "            nb_ass += 1\n"
-    "        if r.est_formation:\n"
+    "        if r.is_training:\n"
     "            _form_pks.append(r.pk)\n"
     "\n"
     "    nb_form = Invitation.objects.filter(\n"
     "        reservation_id__in=_form_pks,\n"
-    "        date_validation__isnull=False,\n"
+    "        validated_at__isnull=False,\n"
     "    ).count() if _form_pks else 0\n"
     "\n"
     "    total_min = min_usage + min_ass"
@@ -68,13 +68,13 @@ print("OK: init nb_formations dashboard supprime")
 
 # ── 3. Dashboard Excel : loop ─────────────────────────────────────────────────
 old_loop = (
-    "        if r.est_formation:\n"
+    "        if r.is_training:\n"
     "            type_resa = \"Formation\"\n"
     "            data_by_type['Formation'] += duree_h\n"
     "            nb_formations += 1"
 )
 new_loop = (
-    "        if r.est_formation:\n"
+    "        if r.is_training:\n"
     "            type_resa = \"Formation\"\n"
     "            data_by_type['Formation'] += duree_h\n"
     "            _form_pks_dash.append(r.pk)"
@@ -92,7 +92,7 @@ old_phase2 = (
 new_phase2 = (
     "    nb_formations = Invitation.objects.filter(\n"
     "        reservation_id__in=_form_pks_dash,\n"
-    "        date_validation__isnull=False,\n"
+    "        validated_at__isnull=False,\n"
     "    ).count() if _form_pks_dash else 0\n"
     "\n"
     "    # ============================================================================\n"

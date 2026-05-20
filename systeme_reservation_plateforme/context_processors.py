@@ -29,4 +29,4 @@ def support_mailto(request):
     }
 
 def news_feed(request):
-    return {"news_list": News.objects.filter(actif=True).order_by('-date_publication')[:5]}
+    return {"news_list": News.objects.filter(is_active=True).order_by('-published_at')[:5]}

@@ -2,7 +2,7 @@
 Script de patch pour reserv/views.py et reserv/urls.py
 - Simplification de stats_query (suppression par_aff, par_fct, utilisation)
 - Ajout de stats_zone1
-- Mise a jour urls.py
+- Mise a day_of_week urls.py
 """
 import re, os, sys
 
@@ -18,19 +18,19 @@ with open(views_path, "r", encoding="utf-8") as f:
 # -- 1a. Changer @require_POST -> @require_http_methods(["GET","POST"]) sur stats_query
 old_decorator = (
     "@login_required\n"
-    "@user_passes_test(est_admin_plateforme)\n"
+    "@user_passes_test(is_platform_admin_plateforme)\n"
     "@csrf_protect\n"
     "@require_POST\n"
     "def stats_query(request):"
 )
 new_decorator = (
     "@login_required\n"
-    "@user_passes_test(est_admin_plateforme)\n"
+    "@user_passes_test(is_platform_admin_plateforme)\n"
     "def stats_query(request):"
 )
 assert old_decorator in src, "ERREUR: bloc decorator stats_query introuvable"
 src = src.replace(old_decorator, new_decorator, 1)
-print("OK: decorator stats_query mis a jour")
+print("OK: decorator stats_query mis a day_of_week")
 
 # -- 1b. Supprimer par_aff et par_fct des defaultdicts
 old_dicts = (
@@ -51,15 +51,15 @@ print("OK: par_aff et par_fct supprimes des defaultdicts")
 old_aff_block = (
     "        aff = getattr(getattr(getattr(r, 'accounts', None), 'laboratoire', None), 'affiliation', None)\n"
     "        if aff:\n"
-    "            key = (aff.id, aff.nom)\n"
+    "            key = (aff.id, aff.name)\n"
     "            par_aff[key]['reservations'] += 1\n"
     "            par_aff[key]['min_usage']    += mu\n"
     "            par_aff[key]['min_assist']   += ma\n"
     "\n"
-    "        if getattr(r, 'accounts', None) and getattr(r.usager, 'laboratoire', None):"
+    "        if getattr(r, 'accounts', None) and getattr(r.user_profile, 'laboratoire', None):"
 )
 new_aff_block = (
-    "        if getattr(r, 'accounts', None) and getattr(r.usager, 'laboratoire', None):"
+    "        if getattr(r, 'accounts', None) and getattr(r.user_profile, 'laboratoire', None):"
 )
 assert old_aff_block in src, "ERREUR: bloc par_aff loop introuvable"
 src = src.replace(old_aff_block, new_aff_block, 1)
@@ -67,8 +67,8 @@ print("OK: alimentation par_aff supprimee du loop")
 
 # -- 1d. Supprimer l'alimentation de par_fct dans le loop
 old_fct_block = (
-    "        if getattr(r, 'accounts', None) and getattr(r.usager, 'fonction', None):\n"
-    "            key = (r.usager.fonction.id, r.usager.fonction.nom)\n"
+    "        if getattr(r, 'accounts', None) and getattr(r.user_profile, 'fonction', None):\n"
+    "            key = (r.user_profile.fonction.id, r.user_profile.fonction.name)\n"
     "            par_fct[key]['reservations'] += 1\n"
     "            par_fct[key]['min_usage']    += mu\n"
     "            par_fct[key]['min_assist']   += ma\n"
@@ -82,7 +82,7 @@ assert old_fct_block in src, "ERREUR: bloc par_fct loop introuvable"
 src = src.replace(old_fct_block, new_fct_block, 1)
 print("OK: alimentation par_fct supprimee du loop")
 
-# -- 1e. Mettre a jour le dict tables (supprimer affiliations et fonctions)
+# -- 1e. Mettre a day_of_week le dict tables (supprimer affiliations et fonctions)
 old_tables = (
     "    tables = {\n"
     "        'equipment':  _tabify(par_eq),\n"
@@ -106,20 +106,20 @@ print("OK: dict tables simplifie")
 # -- 1f. Supprimer le bloc utilisation (taux d'occupation)
 old_util = (
     "    eq_ids = filters.get('equipment') or list({r.equipement_id for r in resas if r.equipement_id})\n"
-    "    eqs = Equipement.objects.filter(id__in=eq_ids).prefetch_related('creneaux').order_by('nom') if eq_ids else []\n"
+    "    eqs = Equipment.objects.filter(id__in=eq_ids).prefetch_related('creneaux').order_by('name') if eq_ids else []\n"
     "\n"
     "    utilisation = []\n"
     "    for e in eqs:\n"
     "        available_min = 0\n"
     "        for c in e.creneaux.all():\n"
-    "            slot_min = int((_combine_safe(date.today(), c.heure_fin) - _combine_safe(date.today(), c.heure_debut)).total_seconds() // 60)\n"
-    "            available_min += wd_counts.get(int(c.jour), 0) * max(slot_min, 0)\n"
+    "            slot_min = int((_combine_safe(date.today(), c.end_time) - _combine_safe(date.today(), c.start_time)).total_seconds() // 60)\n"
+    "            available_min += wd_counts.get(int(c.day_of_week), 0) * max(slot_min, 0)\n"
     "\n"
     "        used_min = sum(minutes_resa(r) for r in resas if r.equipement_id == e.id)\n"
     "        pct = round(100.0 * used_min / available_min, 1) if available_min > 0 else 0.0\n"
     "        utilisation.append({\n"
     "            'equipement_id': e.id,\n"
-    "            'equipement': e.nom,\n"
+    "            'equipment': e.name,\n"
     "            'heures_utilisees': round(used_min/60.0, 2),\n"
     "            'heures_disponibles': round(available_min/60.0, 2),\n"
     "            'occupation_pct': pct,\n"
@@ -157,15 +157,15 @@ print("OK: utilisation retire du JsonResponse")
 # -- 1h. Ajouter stats_zone1 avant la palette de couleurs
 stats_zone1_code = '''
 @login_required
-@user_passes_test(est_admin_plateforme)
+@user_passes_test(is_platform_admin_plateforme)
 def stats_zone1(request):
     """
     Statistiques globales plateforme (zone 1) :
     - Nombre d usagers actifs
-    - Nombre de laboratoires representes (au moins un usager actif)
+    - Nombre de laboratoires representes (au moins un user_profile is_active)
     - Nombre de nouveaux inscrits sur la periode (reglement accepte)
     """
-    from accounts.models import Usager, Laboratoire
+    from accounts.models import UserProfile, Laboratory
 
     def _parse(s):
         try:
@@ -173,17 +173,17 @@ def stats_zone1(request):
         except Exception:
             return None
 
-    debut = _parse(request.GET.get("date_debut") or "")
-    fin   = _parse(request.GET.get("date_fin") or "")
+    debut = _parse(request.GET.get("start_date") or "")
+    fin   = _parse(request.GET.get("end_date") or "")
 
-    nb_actifs = Usager.objects.filter(est_actif=True).count()
-    nb_labos  = Laboratoire.objects.filter(usager__est_actif=True).distinct().count()
+    nb_actifs = UserProfile.objects.filter(is_active=True).count()
+    nb_labos  = Laboratory.objects.filter(usager__is_active=True).distinct().count()
 
-    qs_inscrits = Usager.objects.filter(reglement_accepte=True)
+    qs_inscrits = UserProfile.objects.filter(terms_accepted=True)
     if debut:
-        qs_inscrits = qs_inscrits.filter(reglement_accepte_at__date__gte=debut)
+        qs_inscrits = qs_inscrits.filter(terms_accepted_at__date__gte=debut)
     if fin:
-        qs_inscrits = qs_inscrits.filter(reglement_accepte_at__date__lte=fin)
+        qs_inscrits = qs_inscrits.filter(terms_accepted_at__date__lte=fin)
     nb_inscrits = qs_inscrits.count()
 
     return JsonResponse({
@@ -195,7 +195,7 @@ def stats_zone1(request):
 '''
 
 old_palette = (
-    "# Palette discrete (10 couleurs): on re-map par id d equipement"
+    "# Palette discrete (10 couleurs): on re-map par id d equipment"
 )
 # Le commentaire dans le fichier utilise accent : cherchons la vraie version
 palette_marker = "PALETTE = ["
@@ -224,6 +224,6 @@ urls = urls.replace(old_stats_url, new_stats_url, 1)
 
 with open(urls_path, "w", encoding="utf-8") as f:
     f.write(urls)
-print("OK: urls.py mis a jour")
+print("OK: urls.py mis a day_of_week")
 
 print("\nPatch termine avec succes.")

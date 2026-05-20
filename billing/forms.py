@@ -21,8 +21,8 @@ class FacturationForm(forms.Form):
     Formulaire de génération de factures.
 
     Champs :
-        - date_debut (date) : début de la période.
-        - date_fin (date)   : fin de la période.
+        - start_date (date) : début de la période.
+        - end_date (date)   : fin de la période.
         - affiliations      : filtre optionnel par affiliation (YourUniversity, McGill…).
         - inclure_csv       : inclure un CSV détaillé par labo.
 
@@ -30,12 +30,12 @@ class FacturationForm(forms.Form):
         - La date de fin doit être ≥ date de début.
     """
 
-    date_debut = forms.DateField(
+    start_date = forms.DateField(
         label="Date de début",
         widget=forms.DateInput(attrs={"type": "date", "class": "form-control"}),
     )
 
-    date_fin = forms.DateField(
+    end_date = forms.DateField(
         label="Date de fin",
         widget=forms.DateInput(attrs={"type": "date", "class": "form-control"}),
     )
@@ -55,7 +55,7 @@ class FacturationForm(forms.Form):
 
     def clean(self):
         cleaned_data = super().clean()
-        d1, d2 = cleaned_data.get("date_debut"), cleaned_data.get("date_fin")
+        d1, d2 = cleaned_data.get("start_date"), cleaned_data.get("end_date")
 
         if d1 and d2 and d2 < d1:
             raise forms.ValidationError(

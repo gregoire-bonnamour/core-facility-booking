@@ -11,7 +11,7 @@
         <h3>🔧 Administration</h3>
         <ul>
 			<li><a href="{% url 'admin:index' %}">⚙️ Interface Django admin</a></li>
-            <li><a href="{% url 'accounts:inviter_usager' %}">📨 Inviter un usager</a></li>
+            <li><a href="{% url 'accounts:inviter_usager' %}">📨 Inviter un user_profile</a></li>
             <li><a href="{% url 'booking:stats_admin' %}">📊 Statistiques</a></li>
             <li><a href="{% url 'billing:page_facturation' %}">💰 Facturation</a></li>
             <!-- 👉 nouveau : bouton vers le calendrier global admin -->
@@ -24,15 +24,15 @@
 {% if user.is_staff and nb_reservations_en_attente %}
     <section class="alert-admin">
         <h3>🚨 Réservations en attente</h3>
-        <p><a href="{% url 'admin:reserv_reservation_changelist' %}?statut=en_attente">
+        <p><a href="{% url 'admin:reserv_reservation_changelist' %}?status=en_attente">
             {{ nb_reservations_en_attente }} réservation(s) à valider
         </a></p>
     </section>
 {% endif %}
 
-{# --- Accès usager standard --- #}
+{# --- Accès user_profile standard --- #}
 <section>
-    <h3>🔧 Accès usager</h3>
+    <h3>🔧 Accès user_profile</h3>
     <ul>
         <li><a href="{% url 'accounts:profil' %}">👤 Mon profil</a></li>
         <li><a href="{{ MAILTO_SIGNALER_PROBLEME }}">Signaler un problème</a></li>
@@ -44,10 +44,10 @@
 <section>
     <h3>🗓️ Mes équipements</h3>
     <ul>
-        {% for equipement in equipements %}
+        {% for equipment in equipment_set %}
             <li>
-                <a href="{% url 'booking:calendrier_equipement' equipement.id %}?semaine={{ lundi|date:'Y-m-d' }}">
-                    📅 {{ equipement.nom }}
+                <a href="{% url 'booking:calendrier_equipement' equipment.id %}?semaine={{ lundi|date:'Y-m-d' }}">
+                    📅 {{ equipment.name }}
                 </a>
             </li>
         {% empty %}
@@ -63,9 +63,9 @@
     <ul class="news-feed">
         {% for news in news_list %}
             <li>
-                <strong>{{ news.titre }}</strong><br>
-                <small><em>Publié le {{ news.date_publication|date:"d/m/Y" }}</em></small>
-                <p>{{ news.contenu|linebreaksbr }}</p>
+                <strong>{{ news.title }}</strong><br>
+                <small><em>Publié le {{ news.published_at|date:"d/m/Y" }}</em></small>
+                <p>{{ news.content|linebreaksbr }}</p>
             </li>
         {% endfor %}
     </ul>

@@ -23,7 +23,7 @@ class Command(BaseCommand):
         cutoff = timezone.now() - timedelta(days=months*30)
 
         # Exemple d’idée (à adapter à ton modèle):
-        # qs = Reservation.objects.filter(date_fin__lt=cutoff)
+        # qs = Reservation.objects.filter(end_date__lt=cutoff)
         # count = qs.count()
         count = 0  # placeholder
 

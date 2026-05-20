@@ -1,4 +1,4 @@
-# usager/management/commands/backup_db.py
+# user_profile/management/commands/backup_db.py
 import io, json, re, shutil, zipfile
 from datetime import timedelta
 from pathlib import Path
@@ -80,7 +80,7 @@ class Command(BaseCommand):
     def _apply_rotation(self, backups_dir: Path):
         """
         Conserve:
-          - 1 backup par jour pour les 7 derniers jours (aujourd’hui inclus)
+          - 1 backup par day_of_week pour les 7 derniers jours (aujourd’hui inclus)
           - 1 backup par semaine ISO pour les 8 semaines précédentes
         Supprime le reste.
         """
@@ -105,7 +105,7 @@ class Command(BaseCommand):
         tz = timezone.get_current_timezone() if settings.USE_TZ else None
 
         # Fenêtres de conservation
-        daily_cutoff = (now - timedelta(days=6)).date()  # conserve un par jour pour J-0..J-6
+        daily_cutoff = (now - timedelta(days=6)).date()  # conserve un par day_of_week pour J-0..J-6
 
         keep_weeks = set()
         for i in range(1, 9):  # 8 semaines précédentes

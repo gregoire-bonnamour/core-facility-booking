@@ -5,7 +5,7 @@
 """
 Commande Django : emails_equipement
 ------------------------------------
-Génère la liste des courriels des usagers autorisés pour un équipement donné.
+Génère la liste des emails des usagers autorisés pour un équipement donné.
 
 Usage:
     python manage.py emails_equipement "Nom de l'équipement"
@@ -15,12 +15,12 @@ Usage:
 """
 
 from django.core.management.base import BaseCommand, CommandError
-from equipment.models import Equipement
-from accounts.models import Usager
+from equipment.models import Equipment
+from accounts.models import UserProfile
 
 
 class Command(BaseCommand):
-    help = "Génère la liste des courriels des usagers autorisés pour un équipement"
+    help = "Génère la liste des emails des usagers autorisés pour un équipement"
 
     def add_arguments(self, parser):
         parser.add_argument(
@@ -58,45 +58,45 @@ class Command(BaseCommand):
         format_sortie = options['format']
 
         # Recherche de l'équipement (insensible à la casse, recherche partielle)
-        equipements = Equipement.objects.filter(nom__icontains=equipement_nom)
+        equipment_set = Equipment.objects.filter(nom__icontains=equipement_nom)
 
-        if not equipements.exists():
+        if not equipment_set.exists():
             raise CommandError(
-                f"Aucun équipement trouvé avec le nom '{equipement_nom}'. "
+                f"Aucun équipement trouvé avec le name '{equipement_nom}'. "
                 f"Vérifiez l'orthographe ou utilisez une recherche partielle."
             )
 
-        if equipements.count() > 1:
+        if equipment_set.count() > 1:
             self.stdout.write(
                 self.style.WARNING(
-                    f"\nPlusieurs équipements trouvés ({equipements.count()}):"
+                    f"\nPlusieurs équipements trouvés ({equipment_set.count()}):"
                 )
             )
-            for eq in equipements:
-                self.stdout.write(f"  - {eq.nom}")
+            for eq in equipment_set:
+                self.stdout.write(f"  - {eq.name}")
             self.stdout.write(
                 self.style.WARNING(
-                    "\nVeuillez préciser le nom exact. Utilisation du premier résultat pour cette fois.\n"
+                    "\nVeuillez préciser le name exact. Utilisation du premier résultat pour cette fois.\n"
                 )
             )
 
-        equipement = equipements.first()
+        equipment = equipment_set.first()
         self.stdout.write(
-            self.style.SUCCESS(f"\n📋 Équipement: {equipement.nom}")
+            self.style.SUCCESS(f"\n📋 Équipement: {equipment.name}")
         )
 
         # Récupération des usagers autorisés
-        usagers = equipement.usagers_autorises.all()
+        usagers = equipment.usagers_autorises.all()
 
         if actifs_seulement:
-            usagers = usagers.filter(est_actif=True)
+            usagers = usagers.filter(is_active=True)
 
         # Comptage
         total = usagers.count()
         if total == 0:
             self.stdout.write(
                 self.style.WARNING(
-                    f"\n⚠️  Aucun usager {'actif ' if actifs_seulement else ''}autorisé pour cet équipement.\n"
+                    f"\n⚠️  Aucun user_profile {'is_active ' if actifs_seulement else ''}autorisé pour cet équipement.\n"
                 )
             )
             return
@@ -104,8 +104,8 @@ class Command(BaseCommand):
         # Affichage selon le format
         self.stdout.write(
             self.style.SUCCESS(
-                f"✅ {total} usager{'s' if total > 1 else ''} "
-                f"{'actif' if actifs_seulement else 'trouvé'}{'s' if total > 1 else ''}\n"
+                f"✅ {total} user_profile{'s' if total > 1 else ''} "
+                f"{'is_active' if actifs_seulement else 'trouvé'}{'s' if total > 1 else ''}\n"
             )
         )
 
@@ -117,28 +117,28 @@ class Command(BaseCommand):
             self._afficher_email(usagers)
 
     def _afficher_liste(self, usagers):
-        """Affiche une liste simple, un courriel par ligne"""
-        self.stdout.write("\n📧 Liste des courriels:\n")
-        for usager in usagers:
-            self.stdout.write(usager.courriel)
+        """Affiche une liste simple, un email par ligne"""
+        self.stdout.write("\n📧 Liste des emails:\n")
+        for user_profile in usagers:
+            self.stdout.write(user_profile.email)
         self.stdout.write("")  # Ligne vide à la fin
 
     def _afficher_csv(self, usagers):
-        """Affiche un CSV avec détails (nom, prénom, courriel, statut)"""
+        """Affiche un CSV avec détails (name, prénom, email, status)"""
         self.stdout.write("\n📊 Format CSV:\n")
-        self.stdout.write("Nom,Prénom,Courriel,Actif,Affiliation,Laboratoire")
-        for usager in usagers:
-            affiliation = usager.affiliation.nom if usager.affiliation else "N/A"
-            laboratoire = usager.laboratoire.nom if usager.laboratoire else "N/A"
+        self.stdout.write("Nom,Prénom,Courriel,Actif,Affiliation,Laboratory")
+        for user_profile in usagers:
+            affiliation = user_profile.affiliation.name if user_profile.affiliation else "N/A"
+            laboratoire = user_profile.laboratoire.name if user_profile.laboratoire else "N/A"
             self.stdout.write(
-                f"{usager.nom},{usager.prenom},{usager.courriel},"
-                f"{'Oui' if usager.est_actif else 'Non'},{affiliation},{laboratoire}"
+                f"{user_profile.name},{user_profile.first_name},{user_profile.email},"
+                f"{'Oui' if user_profile.is_active else 'Non'},{affiliation},{laboratoire}"
             )
         self.stdout.write("")  # Ligne vide à la fin
 
     def _afficher_email(self, usagers):
-        """Affiche les courriels séparés par point-virgule pour copier-coller dans un client email"""
-        courriels = "; ".join([usager.courriel for usager in usagers])
+        """Affiche les emails séparés par point-virgule pour copier-coller dans un client email"""
+        emails = "; ".join([user_profile.email for user_profile in usagers])
         self.stdout.write("\n✉️  Format email (copier-coller):\n")
-        self.stdout.write(courriels)
+        self.stdout.write(emails)
         self.stdout.write("")  # Ligne vide à la fin

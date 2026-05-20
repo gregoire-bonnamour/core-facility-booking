@@ -1,5 +1,5 @@
 """
-Patch usager/urls.py : ajoute l'URL confirmer-activite/<token>/.
+Patch user_profile/urls.py : ajoute l'URL confirmer-activite/<token>/.
 """
 import os
 
@@ -24,4 +24,4 @@ src = src.replace(old_anchor, new_anchor, 1)
 with open(path, "w", encoding="utf-8") as f:
     f.write(src)
 
-print("OK: URL confirmer-activite ajoutee dans usager/urls.py")
+print("OK: URL confirmer-activite ajoutee dans user_profile/urls.py")

@@ -3,32 +3,32 @@
 # See the LICENSE file or https://creativecommons.org/licenses/by-nc/4.0/legalcode for details.
 
 """
-Module : equipements.models
+Module : equipment_set.models
 ---------------------------
 Ce module définit les modèles de base liés à la gestion des équipements :
-- Equipement : objet principal (microscope, cytomètre, etc.)
-- Creneau    : créneaux horaires autorisés pour réserver l’équipement
-- PlageLimite: plages horaires où la durée d’utilisation est plafonnée
-- Tarif      : grille tarifaire selon l’affiliation de l’usager
+- Equipment : objet principal (microscope, cytomètre, etc.)
+- TimeSlot    : créneaux horaires autorisés pour réserver l’équipement
+- UsageQuota: plages horaires où la durée d’utilisation est plafonnée
+- Rate      : grille tarifaire selon l’affiliation de l’user_profile
 """
 
 from django.db import models
 
-class Equipement(models.Model):
+class Equipment(models.Model):
     """
     Représente un équipement qui peut être réservé.
     
     Attributs :
-        nom (str)                : nom unique de l’équipement
+        name (str)                : name unique de l’équipement
         description (str)        : description libre de l’équipement
         type (str)               : catégorie (microscope, cytomètre, etc.)
-        localisation (str)       : salle ou lieu de l’équipement
-        actif (bool)             : permet de désactiver l’équipement (masqué des usagers)
+        location (str)       : salle ou lieu de l’équipement
+        is_active (bool)             : permet de désactiver l’équipement (masqué des usagers)
     """
-    nom = models.CharField(max_length=100, unique=True)
+    name = models.CharField(max_length=100, unique=True)
     description = models.TextField(blank=True)
 
-    duree_max_heures = models.PositiveIntegerField(
+    max_duration_hours = models.PositiveIntegerField(
         default=72,  # valeur par défaut
         help_text="Durée max d'une réservation en heures (sauf demande exceptionnelle)."
     )
@@ -41,15 +41,15 @@ class Equipement(models.Model):
     ]
     type = models.CharField(max_length=50, choices=TYPE_CHOICES, default='autre')
 
-    localisation = models.CharField(
+    location = models.CharField(
         max_length=100,
         help_text="Lieu ou salle où se trouve l'équipement"
     )
 
-    actif = models.BooleanField(default=True)
+    is_active = models.BooleanField(default=True)
 
     def __str__(self):
-        return self.nom
+        return self.name
 
 
 # -----------------------
@@ -66,7 +66,7 @@ JOURS_SEMAINE = [
 ]
 
 
-class Creneau(models.Model):
+class TimeSlot(models.Model):
     """
     Définit un créneau horaire régulier pour un équipement.
     
@@ -75,123 +75,123 @@ class Creneau(models.Model):
         doit obligatoirement être entièrement contenue dans ce créneau.
     
     Attributs :
-        equipement (Equipement) : lien vers l’équipement concerné
-        jour (int)              : jour de la semaine (0 = Lundi)
-        heure_debut (time)      : début du créneau
-        heure_fin (time)        : fin du créneau
+        equipment (Equipment) : lien vers l’équipement concerné
+        day_of_week (int)              : day_of_week de la semaine (0 = Lundi)
+        start_time (time)      : début du créneau
+        end_time (time)        : fin du créneau
     """
-    equipement = models.ForeignKey(
-        'Equipement',
+    equipment = models.ForeignKey(
+        'Equipment',
         on_delete=models.CASCADE,
         related_name='creneaux',
         help_text="Équipement concerné par ce créneau."
     )
-    jour = models.IntegerField(
+    day_of_week = models.IntegerField(
         choices=JOURS_SEMAINE,
         help_text="Jour de la semaine concerné (0 = Lundi, 6 = Dimanche)."
     )
-    heure_debut = models.TimeField(help_text="Heure de début du créneau (ex: 08:00).")
-    heure_fin = models.TimeField(help_text="Heure de fin du créneau (ex: 12:00).")
+    start_time = models.TimeField(help_text="Heure de début du créneau (ex: 08:00).")
+    end_time = models.TimeField(help_text="Heure de fin du créneau (ex: 12:00).")
 
     def __str__(self):
-        return f"{self.get_jour_display()} {self.heure_debut.strftime('%H:%M')}–{self.heure_fin.strftime('%H:%M')} ({self.equipement.nom})"
+        return f"{self.get_jour_display()} {self.start_time.strftime('%H:%M')}–{self.end_time.strftime('%H:%M')} ({self.equipment.name})"
 
     class Meta:
         verbose_name = "Créneau horaire"
         verbose_name_plural = "Créneaux horaires"
-        ordering = ['equipement', 'jour', 'heure_debut']
+        ordering = ['equipment', 'day_of_week', 'start_time']
 
 
-class PlageLimite(models.Model):
+class UsageQuota(models.Model):
     """
     Définit une plage horaire hebdomadaire où la durée totale de réservation
-    est limitée pour chaque usager.
+    est limitée pour chaque user_profile.
     
     Exemple :
         - Microscope, lundi 8h–12h
-        - Limite à 120 minutes → un usager ne peut pas réserver plus de 2h au total dans cette plage
+        - Limite à 120 minutes → un user_profile ne peut pas réserver plus de 2h au total dans cette plage
     
     Attributs :
-        equipement (Equipement) : lien vers l’équipement
-        jour (int)              : jour de la semaine (0 = Lundi)
-        heure_debut (time)      : début de la plage
-        heure_fin (time)        : fin de la plage
-        duree_max_minutes (int) : durée max cumulée autorisée par usager
+        equipment (Equipment) : lien vers l’équipement
+        day_of_week (int)              : day_of_week de la semaine (0 = Lundi)
+        start_time (time)      : début de la plage
+        end_time (time)        : fin de la plage
+        max_duration_minutes (int) : durée max cumulée autorisée par user_profile
     """
-    equipement = models.ForeignKey(
-        'Equipement',
+    equipment = models.ForeignKey(
+        'Equipment',
         on_delete=models.CASCADE,
         related_name='plages_limite',
         help_text="Équipement concerné par cette plage de limitation."
     )
-    jour = models.IntegerField(choices=JOURS_SEMAINE, help_text="Jour de la semaine (0 = Lundi, etc.).")
-    heure_debut = models.TimeField(help_text="Début de la plage horaire contrôlée.")
-    heure_fin = models.TimeField(help_text="Fin de la plage horaire contrôlée.")
-    duree_max_minutes = models.PositiveIntegerField(
-        help_text="Durée maximale cumulée autorisée par usager dans cette plage (en minutes)."
+    day_of_week = models.IntegerField(choices=JOURS_SEMAINE, help_text="Jour de la semaine (0 = Lundi, etc.).")
+    start_time = models.TimeField(help_text="Début de la plage horaire contrôlée.")
+    end_time = models.TimeField(help_text="Fin de la plage horaire contrôlée.")
+    max_duration_minutes = models.PositiveIntegerField(
+        help_text="Durée maximale cumulée autorisée par user_profile dans cette plage (en minutes)."
     )
 
     def __str__(self):
-        return f"{self.get_jour_display()} {self.heure_debut.strftime('%H:%M')}–{self.heure_fin.strftime('%H:%M')} ({self.duree_max_minutes} min)"
+        return f"{self.get_jour_display()} {self.start_time.strftime('%H:%M')}–{self.end_time.strftime('%H:%M')} ({self.max_duration_minutes} min)"
 
     class Meta:
         verbose_name = "Plage limitée"
         verbose_name_plural = "Plages limitées"
-        ordering = ['equipement', 'jour', 'heure_debut']
+        ordering = ['equipment', 'day_of_week', 'start_time']
 
-class Tarif(models.Model):
+class Rate(models.Model):
 
     """
     Définit le tarif horaire associés à un équipement pour une affiliation donnée.
 
-    tarif_horaire    : coût horaire standard pour l’utilisation de l’équipement
+    hourly_rate    : coût horaire standard pour l’utilisation de l’équipement
 
     Attributs :
-        equipement (Equipement)   : équipement concerné
-        affiliation (Affiliation) : affiliation de l’usager (YourUniversity, McGill, UdeM…)
-        tarif_horaire (Decimal)   : tarif standard en CAD/h
+        equipment (Equipment)   : équipement concerné
+        affiliation (Affiliation) : affiliation de l’user_profile (YourUniversity, McGill, UdeM…)
+        hourly_rate (Decimal)   : tarif standard en CAD/h
 
     Contraintes :
-        - UniqueConstraint : empêche de définir deux tarifs différents
+        - UniqueConstraint : empêche de définir deux rates différents
           pour le même couple (équipement, affiliation).
     """
 
-    equipement = models.ForeignKey("Equipement", on_delete=models.CASCADE, related_name="tarifs")
+    equipment = models.ForeignKey("Equipment", on_delete=models.CASCADE, related_name="rates")
     affiliation = models.ForeignKey("accounts.Affiliation", on_delete=models.CASCADE)
-    tarif_horaire = models.DecimalField(max_digits=6, decimal_places=2)
+    hourly_rate = models.DecimalField(max_digits=6, decimal_places=2)
 
     class Meta:
         constraints = [
-                models.UniqueConstraint(fields=['equipement', 'affiliation'], name='unique_tarif')
+                models.UniqueConstraint(fields=['equipment', 'affiliation'], name='unique_tarif')
             ]
-        verbose_name = "Tarif"
-        verbose_name_plural = "Tarifs"
+        verbose_name = "Rate"
+        verbose_name_plural = "Rates"
 
     def __str__(self):
-        return f"{self.equipement.nom} - {self.affiliation.nom}: {self.tarif_horaire} CAD/h"
+        return f"{self.equipment.name} - {self.affiliation.name}: {self.hourly_rate} CAD/h"
 
-class TarifFormation(models.Model):
+class TrainingRate(models.Model):
     """
     Définit le tarif FIXE de formation pour un couple (équipement, affiliation).
 
     Attributs :
-        equipement (Equipement)   : équipement concerné
-        affiliation (Affiliation) : affiliation de l’usager (YourUniversity, McGill, etc.)
-        tarif_formation (Decimal) : prix fixe (CAD) facturé pour la formation
+        equipment (Equipment)   : équipement concerné
+        affiliation (Affiliation) : affiliation de l’user_profile (YourUniversity, McGill, etc.)
+        training_fee (Decimal) : prix fixe (CAD) facturé pour la formation
 
     Contraintes :
         - UniqueConstraint : un (équipement, affiliation) ne peut avoir qu’un seul tarif de formation.
     """
-    equipement = models.ForeignKey("Equipement", on_delete=models.CASCADE, related_name="tarifs_formation")
+    equipment = models.ForeignKey("Equipment", on_delete=models.CASCADE, related_name="training_rates")
     affiliation = models.ForeignKey("accounts.Affiliation", on_delete=models.CASCADE)
-    tarif_formation = models.DecimalField(max_digits=8, decimal_places=2, help_text="Prix fixe (CAD) pour la formation")
+    training_fee = models.DecimalField(max_digits=8, decimal_places=2, help_text="Prix fixe (CAD) pour la formation")
 
     class Meta:
         constraints = [
-            models.UniqueConstraint(fields=['equipement', 'affiliation'], name='unique_tarif_formation')
+            models.UniqueConstraint(fields=['equipment', 'affiliation'], name='unique_training_fee')
         ]
-        verbose_name = "Tarif formation"
-        verbose_name_plural = "Tarifs formation"
+        verbose_name = "Rate formation"
+        verbose_name_plural = "Rates formation"
 
     def __str__(self):
-        return f"{self.equipement.nom} - {self.affiliation.nom}: {self.tarif_formation} CAD (formation)"
+        return f"{self.equipment.name} - {self.affiliation.name}: {self.training_fee} CAD (formation)"

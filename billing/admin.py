@@ -38,8 +38,8 @@ from django.contrib import admin
 #     - list_filter  : filtres latéraux
 #     - search_fields: champs recherchables
 #     """
-#     list_display = ('numero', 'client', 'date', 'montant', 'statut')
-#     list_filter = ('statut', 'date')
+#     list_display = ('numero', 'client', 'date', 'montant', 'status')
+#     list_filter = ('status', 'date')
 #     search_fields = ('numero', 'client__nom')
 #
 # @admin.register(LigneFacture)

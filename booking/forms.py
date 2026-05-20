@@ -15,14 +15,14 @@ Regles implementees :
 - Regles de base (dates futures, coherence debut/fin, pas de chevauchement).
 - Gestion des demandes exceptionnelles (bypass des regles optionnelles).
 - Validation par rapport aux creneaux autorises.
-- Validation par rapport aux plages limites (duree max par usager).
+- Validation par rapport aux plages limites (duree max par user_profile).
 """
 
 from django import forms
 from django.utils import timezone
 from django.core.exceptions import ValidationError
 from .models import Reservation
-from equipment.models import Creneau, PlageLimite
+from equipment.models import TimeSlot, UsageQuota
 from datetime import datetime, timedelta, time
 
 HOUR_CHOICES = [(f"{h:02d}", f"{h:02d}") for h in range(24)]
@@ -38,9 +38,9 @@ def generate_time_choices():
 
 class ReservationForm(forms.ModelForm):
     # Champs virtuels pour l'UI
-    heure_debut_h = forms.ChoiceField(choices=HOUR_CHOICES, label="Heure debut")
+    start_time_h = forms.ChoiceField(choices=HOUR_CHOICES, label="Heure debut")
     minute_debut_m = forms.ChoiceField(choices=MINUTE_CHOICES, label="Minutes debut")
-    heure_fin_h = forms.ChoiceField(choices=HOUR_CHOICES, label="Heure fin")
+    end_time_h = forms.ChoiceField(choices=HOUR_CHOICES, label="Heure fin")
     minute_fin_m = forms.ChoiceField(choices=MINUTE_CHOICES, label="Minutes fin")
 
     # Champs virtuels (ne se sauvegardent PAS dans la DB)
@@ -49,22 +49,22 @@ class ReservationForm(forms.ModelForm):
         required=False,
         label="Reservation Maintenance",
         widget=forms.CheckboxInput(attrs={"class": "form-check-input"}),
-        help_text="La reservation sera attribuee a l'usager systeme 'Maintenance'"
+        help_text="La reservation sera attribuee a l'user_profile systeme 'Maintenance'"
     )
     type_reservation_enseignement = forms.BooleanField(
         required=False,
         label="Reservation Enseignement",
         widget=forms.CheckboxInput(attrs={"class": "form-check-input"}),
-        help_text="La reservation sera attribuee a l'usager systeme 'Enseignement'"
+        help_text="La reservation sera attribuee a l'user_profile systeme 'Enseignement'"
     )
 
-    date_debut = forms.DateField(
+    start_date = forms.DateField(
         widget=forms.DateInput(attrs={"type": "date", "class": "form-control"}, format="%Y-%m-%d"),
         input_formats=["%Y-%m-%d"],
         required=True,
         label="Debut :",
     )
-    date_fin = forms.DateField(
+    end_date = forms.DateField(
         widget=forms.DateInput(attrs={"type": "date", "class": "form-control"}, format="%Y-%m-%d"),
         input_formats=["%Y-%m-%d"],
         required=True,
@@ -74,125 +74,125 @@ class ReservationForm(forms.ModelForm):
     class Meta:
         model = Reservation
         fields = [
-            "date_debut",
-            "date_fin",
-            "heure_debut_h", "minute_debut_m",
-            "heure_fin_h", "minute_fin_m",
-            "demande_exception",
+            "start_date",
+            "end_date",
+            "start_time_h", "minute_debut_m",
+            "end_time_h", "minute_fin_m",
+            "exception_request",
             "justification",
-            "est_formation",
-            "courriels_formes",
+            "is_training",
+            "trained_emails",
             "assistance",
-            "duree_assistance_minutes",
+            "assistance_duration_minutes",
         ]
         widgets = {
-            "date_debut": forms.DateInput(attrs={"type": "date", "class": "form-control"}),
-            "date_fin": forms.DateInput(attrs={"type": "date", "class": "form-control"}),
-            "demande_exception": forms.CheckboxInput(attrs={"class": "form-check-input"}),
+            "start_date": forms.DateInput(attrs={"type": "date", "class": "form-control"}),
+            "end_date": forms.DateInput(attrs={"type": "date", "class": "form-control"}),
+            "exception_request": forms.CheckboxInput(attrs={"class": "form-check-input"}),
             "justification": forms.Textarea(attrs={"class": "form-control", "rows": 3}),
-            "est_formation": forms.CheckboxInput(attrs={"class": "form-check-input"}),
-            "courriels_formes": forms.Textarea(attrs={"class": "form-control", "rows": 2}),
+            "is_training": forms.CheckboxInput(attrs={"class": "form-check-input"}),
+            "trained_emails": forms.Textarea(attrs={"class": "form-control", "rows": 2}),
         }
         help_texts = {
-            "est_formation": "Cochez si cette reservation est une formation (facturation au tarif fixe).",
-            "courriels_formes": "Saisissez les courriels des participants (separes par des virgules, points-virgules ou sauts de ligne).",
+            "is_training": "Cochez si cette reservation est une formation (facturation au tarif fixe).",
+            "trained_emails": "Saisissez les emails des participants (separes par des virgules, points-virgules ou sauts de ligne).",
         }
 
     def __init__(self, *args, **kwargs):
-        self.usager = kwargs.pop('accounts', None)
-        self.equipement = kwargs.pop('equipement', None)
+        self.user_profile = kwargs.pop('accounts', None)
+        self.equipment = kwargs.pop('equipment', None)
         self.request = kwargs.pop('request', None)
         super().__init__(*args, **kwargs)
 
         # Champs non obligatoires
         self.fields['justification'].required = False
-        self.fields['courriels_formes'].required = False
-        self.fields['duree_assistance_minutes'].required = False
-        self.fields['duree_assistance_minutes'].widget = forms.NumberInput(attrs={'min': 0, 'step': 5})
+        self.fields['trained_emails'].required = False
+        self.fields['assistance_duration_minutes'].required = False
+        self.fields['assistance_duration_minutes'].widget = forms.NumberInput(attrs={'min': 0, 'step': 5})
 
         # Masquer certains champs pour les non-admin
         is_admin = False
         if self.request and self.request.user.is_authenticated:
-            is_admin = self.request.user.is_staff or (hasattr(self.request.user, 'accounts') and self.request.user.usager.est_admin)
+            is_admin = self.request.user.is_staff or (hasattr(self.request.user, 'accounts') and self.request.user.user_profile.is_platform_admin)
 
         if not is_admin:
-            self.fields['est_formation'].widget = forms.HiddenInput()
-            self.fields['est_formation'].initial = False
-            self.fields['courriels_formes'].widget = forms.HiddenInput()
+            self.fields['is_training'].widget = forms.HiddenInput()
+            self.fields['is_training'].initial = False
+            self.fields['trained_emails'].widget = forms.HiddenInput()
             self.fields['type_reservation_maintenance'].widget = forms.HiddenInput()
             self.fields['type_reservation_enseignement'].widget = forms.HiddenInput()
 
     def clean(self):
         cleaned_data = super().clean()
 
-        date_debut = cleaned_data.get("date_debut")
-        date_fin = cleaned_data.get("date_fin")
-        demande_exception = cleaned_data.get("demande_exception")
+        start_date = cleaned_data.get("start_date")
+        end_date = cleaned_data.get("end_date")
+        exception_request = cleaned_data.get("exception_request")
         justification = cleaned_data.get("justification")
 
         # Recomposition des heures
-        h_d = cleaned_data.get("heure_debut_h")
+        h_d = cleaned_data.get("start_time_h")
         m_d = cleaned_data.get("minute_debut_m")
-        h_f = cleaned_data.get("heure_fin_h")
+        h_f = cleaned_data.get("end_time_h")
         m_f = cleaned_data.get("minute_fin_m")
 
-        heure_debut = time(int(h_d), int(m_d)) if h_d and m_d else None
-        heure_fin = time(int(h_f), int(m_f)) if h_f and m_f else None
+        start_time = time(int(h_d), int(m_d)) if h_d and m_d else None
+        end_time = time(int(h_f), int(m_f)) if h_f and m_f else None
 
         # Injecter dans cleaned_data -> correspondance avec le modele
-        cleaned_data["heure_debut"] = heure_debut
-        cleaned_data["heure_fin"] = heure_fin
+        cleaned_data["start_time"] = start_time
+        cleaned_data["end_time"] = end_time
 
-        if not date_debut or not date_fin or not heure_debut or not heure_fin:
+        if not start_date or not end_date or not start_time or not end_time:
             return cleaned_data  # stop si donnees incompletes
 
-        dt_debut = timezone.make_aware(datetime.combine(date_debut, heure_debut))
-        dt_fin = timezone.make_aware(datetime.combine(date_fin, heure_fin))
+        dt_debut = timezone.make_aware(datetime.combine(start_date, start_time))
+        dt_fin = timezone.make_aware(datetime.combine(end_date, end_time))
 
         # 1. Reservation future
         if dt_debut < timezone.now():
-            self.add_error("date_debut", "La reservation doit commencer dans le futur.")
+            self.add_error("start_date", "La reservation doit commencer dans le futur.")
 
         # 2. Debut < fin
         if dt_debut >= dt_fin:
-            self.add_error("heure_debut_h", "L'heure de debut doit etre avant l'heure de fin.")
-            self.add_error("heure_fin_h", "L'heure de fin doit etre apres l'heure de debut.")
+            self.add_error("start_time_h", "L'heure de debut doit etre avant l'heure de fin.")
+            self.add_error("end_time_h", "L'heure de fin doit etre apres l'heure de debut.")
 
         # 3. Chevauchement
-        if self.equipement:
+        if self.equipment:
             conflits = (
                 Reservation.objects
-                .filter(equipement=self.equipement)
+                .filter(equipment=self.equipment)
                 .exclude(pk=self.instance.pk)
-                .exclude(statut__in=['annulee', 'passee'])
+                .exclude(statut__in=['cancelled', 'past'])
             )
             for r in conflits:
-                r_debut = timezone.make_aware(datetime.combine(r.date_debut, r.heure_debut))
-                r_fin = timezone.make_aware(datetime.combine(r.date_fin, r.heure_fin))
+                r_debut = timezone.make_aware(datetime.combine(r.start_date, r.start_time))
+                r_fin = timezone.make_aware(datetime.combine(r.end_date, r.end_time))
                 if dt_debut < r_fin and dt_fin > r_debut:
                     raise ValidationError(
-                        f"Chevauche une autre reservation : {r.date_debut} {r.heure_debut}-{r.heure_fin}"
+                        f"Chevauche une autre reservation : {r.start_date} {r.start_time}-{r.end_time}"
                     )
 
-        # 4. Duree maximale globale (parametre equipement)
+        # 4. Duree maximale globale (parametre equipment)
         duree_totale = dt_fin - dt_debut
-        if self.equipement and not demande_exception:
-            duree_max = getattr(self.equipement, "duree_max_heures", 72)
+        if self.equipment and not exception_request:
+            duree_max = getattr(self.equipment, "max_duration_hours", 72)
             if duree_totale > timedelta(hours=duree_max):
                 raise ValidationError(
                     f"La reservation depasse la duree maximale autorisee de {duree_max}h "
-                    f"pour cet equipement (sauf demande exceptionnelle)."
+                    f"pour cet equipment (sauf demande exceptionnelle)."
                 )
 
         # 5. Exception -> justification obligatoire
-        if demande_exception and not justification:
+        if exception_request and not justification:
             self.add_error("justification", "Veuillez expliquer la demande d'exception.")
 
         # Validation Assistance : Duree obligatoire si coche
         assistance = cleaned_data.get("assistance")
-        duree_assistance = cleaned_data.get("duree_assistance_minutes")
+        duree_assistance = cleaned_data.get("assistance_duration_minutes")
         if assistance and (duree_assistance is None or duree_assistance <= 0):
-            self.add_error("duree_assistance_minutes", "La duree d'assistance est obligatoire si cette option est cochee.")
+            self.add_error("assistance_duration_minutes", "La duree d'assistance est obligatoire si cette option est cochee.")
 
         # Validation : Maintenance et Enseignement sont mutuellement exclusifs
         type_maint = cleaned_data.get("type_reservation_maintenance", False)
@@ -203,61 +203,61 @@ class ReservationForm(forms.ModelForm):
                 "Veuillez ne cocher qu'une seule option."
             )
 
-        if demande_exception:
+        if exception_request:
             return cleaned_data  # on bypass les regles optionnelles (creneaux, plages)
 
         # 6. Respect des creneaux autorises
-        creneaux = Creneau.objects.filter(equipement=self.equipement, jour=date_debut.weekday())
+        creneaux = TimeSlot.objects.filter(equipment=self.equipment, day_of_week=start_date.weekday())
         if creneaux.exists():
             touche, respecte = False, False
             for c in creneaux:
-                if (heure_debut < c.heure_fin and heure_fin > c.heure_debut):
+                if (start_time < c.end_time and end_time > c.start_time):
                     touche = True
-                    if c.heure_debut <= heure_debut and c.heure_fin >= heure_fin:
+                    if c.start_time <= start_time and c.end_time >= end_time:
                         respecte = True
                         break
             if touche and not respecte:
-                raise ValidationError("Reservation hors des creneaux autorises pour ce jour.")
+                raise ValidationError("Reservation hors des creneaux autorises pour ce day_of_week.")
 
         # 7. Limites cumulees
-        plages = PlageLimite.objects.filter(equipement=self.equipement, jour=date_debut.weekday())
+        plages = UsageQuota.objects.filter(equipment=self.equipment, day_of_week=start_date.weekday())
         for plage in plages:
-            if plage.heure_debut <= heure_debut < plage.heure_fin or plage.heure_debut < heure_fin <= plage.heure_fin:
+            if plage.start_time <= start_time < plage.end_time or plage.start_time < end_time <= plage.end_time:
                 total = timedelta()
                 reservations = Reservation.objects.filter(
-                    usager=self.usager,
-                    equipement=self.equipement,
-                    date_debut=date_debut,
-                    statut__in=['a_venir', 'en_attente'],
-                    heure_debut__lt=plage.heure_fin,
-                    heure_fin__gt=plage.heure_debut,
+                    user_profile=self.user_profile,
+                    equipment=self.equipment,
+                    start_date=start_date,
+                    statut__in=['upcoming', 'pending'],
+                    start_time__lt=plage.end_time,
+                    end_time__gt=plage.start_time,
                 )
                 if self.instance.pk:
                     reservations = reservations.exclude(pk=self.instance.pk)
 
                 for r in reservations:
-                    total += datetime.combine(date_debut, r.heure_fin) - datetime.combine(date_debut, r.heure_debut)
+                    total += datetime.combine(start_date, r.end_time) - datetime.combine(start_date, r.start_time)
 
                 total += dt_fin - dt_debut
-                if total > timedelta(minutes=plage.duree_max_minutes):
+                if total > timedelta(minutes=plage.max_duration_minutes):
                     raise ValidationError(
-                        f"Duree totale ({total}) > limite {plage.duree_max_minutes} min "
-                        f"dans la plage {plage.heure_debut}-{plage.heure_fin}"
+                        f"Duree totale ({total}) > limite {plage.max_duration_minutes} min "
+                        f"dans la plage {plage.start_time}-{plage.end_time}"
                     )
 
     def save(self, commit=True):
         instance = super().save(commit=False)
 
         # Composer les heures depuis les champs virtuels si presents
-        h_d = self.cleaned_data.get("heure_debut_h")
+        h_d = self.cleaned_data.get("start_time_h")
         m_d = self.cleaned_data.get("minute_debut_m")
-        h_f = self.cleaned_data.get("heure_fin_h")
+        h_f = self.cleaned_data.get("end_time_h")
         m_f = self.cleaned_data.get("minute_fin_m")
 
         if h_d is not None and m_d is not None:
-            instance.heure_debut = time(int(h_d), int(m_d))
+            instance.start_time = time(int(h_d), int(m_d))
         if h_f is not None and m_f is not None:
-            instance.heure_fin = time(int(h_f), int(m_f))
+            instance.end_time = time(int(h_f), int(m_f))
 
         if commit:
             instance.save()
@@ -271,12 +271,12 @@ class ReservationModificationForm(ReservationForm):
     """
     class Meta(ReservationForm.Meta):
         widgets = {
-            "date_debut": forms.DateInput(attrs={"type": "date", "class": "form-control"}),
-            "date_fin": forms.DateInput(attrs={"type": "date", "class": "form-control"}),
-            "demande_exception": forms.CheckboxInput(attrs={"class": "form-check-input"}),
+            "start_date": forms.DateInput(attrs={"type": "date", "class": "form-control"}),
+            "end_date": forms.DateInput(attrs={"type": "date", "class": "form-control"}),
+            "exception_request": forms.CheckboxInput(attrs={"class": "form-check-input"}),
             "justification": forms.Textarea(attrs={"class": "form-control", "rows": 3}),
-            "est_formation": forms.CheckboxInput(attrs={"class": "form-check-input"}),
-            "courriels_formes": forms.Textarea(attrs={"class": "form-control", "rows": 2}),
+            "is_training": forms.CheckboxInput(attrs={"class": "form-check-input"}),
+            "trained_emails": forms.Textarea(attrs={"class": "form-control", "rows": 2}),
         }
 
     def __init__(self, *args, **kwargs):
@@ -284,18 +284,18 @@ class ReservationModificationForm(ReservationForm):
 
         # Pre-remplir les champs virtuels avec l'instance en cours
         if self.instance and self.instance.pk:
-            if self.instance.heure_debut:
-                self.fields["heure_debut_h"].initial = f"{self.instance.heure_debut.hour:02d}"
-                self.fields["minute_debut_m"].initial = f"{self.instance.heure_debut.minute - self.instance.heure_debut.minute % 10:02d}"
-            if self.instance.heure_fin:
-                self.fields["heure_fin_h"].initial = f"{self.instance.heure_fin.hour:02d}"
-                self.fields["minute_fin_m"].initial = f"{self.instance.heure_fin.minute - self.instance.heure_fin.minute % 10:02d}"
+            if self.instance.start_time:
+                self.fields["start_time_h"].initial = f"{self.instance.start_time.hour:02d}"
+                self.fields["minute_debut_m"].initial = f"{self.instance.start_time.minute - self.instance.start_time.minute % 10:02d}"
+            if self.instance.end_time:
+                self.fields["end_time_h"].initial = f"{self.instance.end_time.hour:02d}"
+                self.fields["minute_fin_m"].initial = f"{self.instance.end_time.minute - self.instance.end_time.minute % 10:02d}"
 
         # Restrictions si pas admin
         is_admin = False
         if self.request and self.request.user.is_authenticated:
-            is_admin = self.request.user.is_staff or (hasattr(self.request.user, 'accounts') and self.request.user.usager.est_admin)
+            is_admin = self.request.user.is_staff or (hasattr(self.request.user, 'accounts') and self.request.user.user_profile.is_platform_admin)
 
         if not is_admin:
             self.fields["assistance"].disabled = True
-            self.fields["duree_assistance_minutes"].disabled = True
+            self.fields["assistance_duration_minutes"].disabled = True

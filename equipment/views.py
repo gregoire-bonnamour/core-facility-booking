@@ -3,12 +3,12 @@
 # See the LICENSE file or https://creativecommons.org/licenses/by-nc/4.0/legalcode for details.
 
 """
-Module : equipements.views
+Module : equipment_set.views
 --------------------------
-Vues (endpoints) liées à l’application `equipements`.
+Vues (endpoints) liées à l’application `equipment_set`.
 
 À ce stade, aucune vue publique n’est exposée : l’administration des
-équipements, créneaux, plages limites et tarifs se fait via le site
+équipements, créneaux, plages limites et rates se fait via le site
 d’administration Django.
 
 Bonnes pratiques :
@@ -31,13 +31,13 @@ from django.shortcuts import render
 # Exemple de squelette à réutiliser :
 #
 # from django.contrib.auth.decorators import login_required
-# from .models import Equipement
+# from .models import Equipment
 #
 # @login_required
 # def list_equipements(request):
 #     """
 #     Affiche la liste des équipements actifs.
-#     Filtrage/facettes (type, localisation) à ajouter si nécessaire.
+#     Filtrage/facettes (type, location) à ajouter si nécessaire.
 #     """
-#     equipements = Equipement.objects.filter(actif=True).order_by('nom')
-#     return render(request, 'equipements/liste.html', {'equipment': equipements})
+#     equipment_set = Equipment.objects.filter(is_active=True).order_by('name')
+#     return render(request, 'equipment_set/liste.html', {'equipment': equipment_set})

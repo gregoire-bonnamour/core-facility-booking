@@ -11,8 +11,8 @@ from django.utils.deprecation import MiddlewareMixin
 EXEMPT_PREFIXES = (
     '/static/',           # fichiers statiques
     '/admin/',            # admin (login, logout, etc.)
-    '/usager/inscription',  # page d'inscription publique
-    '/usager/confirmation', # lien email de confirmation
+    '/user_profile/inscription',  # page d'inscription publique
+    '/user_profile/confirmation', # lien email de confirmation
 )
 
 def _is_exempt_path(path: str) -> bool:
@@ -43,7 +43,7 @@ class ReglementAcceptanceMiddleware(MiddlewareMixin):
 
         # Names safe
         try:
-            # On résout le nom si possible (ignore exceptions)
+            # On résout le name si possible (ignore exceptions)
             resolver_match = request.resolver_match
             if resolver_match and resolver_match.view_name in SAFE_NAMES:
                 return None
@@ -52,10 +52,10 @@ class ReglementAcceptanceMiddleware(MiddlewareMixin):
 
         # Si déjà accepté → continuer
         profil = getattr(getattr(user, "accounts", None), "id", None)
-        # On récupère prudemment via reverse relation si ton modèle s'appelle Usager
+        # On récupère prudemment via reverse relation si ton modèle s'appelle UserProfile
         try:
-            usager = getattr(user, "accounts", None)
-            if usager and getattr(usager, "reglement_accepte", False):
+            user_profile = getattr(user, "accounts", None)
+            if user_profile and getattr(user_profile, "terms_accepted", False):
                 return None
         except Exception:
             return None  # en cas d'incertitude, on ne bloque pas
