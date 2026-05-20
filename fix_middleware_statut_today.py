@@ -5,7 +5,7 @@ terminees aujourd'hui (date_fin = today ET heure_fin <= maintenant).
 import os
 
 BASE = os.path.dirname(os.path.abspath(__file__))
-path = os.path.join(BASE, "reserv", "middleware.py")
+path = os.path.join(BASE, "booking", "middleware.py")
 
 with open(path, "r", encoding="utf-8") as f:
     src = f.read()

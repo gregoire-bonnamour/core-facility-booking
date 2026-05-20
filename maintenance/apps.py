@@ -16,7 +16,7 @@ Cette classe est utilisée par Django pour :
 from django.apps import AppConfig
 
 
-class ReservConfig(AppConfig):
+class BookingConfig(AppConfig):
     """
     Configuration de l’application `reserv`.
 

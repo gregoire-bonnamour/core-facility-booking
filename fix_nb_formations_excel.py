@@ -5,7 +5,7 @@ dans _agg_metrics (Excel par equipement) et dans le dashboard Excel stats.
 import os
 
 BASE = os.path.dirname(os.path.abspath(__file__))
-views_path = os.path.join(BASE, "reserv", "views.py")
+views_path = os.path.join(BASE, "booking", "views.py")
 
 with open(views_path, "r", encoding="utf-8") as f:
     src = f.read()

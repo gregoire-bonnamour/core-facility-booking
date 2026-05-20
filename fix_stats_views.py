@@ -11,7 +11,7 @@ BASE = os.path.dirname(os.path.abspath(__file__))
 # ============================================================
 # 1. PATCH views.py
 # ============================================================
-views_path = os.path.join(BASE, "reserv", "views.py")
+views_path = os.path.join(BASE, "booking", "views.py")
 with open(views_path, "r", encoding="utf-8") as f:
     src = f.read()
 
@@ -49,17 +49,17 @@ print("OK: par_aff et par_fct supprimes des defaultdicts")
 
 # -- 1c. Supprimer l'alimentation de par_aff dans le loop
 old_aff_block = (
-    "        aff = getattr(getattr(getattr(r, 'usager', None), 'laboratoire', None), 'affiliation', None)\n"
+    "        aff = getattr(getattr(getattr(r, 'accounts', None), 'laboratoire', None), 'affiliation', None)\n"
     "        if aff:\n"
     "            key = (aff.id, aff.nom)\n"
     "            par_aff[key]['reservations'] += 1\n"
     "            par_aff[key]['min_usage']    += mu\n"
     "            par_aff[key]['min_assist']   += ma\n"
     "\n"
-    "        if getattr(r, 'usager', None) and getattr(r.usager, 'laboratoire', None):"
+    "        if getattr(r, 'accounts', None) and getattr(r.usager, 'laboratoire', None):"
 )
 new_aff_block = (
-    "        if getattr(r, 'usager', None) and getattr(r.usager, 'laboratoire', None):"
+    "        if getattr(r, 'accounts', None) and getattr(r.usager, 'laboratoire', None):"
 )
 assert old_aff_block in src, "ERREUR: bloc par_aff loop introuvable"
 src = src.replace(old_aff_block, new_aff_block, 1)
@@ -67,16 +67,16 @@ print("OK: alimentation par_aff supprimee du loop")
 
 # -- 1d. Supprimer l'alimentation de par_fct dans le loop
 old_fct_block = (
-    "        if getattr(r, 'usager', None) and getattr(r.usager, 'fonction', None):\n"
+    "        if getattr(r, 'accounts', None) and getattr(r.usager, 'fonction', None):\n"
     "            key = (r.usager.fonction.id, r.usager.fonction.nom)\n"
     "            par_fct[key]['reservations'] += 1\n"
     "            par_fct[key]['min_usage']    += mu\n"
     "            par_fct[key]['min_assist']   += ma\n"
     "\n"
-    "        if getattr(r, 'usager', None):"
+    "        if getattr(r, 'accounts', None):"
 )
 new_fct_block = (
-    "        if getattr(r, 'usager', None):"
+    "        if getattr(r, 'accounts', None):"
 )
 assert old_fct_block in src, "ERREUR: bloc par_fct loop introuvable"
 src = src.replace(old_fct_block, new_fct_block, 1)
@@ -85,7 +85,7 @@ print("OK: alimentation par_fct supprimee du loop")
 # -- 1e. Mettre a jour le dict tables (supprimer affiliations et fonctions)
 old_tables = (
     "    tables = {\n"
-    "        'equipements':  _tabify(par_eq),\n"
+    "        'equipment':  _tabify(par_eq),\n"
     "        'affiliations': _tabify(par_aff),\n"
     "        'laboratoires': _tabify(par_labo),\n"
     "        'fonctions':    _tabify(par_fct),\n"
@@ -94,7 +94,7 @@ old_tables = (
 )
 new_tables = (
     "    tables = {\n"
-    "        'equipements':  _tabify(par_eq),\n"
+    "        'equipment':  _tabify(par_eq),\n"
     "        'laboratoires': _tabify(par_labo),\n"
     "        'usagers':      _tabify(par_usr),\n"
     "    }"
@@ -105,7 +105,7 @@ print("OK: dict tables simplifie")
 
 # -- 1f. Supprimer le bloc utilisation (taux d'occupation)
 old_util = (
-    "    eq_ids = filters.get('equipements') or list({r.equipement_id for r in resas if r.equipement_id})\n"
+    "    eq_ids = filters.get('equipment') or list({r.equipement_id for r in resas if r.equipement_id})\n"
     "    eqs = Equipement.objects.filter(id__in=eq_ids).prefetch_related('creneaux').order_by('nom') if eq_ids else []\n"
     "\n"
     "    utilisation = []\n"
@@ -165,7 +165,7 @@ def stats_zone1(request):
     - Nombre de laboratoires representes (au moins un usager actif)
     - Nombre de nouveaux inscrits sur la periode (reglement accepte)
     """
-    from usager.models import Usager, Laboratoire
+    from accounts.models import Usager, Laboratoire
 
     def _parse(s):
         try:
@@ -210,7 +210,7 @@ print("OK: views.py sauvegarde")
 # ============================================================
 # 2. PATCH urls.py
 # ============================================================
-urls_path = os.path.join(BASE, "reserv", "urls.py")
+urls_path = os.path.join(BASE, "booking", "urls.py")
 with open(urls_path, "r", encoding="utf-8") as f:
     urls = f.read()
 

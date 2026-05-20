@@ -1,0 +1,64 @@
+# Copyright (c) 2025 Author Author
+# Licensed under the Creative Commons Attribution-NonCommercial 4.0 International License (CC BY-NC 4.0)
+# See the LICENSE file or https://creativecommons.org/licenses/by-nc/4.0/legalcode for details.
+
+"""
+Module : facturation.forms
+--------------------------
+Formulaires pour la génération et l’export de factures.
+
+Actuellement :
+- FacturationForm : permet à un administrateur de définir une période
+  de facturation, avec filtres par affiliations et option d’export CSV.
+"""
+
+from django import forms
+from accounts.models import Affiliation
+
+
+class FacturationForm(forms.Form):
+    """
+    Formulaire de génération de factures.
+
+    Champs :
+        - date_debut (date) : début de la période.
+        - date_fin (date)   : fin de la période.
+        - affiliations      : filtre optionnel par affiliation (YourUniversity, McGill…).
+        - inclure_csv       : inclure un CSV détaillé par labo.
+
+    Validation :
+        - La date de fin doit être ≥ date de début.
+    """
+
+    date_debut = forms.DateField(
+        label="Date de début",
+        widget=forms.DateInput(attrs={"type": "date", "class": "form-control"}),
+    )
+
+    date_fin = forms.DateField(
+        label="Date de fin",
+        widget=forms.DateInput(attrs={"type": "date", "class": "form-control"}),
+    )
+
+    affiliations = forms.ModelMultipleChoiceField(
+        label="Limiter aux affiliations suivantes (facultatif)",
+        queryset=Affiliation.objects.all(),
+        required=False,
+        widget=forms.SelectMultiple(attrs={"size": 6, "class": "form-control"}),
+    )
+
+    inclure_csv = forms.BooleanField(
+        label="Inclure un fichier CSV détaillé par laboratoire",
+        required=False,
+        initial=False,
+    )
+
+    def clean(self):
+        cleaned_data = super().clean()
+        d1, d2 = cleaned_data.get("date_debut"), cleaned_data.get("date_fin")
+
+        if d1 and d2 and d2 < d1:
+            raise forms.ValidationError(
+                "La date de fin doit être postérieure à la date de début."
+            )
+        return cleaned_data

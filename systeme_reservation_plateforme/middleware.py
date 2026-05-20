@@ -25,7 +25,7 @@ SAFE_PREFIXES = (
 )
 
 SAFE_NAMES = {
-    "usager:reglement",
+    "accounts:reglement",
     "logout",
     "login",
 }
@@ -51,17 +51,17 @@ class ReglementAcceptanceMiddleware(MiddlewareMixin):
             pass
 
         # Si déjà accepté → continuer
-        profil = getattr(getattr(user, "usager", None), "id", None)
+        profil = getattr(getattr(user, "accounts", None), "id", None)
         # On récupère prudemment via reverse relation si ton modèle s'appelle Usager
         try:
-            usager = getattr(user, "usager", None)
+            usager = getattr(user, "accounts", None)
             if usager and getattr(usager, "reglement_accepte", False):
                 return None
         except Exception:
             return None  # en cas d'incertitude, on ne bloque pas
 
         # Sinon → redirige vers la page règlement (avec next)
-        reglement_url = reverse("usager:reglement")
+        reglement_url = reverse("accounts:reglement")
         if path != reglement_url:
             return redirect(f"{reglement_url}?next={quote(path)}")
 

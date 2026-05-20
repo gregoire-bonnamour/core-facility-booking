@@ -94,9 +94,9 @@
       <button type="button" class="check-all" data-target="#equipements">Cocher tout</button>
       <button type="button" class="uncheck-all" data-target="#equipements">Tout décocher</button>
     </div>
-    <div id="equipements" class="list cols-2">
+    <div id="equipment" class="list cols-2">
       {% for e in equipements %}
-        <label><input type="checkbox" name="equipements" value="{{ e.id }}"> {{ e.nom }}</label>
+        <label><input type="checkbox" name="equipment" value="{{ e.id }}"> {{ e.nom }}</label>
       {% endfor %}
     </div>
   </div>
@@ -149,9 +149,9 @@
 <script>
 document.addEventListener('DOMContentLoaded', () => {
 
-  const URL_QUERY   = "{% url 'reserv:stats_query' %}";
-  const URL_XLSX    = "{% url 'reserv:stats_export_unified_xlsx' %}";
-  const URL_Z1      = "{% url 'reserv:stats_zone1' %}";
+  const URL_QUERY   = "{% url 'booking:stats_query' %}";
+  const URL_XLSX    = "{% url 'booking:stats_export_unified_xlsx' %}";
+  const URL_Z1      = "{% url 'booking:stats_zone1' %}";
 
   let chartUsagers = null;
   let chartLabos   = null;
@@ -172,8 +172,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const d2 = document.getElementById('date_fin').value;
     if (d1) params.set('date_debut', d1);
     if (d2) params.set('date_fin', d2);
-    const eq = getChecked('equipements');
-    if (eq.length) params.set('equipements', eq.join(','));
+    const eq = getChecked('equipment');
+    if (eq.length) params.set('equipment', eq.join(','));
     return params.toString();
   }
 
@@ -316,7 +316,7 @@ document.addEventListener('DOMContentLoaded', () => {
     setMeta('#equipements', 'meta-equipements');
   });
 
-  document.getElementById('equipements').addEventListener('change', () => {
+  document.getElementById('equipment').addEventListener('change', () => {
     setMeta('#equipements', 'meta-equipements');
   });
 

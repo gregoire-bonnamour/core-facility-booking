@@ -45,7 +45,7 @@
         nowIndicator: true,
         headerToolbar: { left: 'prev,next today', center: 'title', right: 'dayGridMonth,timeGridWeek,timeGridDay' },
         events: {
-          url: "{% url 'reserv:calendrier_global_admin_data' %}",  // génère /reserv/admin/...
+          url: "{% url 'booking:calendrier_global_admin_data' %}",  // génère /reserv/admin/...
           failure: function() { alert('Erreur de chargement des réservations.'); }
         },
         eventDidMount: function(info) {

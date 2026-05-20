@@ -4,7 +4,7 @@ Patch usager/urls.py : ajoute l'URL confirmer-activite/<token>/.
 import os
 
 BASE = os.path.dirname(os.path.abspath(__file__))
-path = os.path.join(BASE, "usager", "urls.py")
+path = os.path.join(BASE, "accounts", "urls.py")
 
 with open(path, "r", encoding="utf-8") as f:
     src = f.read()

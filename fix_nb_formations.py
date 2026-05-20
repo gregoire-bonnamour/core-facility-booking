@@ -5,7 +5,7 @@ plutot que les sessions de formation (Reservation.est_formation).
 import os
 
 BASE = os.path.dirname(os.path.abspath(__file__))
-views_path = os.path.join(BASE, "reserv", "views.py")
+views_path = os.path.join(BASE, "booking", "views.py")
 
 with open(views_path, "r", encoding="utf-8") as f:
     src = f.read()
@@ -44,7 +44,7 @@ old_kpis = (
     "        'reservations': total_reservations,"
 )
 new_kpis = (
-    "    from usager.models import Invitation\n"
+    "    from accounts.models import Invitation\n"
     "    _form_resa_ids = [r.pk for r in resas if r.est_formation]\n"
     "    nb_form = Invitation.objects.filter(\n"
     "        reservation_id__in=_form_resa_ids,\n"

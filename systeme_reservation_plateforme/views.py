@@ -12,8 +12,8 @@ d’une application spécifique (ici : la page d’accueil).
 from datetime import date, timedelta
 from django.shortcuts import render, get_object_or_404
 from django.contrib.auth.decorators import login_required
-from usager.models import Usager
-from reserv.models import Reservation
+from accounts.models import Usager
+from booking.models import Reservation
 
 
 @login_required
@@ -32,7 +32,7 @@ def accueil(request):
         lundi : date du lundi de la semaine courante
         nb_reservations_en_attente (si admin) : nombre de réservations à valider
     """
-    est_admin = request.user.is_staff or (hasattr(request.user, 'usager') and request.user.usager.est_admin)
+    est_admin = request.user.is_staff or (hasattr(request.user, 'accounts') and request.user.usager.est_admin)
 
     equipements = []
     try:
@@ -50,7 +50,7 @@ def accueil(request):
     context = {
         'user': request.user,
         'is_admin': est_admin,
-        'equipements': equipements,
+        'equipment': equipements,
         'lundi': lundi,
     }
 

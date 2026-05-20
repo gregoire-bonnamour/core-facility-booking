@@ -2,7 +2,7 @@ from django.core.management.base import BaseCommand
 from django.utils import timezone
 from datetime import timedelta
 
-# from reserv.models import Reservation  # décommente et adapte quand prêt
+# from booking.models import Reservation  # décommente et adapte quand prêt
 
 class Command(BaseCommand):
     help = "Exemple: archiver/supprimer des données anciennes (à adapter avant usage)."

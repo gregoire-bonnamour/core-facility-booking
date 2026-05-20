@@ -4,9 +4,9 @@
 
 import random
 from datetime import date, time, datetime, timedelta
-from reserv.models import Reservation
-from usager.models import Usager
-from equipements.models import Equipement
+from booking.models import Reservation
+from accounts.models import Usager
+from equipment.models import Equipement
 
 random.seed(42)  # reproductible
 
@@ -48,7 +48,7 @@ for _ in range(nb_reservations):
     resa_type = random.choice(["classique", "assistance", "formation"])
 
     kwargs = {
-        "usager": usager,
+        "accounts": usager,
         "equipement": equipement,
         "date_debut": start_date,
         "date_fin": start_date,

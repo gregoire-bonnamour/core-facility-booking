@@ -33,10 +33,10 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
 
     # Apps projet
-    "equipements",
-    "usager.apps.UsagerConfig",
-    "reserv",
-    "facturation",
+    "equipment",
+    "accounts.apps.AccountsConfig",
+    "booking",
+    "billing",
     'maintenance',
     "ops",
 ]
@@ -54,7 +54,7 @@ MIDDLEWARE = [
 
     # Middleware applicatifs
     "systeme_reservation_plateforme.middleware.ReglementAcceptanceMiddleware",
-    "reserv.middleware.MiseAJourReservationTermineeMiddleware",
+    "booking.middleware.MiseAJourReservationTermineeMiddleware",
 ]
 
 ROOT_URLCONF = "systeme_reservation_plateforme.urls"
@@ -152,7 +152,7 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 AUTHENTICATION_BACKENDS = [
-    "usager.backends.EmailAuthBackend",
+    "accounts.backends.EmailAuthBackend",
     "django.contrib.auth.backends.ModelBackend",
 ]
 
@@ -167,8 +167,8 @@ LOGGING = {
     "root": {"handlers": ["console"], "level": "INFO"},
     "loggers": {
         "django.request": {"handlers": ["mail_admins", "console"], "level": "ERROR", "propagate": False},
-        "reserv": {"handlers": ["console"], "level": "INFO"},
-        "facturation": {"handlers": ["console"], "level": "INFO"},
+        "booking": {"handlers": ["console"], "level": "INFO"},
+        "billing": {"handlers": ["console"], "level": "INFO"},
     },
 }
 

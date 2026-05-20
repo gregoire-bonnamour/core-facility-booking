@@ -10,10 +10,10 @@
   <h3>🔧 Administration</h3>
   <ul>
     <li><a href="{% url 'admin:index' %}">⚙️ Interface Django admin</a></li>
-    <li><a href="{% url 'usager:inviter_usager' %}">📨 Inviter un usager</a></li>
-    <li><a href="{% url 'reserv:stats_admin' %}">📊 Statistiques</a></li>
-    <li><a href="{% url 'facturation:page_facturation' %}">💰 Facturation</a></li>
-    <li><a href="{% url 'reserv:calendrier_global_admin' %}">📅 Calendrier global (tous équipements)</a></li>
+    <li><a href="{% url 'accounts:inviter_usager' %}">📨 Inviter un usager</a></li>
+    <li><a href="{% url 'booking:stats_admin' %}">📊 Statistiques</a></li>
+    <li><a href="{% url 'billing:page_facturation' %}">💰 Facturation</a></li>
+    <li><a href="{% url 'booking:calendrier_global_admin' %}">📅 Calendrier global (tous équipements)</a></li>
   </ul>
 </section>
 {% endif %}
@@ -37,8 +37,8 @@
     <section>
       <h3>🔧 Accès usager</h3>
       <ul>
-        <li><a href="{% url 'usager:profil' %}">👤 Mon profil</a></li>
-        <li><a href="{% url 'usager:reglement_lecture' %}">📋 Règlement de la plateforme</a></li>
+        <li><a href="{% url 'accounts:profil' %}">👤 Mon profil</a></li>
+        <li><a href="{% url 'accounts:reglement_lecture' %}">📋 Règlement de la plateforme</a></li>
         <li><a href="{{ MAILTO_SIGNALER_PROBLEME }}">Signaler un problème</a></li>
       </ul>
     </section>
@@ -49,7 +49,7 @@
       <ul>
         {% for equipement in equipements %}
         <li>
-          <a href="{% url 'reserv:calendrier_equipement' equipement.id %}?semaine={{ lundi|date:'Y-m-d' }}">
+          <a href="{% url 'booking:calendrier_equipement' equipement.id %}?semaine={{ lundi|date:'Y-m-d' }}">
             📅 {{ equipement.nom }}
           </a>
         </li>

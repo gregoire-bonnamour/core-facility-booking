@@ -14,9 +14,9 @@ Elles sont incluses ici pour centraliser la configuration.
 from django.contrib import admin
 from django.urls import path, include
 from django.contrib.auth.views import LoginView
-from usager.forms import EmailLoginForm
+from accounts.forms import EmailLoginForm
 from systeme_reservation_plateforme import views as core_views
-from usager import views as usager_views
+from accounts import views as usager_views
 from django.contrib.auth import views as auth_views
 from django.conf.urls.i18n import i18n_patterns
 
@@ -37,16 +37,16 @@ urlpatterns = [
     path('accounts/', include('django.contrib.auth.urls')),
 
     # App "réservation"
-    path('reserv/', include('reserv.urls')),
+    path('reserv/', include('booking.urls')),
 
     # Page d’accueil du projet (vue core)
     path('', core_views.accueil, name='accueil'),
 
-    # App "usager" (gestion inscriptions, profils, invitations…)
-    path('usager/', include('usager.urls')),
+    # App "accounts" (gestion inscriptions, profils, invitations…)
+    path('usager/', include('accounts.urls')),
 
-    # App "facturation" (interface génération factures)
-    path('facturation/', include('facturation.urls')),
+    # App "billing" (interface génération factures)
+    path('facturation/', include('billing.urls')),
         
     path("admin/", admin.site.urls),
     

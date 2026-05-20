@@ -264,7 +264,7 @@ LOGGING = {
     "root": {"handlers": ["file", "console"], "level": "INFO"},
     "loggers": {
         "django": {"handlers": ["file", "console"], "level": "INFO", "propagate": False},
-        "reserv": {"handlers": ["file", "console"], "level": "DEBUG", "propagate": False},
+        "booking": {"handlers": ["file", "console"], "level": "DEBUG", "propagate": False},
     },
 }
 ```

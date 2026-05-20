@@ -5,7 +5,7 @@ Insere avant la vue accueil().
 import os
 
 BASE = os.path.dirname(os.path.abspath(__file__))
-path = os.path.join(BASE, "usager", "views.py")
+path = os.path.join(BASE, "accounts", "views.py")
 
 with open(path, "r", encoding="utf-8") as f:
     src = f.read()
@@ -48,7 +48,7 @@ def confirmer_activite(request, token):
 
     return render(request, "usager/confirmer_activite.html", {
         "statut": "ok",
-        "usager": usager,
+        "accounts": usager,
     })
 
 

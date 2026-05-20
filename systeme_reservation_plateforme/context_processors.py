@@ -5,7 +5,7 @@
 # systeme_reservation_plateforme/context_processors.py
 from django.conf import settings
 from urllib.parse import quote
-from usager.models import News
+from accounts.models import News
 
 
 def support_mailto(request):

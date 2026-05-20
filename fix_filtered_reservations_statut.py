@@ -5,7 +5,7 @@ meme si le cron n'a pas encore mis a jour leur statut a 'passee'.
 import os
 
 BASE = os.path.dirname(os.path.abspath(__file__))
-views_path = os.path.join(BASE, "reserv", "views.py")
+views_path = os.path.join(BASE, "booking", "views.py")
 
 with open(views_path, "r", encoding="utf-8") as f:
     src = f.read()
