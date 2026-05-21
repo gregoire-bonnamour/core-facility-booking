@@ -26,23 +26,23 @@ urlpatterns = [
     path('inscription/', views.inscription, name='inscription'),
     path(
         "confirmation-envoyee/",
-        TemplateView.as_view(template_name="user_profile/inscription_confirmation.html"),
+        TemplateView.as_view(template_name="accounts/inscription_confirmation.html"),
         name="inscription_confirmation"
     ),
     path('confirmation/<uidb64>/<token>/', views.confirmer_inscription, name='confirmation'),
 
     # --- Invitation (admin) ---
-    path('inviter/', views.inviter_usager, name='inviter_usager'),
+    path('inviter/', views.inviter_usager, name='invite_user'),
 
     # --- Profil ---
     path('profil/', views.profil, name='profil'),
     path('admin/user_profile/valider-formations/', views.valider_formations, name='valider_formations'),
 
     # --- AJAX ---
-    path('ajax/labos/', views.get_laboratoires_par_affiliation, name='ajax_labos'),
+    path('ajax/labos/', views.get_laboratoires_par_affiliation, name='ajax_labs'),
     
     # Re-verification 5 ans
-    path('confirmer-activite/<str:token>/', views.confirmer_activite, name='confirmer_activite'),
+    path('confirmer-activite/<str:token>/', views.confirmer_activite, name='confirm_activity'),
 
     # Reglement
     path("reglement/", views.reglement, name="reglement"),

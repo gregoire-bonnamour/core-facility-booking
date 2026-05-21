@@ -59,22 +59,22 @@
   <div class="zone-title">Core Facility — Overview</div>
   <div style="display:flex; gap:12px; align-items:flex-end; flex-wrap:wrap; margin-bottom:12px;">
     <div class="filtre">
-      <label style="font-size:.9em; color:#374151;">Period (inscrits)</label><br>
+      <label style="font-size:.9em; color:#374151;">Period (signups)</label><br>
       <input type="date" id="z1-debut" style="padding:4px 8px; border:1px solid #d1d5db; border-radius:6px;">
       <span style="margin:0 4px; color:#9ca3af;">→</span>
       <input type="date" id="z1-fin" style="padding:4px 8px; border:1px solid #d1d5db; border-radius:6px;">
     </div>
-    <button type="button" id="btn-z1" class="btn primary">Actualiser</button>
+    <button type="button" id="btn-z1" class="btn primary">Refresh</button>
   </div>
   <div class="kpis">
-    <div class="kpi"><span class="kpi-val" id="z1-user_profiles-actifs">—</span><span class="kpi-lbl">UserProfilees actifs</span></div>
-    <div class="kpi"><span class="kpi-val" id="z1-labos">—</span><span class="kpi-lbl">Labos représentés</span></div>
-    <div class="kpi"><span class="kpi-val" id="z1-inscrits">—</span><span class="kpi-lbl">Nouveaux inscrits<br><small id="z1-inscrits-periode" style="color:#9ca3af;"></small></span></div>
+    <div class="kpi"><span class="kpi-val" id="z1-user_profiles-actifs">—</span><span class="kpi-lbl">Active users</span></div>
+    <div class="kpi"><span class="kpi-val" id="z1-labos">—</span><span class="kpi-lbl">Labs represented</span></div>
+    <div class="kpi"><span class="kpi-val" id="z1-inscrits">—</span><span class="kpi-lbl">New signups<br><small id="z1-inscrits-periode" style="color:#9ca3af;"></small></span></div>
   </div>
 </div>
 
 <!-- ═══════════════════════════════════════════════
-     FILTRES + ZONE 2 — Stats par équipement
+     FILTRES + ZONE 2 — Equipment stats
 ═══════════════════════════════════════════════ -->
 <form id="stats-form" class="stats-filtres">
   <div style="display:flex; gap:12px; align-items:flex-end; flex-wrap:wrap; margin-bottom:12px;">
@@ -84,15 +84,15 @@
       <span style="margin:0 4px; color:#9ca3af;">→</span>
       <input type="date" name="end_date" id="end_date" style="padding:4px 8px; border:1px solid #d1d5db; border-radius:6px;">
     </div>
-    <button type="button" id="btn-stats" class="btn primary">Actualiser</button>
+    <button type="button" id="btn-stats" class="btn primary">Refresh</button>
     <button type="button" id="export-XLSX-unified" class="btn" style="background:#2563eb; color:#fff; font-weight:600;">Exporter (.xlsx)</button>
   </div>
 
   <div class="filtre">
     <div class="filtre-header">
-      <strong>Équipement <span class="meta" id="meta-equipment_set"></span></strong>
-      <button type="button" class="check-all" data-target="#equipment_set">Cocher tout</button>
-      <button type="button" class="uncheck-all" data-target="#equipment_set">Tout décocher</button>
+      <strong>Equipment <span class="meta" id="meta-equipment_set"></span></strong>
+      <button type="button" class="check-all" data-target="#equipment_set">Check all</button>
+      <button type="button" class="uncheck-all" data-target="#equipment_set">Uncheck all</button>
     </div>
     <div id="equipment" class="list cols-2">
       {% for e in equipment_set %}
@@ -102,20 +102,20 @@
   </div>
 </form>
 
-<div id="zone2-loader"><span class="spinner"></span>Chargement…</div>
+<div id="zone2-loader"><span class="spinner"></span>Loading…</div>
 
 <div class="zone" id="zone2" style="display:none;">
-  <div class="zone-title">Statistics équipements</div>
+  <div class="zone-title">Equipment statistics</div>
   <div class="kpis">
     <div class="kpi"><span class="kpi-val" id="z2-reservations">—</span><span class="kpi-lbl">Bookings</span></div>
-    <div class="kpi"><span class="kpi-val" id="z2-heures">—</span><span class="kpi-lbl">Heures d'usage</span></div>
-    <div class="kpi"><span class="kpi-val" id="z2-user_profiles">—</span><span class="kpi-lbl">UserProfilees distincts</span></div>
-    <div class="kpi"><span class="kpi-val" id="z2-formations">—</span><span class="kpi-lbl">Formations données</span></div>
+    <div class="kpi"><span class="kpi-val" id="z2-heures">—</span><span class="kpi-lbl">Usage hours</span></div>
+    <div class="kpi"><span class="kpi-val" id="z2-user_profiles">—</span><span class="kpi-lbl">Distinct users</span></div>
+    <div class="kpi"><span class="kpi-val" id="z2-formations">—</span><span class="kpi-lbl">Training sessions given</span></div>
   </div>
 
   <div class="charts-row">
     <div class="chart-box">
-      <h4>Top 5 user_profiles — temps d'usage</h4>
+      <h4>Top 5 users — usage time</h4>
       <canvas id="chart-user_profiles" height="220"></canvas>
     </div>
     <div class="chart-box">
@@ -125,17 +125,17 @@
   </div>
 
   <div id="table-equipment_set-wrap" style="margin-top:16px; display:none;">
-    <div class="zone-title" style="margin-top:0;">Détail par équipement</div>
+    <div class="zone-title" style="margin-top:0;">Equipment detail</div>
     <div class="table-wrap">
       <table class="table" id="table-equipment_set">
         <thead>
           <tr>
-            <th>Équipement</th>
+            <th>Equipment</th>
             <th>Bookings</th>
             <th>H usage</th>
             <th>H assistance</th>
-            <th>H totales</th>
-            <th>Fromrée moy.</th>
+            <th>Total hours</th>
+            <th>Avg duration</th>
           </tr>
         </thead>
         <tbody id="tbody-equipment_set"></tbody>
@@ -184,7 +184,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!box) { meta.textContent = '(0)'; return; }
     const total   = box.querySelectorAll('input[type="checkbox"]').length;
     const checked = box.querySelectorAll('input[type="checkbox"]:checked').length;
-    meta.textContent = total ? `(${total}) — ${checked} sélectionné${checked>1?'s':''}` : '(0)';
+    meta.textContent = total ? `(${total}) — ${checked} selected${checked>1?'s':''}` : '(0)';
   }
 
   // ── Pie chart helper ─────────────────────────────────
@@ -224,10 +224,10 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('z1-user_profiles-actifs').textContent = data.usagers_actifs ?? '—';
         document.getElementById('z1-labos').textContent          = data.labos_representes ?? '—';
         document.getElementById('z1-inscrits').textContent       = data.nouveaux_inscrits ?? '—';
-        const lbl = (d1 || d2) ? `${d1 || '…'} → ${d2 || '…'}` : 'toutes périodes';
+        const lbl = (d1 || d2) ? `${d1 || '…'} → ${d2 || '…'}` : 'all periods';
         document.getElementById('z1-inscrits-periode').textContent = lbl;
       })
-      .catch(err => console.error('Erreur zone1:', err));
+      .catch(err => console.error('Error zone1:', err));
   }
 
   // ── Zone 2 ───────────────────────────────────────────
@@ -293,7 +293,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         zone2.style.display = '';
       })
-      .catch(err => { loader.style.display = 'none'; console.error('Erreur zone2:', err); });
+      .catch(err => { loader.style.display = 'none'; console.error('Error zone2:', err); });
   }
 
   // ── Boutons ──────────────────────────────────────────
@@ -320,7 +320,7 @@ document.addEventListener('DOMContentLoaded', () => {
     setMeta('#equipment_set', 'meta-equipment_set');
   });
 
-  // Chargement initial
+  // Loading initial
   setMeta('#equipment_set', 'meta-equipment_set');
   loadZone1();
   loadZone2();

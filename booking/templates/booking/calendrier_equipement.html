@@ -117,16 +117,16 @@
   }
 </style>
 
-<a href="{% url 'home' %}" class="btn-retour">🏠 Back à l'home</a>
+<a href="{% url 'home' %}" class="btn-retour">🏠 Back to home</a>
 
 <h1>Calendar – {{ equipment.name }}</h1>
-<p><strong>Rate horaire :</strong> {{ hourly_rate }} $ CAD/h</p>
-<p><strong>Localisation :</strong> {{ equipment.location }}</p>
+<p><strong>Hourly rate :</strong> {{ hourly_rate }} $ CAD/h</p>
+<p><strong>Location:</strong> {{ equipment.location }}</p>
 
 <div class="navigation">
-  <a href="?semaine={{ semaine_precedente|date:'Y-m-d' }}">← Semaine précédente</a>
-  <span>Semaine du {{ lundi|date:"d/m/Y" }}</span>
-  <a href="?semaine={{ semaine_suivante|date:'Y-m-d' }}">Semaine suivante →</a>
+  <a href="?semaine={{ semaine_precedente|date:'Y-m-d' }}">← Previous week</a>
+  <span>Week of {{ lundi|date:"d/m/Y" }}</span>
+  <a href="?semaine={{ semaine_suivante|date:'Y-m-d' }}">Next week →</a>
 </div>
 
 <div class="calendar-container">
@@ -140,7 +140,7 @@
 
   {% for heure in heures %}
   <div class="time-slot hour">
-    {{ heure|stringformat:"02d" }}h
+    {{ heure|stringformat:"02d" }}:00
   </div>
   {% for day_of_week in jours_semaine %}
   <div class="time-slot day-column" data-day="{{ day_of_week|date:'Y-m-d' }}" data-hour="{{ heure }}">

@@ -49,7 +49,7 @@ class Reservation(models.Model):
     is_training = models.BooleanField(default=False)
     trained_emails = models.TextField(
         blank=True,
-        help_text="Uniquement pour les réservations de type formation. Séparer les emails par des virgules."
+        help_text="For training reservations only. Separate emails with commas."
     )
 
     # --- Demande exceptionnelle ---
@@ -59,20 +59,20 @@ class Reservation(models.Model):
     # --- Maintenance / Hors service ---
     is_maintenance = models.BooleanField(
         default=False,
-        help_text="Réservation pour maintenance/hors service (bloque l'équipement)"
+        help_text="Maintenance/out-of-service reservation (blocks equipment)"
     )
 
     is_teaching = models.BooleanField(
         default=False,
-        help_text="Réservation pour enseignement (cours de lab)"
+        help_text="Teaching reservation (lab course)"
     )
 
     # --- Statut ---
     STATUT_CHOIX = [
-        ('upcoming', 'À venir'),
-        ('past', 'Passée'),
-        ('cancelled', 'Annulée'),
-        ('pending', 'En attente (exception)'),
+        ('upcoming', 'Upcoming'),
+        ('past', 'Past'),
+        ('cancelled', 'Cancelled'),
+        ('pending', 'Pending (exception request)'),
     ]
     status = models.CharField(max_length=20, choices=STATUT_CHOIX, default='upcoming')
 
@@ -81,8 +81,8 @@ class Reservation(models.Model):
 
     class Meta:
         ordering = ['-start_date', 'start_time']
-        verbose_name = "Réservation"
-        verbose_name_plural = "Réservations"
+        verbose_name = "Reservation"
+        verbose_name_plural = "Reservations"
 
     def __str__(self):
         return f"{self.equipment.name} - {self.start_date} ({self.start_time}-{self.end_time})"
@@ -97,12 +97,12 @@ class Reservation(models.Model):
             dt_debut = dt_fin = None
 
         if dt_debut and dt_fin and dt_fin <= dt_debut:
-            errors['end_date'] = "La fin doit être strictement postérieure au début."
+            errors['end_date'] = "The end time must be strictly after the start time."
 
-        if dt_debut and dt_fin and self.equipement_id:
+        if dt_debut and dt_fin and self.equipment_id:
             candidats = (
                 Reservation.objects
-                .filter(equipement_id=self.equipement_id)
+                .filter(equipment_id=self.equipment_id)
                 .exclude(pk=self.pk)
                 .exclude(status='cancelled')
                 .filter(start_date__lte=self.end_date, end_date__gte=self.start_date)
@@ -112,7 +112,7 @@ class Reservation(models.Model):
                 o_fin = datetime.combine(other.end_date, other.end_time)
                 if dt_debut < o_fin and dt_fin > o_debut:
                     errors['start_date'] = (
-                        "Chevauchement détecté avec une autre réservation de cet équipement."
+                        "Overlap detected with another reservation for this equipment."
                     )
                     break
 

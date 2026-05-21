@@ -55,17 +55,17 @@ class MiseAJourReservationTermineeMiddleware:
         - Met à day_of_week les réservations expirées.
         - Returns la réponse du middleware suivant.
         """
-        if cache.add('statuts_updated', True, 60):
+        if cache.add('statuses_updated', True, 60):
             aujourd_hui = timezone.localdate()
             maintenant  = timezone.localtime().time()
             # Reservations terminees avant aujourd'hui
             (Reservation.objects
                 .filter(end_date__lt=aujourd_hui)
-                .exclude(statut__in=['past', 'cancelled'])
+                .exclude(status__in=['past', 'cancelled'])
                 .update(status='past'))
             # Reservations terminees aujourd'hui (end_time passee)
             (Reservation.objects
                 .filter(end_date=aujourd_hui, end_time__lte=maintenant)
-                .exclude(statut__in=['past', 'cancelled'])
+                .exclude(status__in=['past', 'cancelled'])
                 .update(status='past'))
         return self.get_response(request)

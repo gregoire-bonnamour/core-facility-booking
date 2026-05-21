@@ -32,7 +32,7 @@ def accueil(request):
         lundi : date du lundi de la semaine courante
         nb_reservations_en_attente (si admin) : nombre de réservations à valider
     """
-    is_platform_admin = request.user.is_staff or (hasattr(request.user, 'accounts') and request.user.user_profile.is_platform_admin)
+    is_platform_admin = request.user.is_staff or (hasattr(request.user, 'user_profile') and request.user.user_profile.is_platform_admin)
 
     equipment_set = []
     try:
@@ -50,7 +50,7 @@ def accueil(request):
     context = {
         'user': request.user,
         'is_admin': is_platform_admin,
-        'equipment': equipment_set,
+        'equipment_set': equipment_set,
         'lundi': lundi,
     }
 

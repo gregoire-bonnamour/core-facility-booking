@@ -40,7 +40,7 @@ urlpatterns = [
     path('reserv/', include('booking.urls')),
 
     # Page d’accueil du projet (vue core)
-    path('', core_views.accueil, name='accueil'),
+    path('', core_views.accueil, name='home'),
 
     # App "accounts" (gestion inscriptions, profils, invitations…)
     path('user_profile/', include('accounts.urls')),

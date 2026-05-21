@@ -45,7 +45,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
-    "django.middleware.locale.LocaleMiddleware",  
+    # "django.middleware.locale.LocaleMiddleware",  # disabled: force en locale  
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
@@ -94,7 +94,7 @@ DATABASES = {
 }
 
 # --- i18n / TZ ---
-LANGUAGE_CODE = "fr"          # FR by default
+LANGUAGE_CODE = "en"          # EN for GitHub public repo
 TIME_ZONE = "America/Toronto"  # EST/EDT — même fuseau que Montréal
 USE_I18N = True
 USE_L10N = True

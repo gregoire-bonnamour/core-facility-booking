@@ -111,7 +111,7 @@
 </div>
 
 <div class="signup-form">
-    <h1>Créer un compte</h1>
+    <h1>Create an account</h1>
 
     {% if messages %}
     {% for message in messages %}
@@ -155,7 +155,7 @@
             </ul>
             {% endif %}
         </div>
-        <button type="submit">S'inscrire</button>
+        <button type="submit">Sign up</button>
     </form>
 </div>
 
@@ -167,7 +167,7 @@
 
             if (affiliationId) {
                 $.ajax({
-                    url: "{% url 'accounts:ajax_labos' %}",
+                    url: "{% url 'accounts:ajax_labs' %}",
                     data: {
                         'affiliation_id': affiliationId
                     },

@@ -39,7 +39,7 @@
 
 {# 📋 Tableau des invitations en attente #}
 {% if invitations_en_attente %}
-<h3>Invitations en attente (comptes non créés)</h3>
+<h3>Pending invitations (accounts not created)</h3>
 
 <form method="post" id="invitationForm">
   {% csrf_token %}
@@ -107,10 +107,10 @@
 </script>
 
 {% else %}
-<p style="margin-top: 20px; font-style: italic; color: gray;">Tocune invitation en attente.</p>
+<p style="margin-top: 20px; font-style: italic; color: gray;">No pending invitations.</p>
 {% endif %}
 
-<p><a href="{% url 'home' %}">⬅ Back à l'home</a></p>
+<p><a href="{% url 'home' %}">⬅ Back to home</a></p>
 <footer>
 </footer>
 {% endblock %}

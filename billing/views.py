@@ -29,7 +29,7 @@ logger = logging.getLogger(__name__)
 
 
 def is_platform_admin_plateforme(user):
-    return user.is_staff or user.is_superuser or (hasattr(user, 'accounts') and user.user_profile.is_platform_admin)
+    return user.is_staff or user.is_superuser or (hasattr(user, 'user_profile') and user.user_profile.is_platform_admin)
 
 @user_passes_test(is_platform_admin_plateforme)
 def generer_factures(request):

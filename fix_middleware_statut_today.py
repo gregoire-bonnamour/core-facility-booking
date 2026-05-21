@@ -11,27 +11,27 @@ with open(path, "r", encoding="utf-8") as f:
     src = f.read()
 
 old_block = (
-    "        if cache.add('statuts_updated', True, 60):\n"
+    "        if cache.add('statuses_updated', True, 60):\n"
     "            aujourd_hui = timezone.localdate()\n"
     "            (Reservation.objects\n"
     "                .filter(end_date__lt=aujourd_hui)\n"
-    "                .exclude(statut__in=['past', 'cancelled'])\n"
+    "                .exclude(status__in=['past', 'cancelled'])\n"
     "                .update(status='past'))\n"
     "        return self.get_response(request)"
 )
 new_block = (
-    "        if cache.add('statuts_updated', True, 60):\n"
+    "        if cache.add('statuses_updated', True, 60):\n"
     "            aujourd_hui = timezone.localdate()\n"
     "            maintenant  = timezone.localtime().time()\n"
     "            # Reservations terminees avant aujourd'hui\n"
     "            (Reservation.objects\n"
     "                .filter(end_date__lt=aujourd_hui)\n"
-    "                .exclude(statut__in=['past', 'cancelled'])\n"
+    "                .exclude(status__in=['past', 'cancelled'])\n"
     "                .update(status='past'))\n"
     "            # Reservations terminees aujourd'hui (end_time passee)\n"
     "            (Reservation.objects\n"
     "                .filter(end_date=aujourd_hui, end_time__lte=maintenant)\n"
-    "                .exclude(statut__in=['past', 'cancelled'])\n"
+    "                .exclude(status__in=['past', 'cancelled'])\n"
     "                .update(status='past'))\n"
     "        return self.get_response(request)"
 )

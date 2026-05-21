@@ -161,37 +161,37 @@ def inviter_usager(request):
             try:
                 invitation = Invitation.objects.get(pk=invitation_id)
                 _envoyer_email_invitation(request, invitation, rappel=True)
-                messages.success(request, f"Rappel envoyé avec succès à {invitation.email}.")
+                messages.success(request, f"Reminder sent successfully to {invitation.email}.")
             except Invitation.DoesNotExist:
-                messages.error(request, "L'invitation n'existe pas ou a été supprimée.")
-            return redirect('accounts:inviter_usager')
+                messages.error(request, "The invitation does not exist or has been deleted.")
+            return redirect('accounts:invite_user')
 
         # --- CAS 3 : SUPPRIMER ---
         if action == 'supprimer':
             invitation_id = request.POST.get('invitation_id')
             Invitation.objects.filter(pk=invitation_id).delete()
-            messages.success(request, "Invitation supprimée.")
-            return redirect('accounts:inviter_usager')
+            messages.success(request, "Invitation deleted.")
+            return redirect('accounts:invite_user')
 
         # --- CAS 4 : ACTIONS DE MASSE / NOUVEAU FORMAT ---
         if action == 'supprimer_masse':
             ids = request.POST.getlist('invitation_ids')
             if ids:
                 count, _ = Invitation.objects.filter(id__in=ids).delete()
-                messages.success(request, f"{count} invitation(s) supprimée(s).")
+                messages.success(request, f"{count} invitation(s) deleted.")
             else:
-                messages.warning(request, "None invitation sélectionnée.")
-            return redirect('accounts:inviter_usager')
+                messages.warning(request, "No invitation selected.")
+            return redirect('accounts:invite_user')
         
         if action and action.startswith('relancer_'):
             try:
                 invitation_id = int(action.split('_')[1])
                 invitation = Invitation.objects.get(pk=invitation_id)
                 _envoyer_email_invitation(request, invitation, rappel=True)
-                messages.success(request, f"Rappel envoyé avec succès à {invitation.email}.")
+                messages.success(request, f"Reminder sent successfully to {invitation.email}.")
             except (IndexError, ValueError, Invitation.DoesNotExist):
                 messages.error(request, "Erreur lors de la relance.")
-            return redirect('accounts:inviter_usager')
+            return redirect('accounts:invite_user')
 
         # --- CAS 1 : NOUVELLE INVITATION ---
         form = InvitationForm(request.POST)
@@ -210,8 +210,8 @@ def inviter_usager(request):
             # Envoi du email
             _envoyer_email_invitation(request, invitation, rappel=False)
 
-            messages.success(request, f"Invitation envoyée à {email}.")
-            return redirect('accounts:inviter_usager')
+            messages.success(request, f"Invitation sent to {email}.")
+            return redirect('accounts:invite_user')
 
     else:
         form = InvitationForm()
@@ -237,24 +237,24 @@ def _envoyer_email_invitation(request, invitation, rappel=False):
         reverse("accounts:inscription") + "?" + urlencode({"email": invitation.email})
     )
 
-    prefixe = "RAPPEL : " if rappel else ""
-    sujet = f"{prefixe}Invitation à utiliser la plateforme de réservation"
+    prefixe = "REMINDER: " if rappel else ""
+    sujet = f"{prefixe}Invitation to use the core facility booking platform"
 
     intro = (
-        "Bonjour,\n\n"
-        "Ceci est un rappel pour votre invitation à la plateforme."
+        "Hello,\n\n"
+        "This is a reminder for your invitation to the platform."
         if rappel else
-        "Bonjour,\n\n"
-        "Vous avez été invité à utiliser la plateforme de microscopie et cytométrie du YourFacility."
+        "Hello,\n\n"
+        "You have been invited to use the YourFacility Core Facility booking platform."
     )
 
     message = (
         f"{intro}\n\n"
-        "Pour créer votre compte (ou finaliser votre inscription), veuillez cliquer sur le lien suivant :\n"
+        "To create your account (or complete your registration), please click the following link:\n"
         f"{lien_inscription}\n\n"
-        "Ceci est un email automatique.\n\n"
-        "Cordialement,\n"
-        "L’équipe de la plateforme de microscopie et cytométrie du YourFacility\n"
+        "This is an automated email.\n\n"
+        "Best regards,\n"
+        "The YourFacility Core Facility Team\n"
     )
 
     send_mail(
@@ -276,7 +276,7 @@ def profil(request):
         - user  : request.user (Django User)
         - user_profile: profil UserProfile lié (peut être None si non créé)
     """
-    user_profile = getattr(request.user, 'accounts', None)
+    user_profile = getattr(request.user, 'user_profile', None)
     return render(request, 'accounts/profil.html', {'user': request.user, 'accounts': user_profile})
 
 
@@ -314,7 +314,7 @@ def valider_formations(request):
         ids = request.POST.getlist("invitation_ids")
 
         if not ids:
-            messages.warning(request, "None invitation sélectionnée.")
+            messages.warning(request, "No invitation selected.")
             return redirect(request.path)
 
         # 1) SUPPRIMER LA SÉLECTION
@@ -336,7 +336,7 @@ def valider_formations(request):
 
             if not user_profile or not equipment:
                 skip += 1
-                errors.append(f"{email} (user_profile inexistant ou réservation manquante)")
+                errors.append(f"{email} (user profile not found or reservation missing)")
                 continue
 
             user_profile.authorized_equipment.add(equipment)
@@ -447,7 +447,7 @@ except Exception:
 REGLEMENT_POINTS = [
     "Publications scientifiques (acknowledgment, information et co-signature).",
     "Respect et bon usage des équipements (formation, consommables, nettoyage, signalement incident).",
-    "Réservations, retards et assistance (fenêtre de modification/suppression et facturation).",
+    "Reservations, delays and assistance (modification/deletion window and billing).",
     "Données, sécurité et confidentialité (export, politiques YourUniversity).",
     "Sanctions graduées (rappel → avertissement → suspension → retrait d’accès).",
 ]
@@ -460,7 +460,7 @@ def reglement_view(request):
     Pas d'hypothèse sur les valeurs exactes envoyées (1..5, 0..4, etc.).
     """
     # Où rediriger après succès
-    next_url = request.POST.get("next") or request.GET.get("next") or reverse("accueil")
+    next_url = request.POST.get("next") or request.GET.get("next") or reverse("home")
 
     # — NEW: choisir le template d'affichage selon ?lang=en (FR by default)
     lang = (request.GET.get("lang") or "").lower()
@@ -529,15 +529,15 @@ def reglement_view(request):
                 )
                 pdf_name = "Platform-Rules.pdf"
             else:
-                subject = "Règlement de la plateforme — confirmation"
+                subject = "Platform Rules — confirmation"
                 body = (
-                    "Bonjour,\n\n"
-                    "Votre acceptation du règlement a été enregistrée.\n"
-                    + ("Une copie PDF est jointe.\n\n" if pdf_bytes else "La pièce jointe PDF n'a pas pu être générée.\n\n")
-                    + ("[DEBUG] Erreur PDF: " + pdf_err + "\n\n" if settings.DEBUG and pdf_err else "")
-                    + "Cordialement,\nL’équipe de la plateforme"
+                    "Hello,\n\n"
+                    "Your acceptance of the platform rules has been recorded.\n"
+                    + ("A PDF copy is attached.\n\n" if pdf_bytes else "The PDF attachment could not be generated.\n\n")
+                    + ("[DEBUG] PDF error: " + pdf_err + "\n\n" if settings.DEBUG and pdf_err else "")
+                    + "Best regards,\nThe Core Facility Team"
                 )
-                pdf_name = "Reglement-Plateforme.pdf"
+                pdf_name = "Platform-Rules.pdf"
             to_list = [request.user.email] if getattr(request.user, "email", None) else [settings.SERVER_EMAIL]
 
             from django.core.mail import EmailMessage
@@ -599,7 +599,7 @@ def _envoyer_reglement_pdf(request):
         raise RuntimeError("WeasyPrint n'est pas disponible dans l'environnement.")
 
     user = request.user
-    usager_email = getattr(user, "email", "") or getattr(getattr(user, "accounts", None), "email", "")
+    usager_email = getattr(user, "email", "") or getattr(getattr(user, "user_profile", None), "email", "")
     if not usager_email:
         raise RuntimeError("None adresse email n'est associée à votre compte.")
 
@@ -612,12 +612,12 @@ def _envoyer_reglement_pdf(request):
     html_string = render_to_string("accounts/reglement_pdf.html", contexte_pdf)
     pdf_bytes = HTML(string=html_string, base_url=getattr(settings, "SITE_URL", "")).write_pdf()
 
-    subject = "Règlement de la plateforme – confirmation d’acceptation"
+    subject = "Platform Rules – acceptance confirmation"
     body = (
-        "Bonjour,\n\n"
-        "Vous trouverez en pièce jointe le règlement de la plateforme que vous venez d’accepter.\n"
-        "Conservez ce document pour vos archives.\n\n"
-        "Cordialement,\nL’équipe de la plateforme"
+        "Hello,\n\n"
+        "Please find attached the platform rules you have just accepted.\n"
+        "Keep this document for your records.\n\n"
+        "Best regards,\nThe Core Facility Team"
     )
     from_email = getattr(settings, "DEFAULT_FROM_EMAIL", "no-reply@example.com")
 

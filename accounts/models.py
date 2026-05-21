@@ -129,7 +129,7 @@ class UserProfile(models.Model):
     user = models.OneToOneField(
         User,
         on_delete=models.CASCADE,
-        related_name='accounts'
+        related_name='user_profile'
     )
 
     first_name = models.CharField(max_length=30, help_text="Prénom de l'user_profile")

@@ -38,24 +38,24 @@ def generate_time_choices():
 
 class ReservationForm(forms.ModelForm):
     # Champs virtuels pour l'UI
-    start_time_h = forms.ChoiceField(choices=HOUR_CHOICES, label="Heure debut")
-    start_minute_m = forms.ChoiceField(choices=MINUTE_CHOICES, label="Minutes debut")
-    end_time_h = forms.ChoiceField(choices=HOUR_CHOICES, label="Heure fin")
-    end_minute_m = forms.ChoiceField(choices=MINUTE_CHOICES, label="Minutes fin")
+    start_time_h = forms.ChoiceField(choices=HOUR_CHOICES, label="Start hour")
+    start_minute_m = forms.ChoiceField(choices=MINUTE_CHOICES, label="Start minute")
+    end_time_h = forms.ChoiceField(choices=HOUR_CHOICES, label="End hour")
+    end_minute_m = forms.ChoiceField(choices=MINUTE_CHOICES, label="End minute")
 
     # Champs virtuels (ne se sauvegardent PAS dans la DB)
     # Ils servent uniquement a l'interface pour les admins
     is_maintenance = forms.BooleanField(
         required=False,
-        label="Reservation Maintenance",
+        label="Maintenance Reservation",
         widget=forms.CheckboxInput(attrs={"class": "form-check-input"}),
-        help_text="La reservation sera attribuee a l'user_profile systeme 'Maintenance'"
+        help_text="Reservation will be assigned to the system 'Maintenance' user profile"
     )
     is_teaching = forms.BooleanField(
         required=False,
         label="Reservation Enseignement",
         widget=forms.CheckboxInput(attrs={"class": "form-check-input"}),
-        help_text="La reservation sera attribuee a l'user_profile systeme 'Enseignement'"
+        help_text="Reservation will be assigned to the system 'Teaching' user profile"
     )
 
     start_date = forms.DateField(
@@ -99,7 +99,7 @@ class ReservationForm(forms.ModelForm):
         }
 
     def __init__(self, *args, **kwargs):
-        self.user_profile = kwargs.pop('accounts', None)
+        self.user_profile = kwargs.pop('user_profile', None)
         self.equipment = kwargs.pop('equipment', None)
         self.request = kwargs.pop('request', None)
         super().__init__(*args, **kwargs)
@@ -113,7 +113,7 @@ class ReservationForm(forms.ModelForm):
         # Masquer certains champs pour les non-admin
         is_admin = False
         if self.request and self.request.user.is_authenticated:
-            is_admin = self.request.user.is_staff or (hasattr(self.request.user, 'accounts') and self.request.user.user_profile.is_platform_admin)
+            is_admin = self.request.user.is_staff or (hasattr(self.request.user, 'user_profile') and self.request.user.user_profile.is_platform_admin)
 
         if not is_admin:
             self.fields['is_training'].widget = forms.HiddenInput()
@@ -151,12 +151,12 @@ class ReservationForm(forms.ModelForm):
 
         # 1. Reservation future
         if dt_debut < timezone.now():
-            self.add_error("start_date", "La reservation doit commencer dans le futur.")
+            self.add_error("start_date", "The reservation must start in the future.")
 
         # 2. Debut < fin
         if dt_debut >= dt_fin:
-            self.add_error("start_time_h", "L'heure de debut doit etre avant l'heure de fin.")
-            self.add_error("end_time_h", "L'heure de fin doit etre apres l'heure de debut.")
+            self.add_error("start_time_h", "The start time must be before the end time.")
+            self.add_error("end_time_h", "The end time must be after the start time.")
 
         # 3. Chevauchement
         if self.equipment:
@@ -164,14 +164,14 @@ class ReservationForm(forms.ModelForm):
                 Reservation.objects
                 .filter(equipment=self.equipment)
                 .exclude(pk=self.instance.pk)
-                .exclude(statut__in=['cancelled', 'past'])
+                .exclude(status__in=['cancelled', 'past'])
             )
             for r in conflits:
                 r_debut = timezone.make_aware(datetime.combine(r.start_date, r.start_time))
                 r_fin = timezone.make_aware(datetime.combine(r.end_date, r.end_time))
                 if dt_debut < r_fin and dt_fin > r_debut:
                     raise ValidationError(
-                        f"Chevauche une autre reservation : {r.start_date} {r.start_time}-{r.end_time}"
+                        f"Overlaps with another reservation: {r.start_date} {r.start_time}-{r.end_time}"
                     )
 
         # 4. Duree maximale globale (parametre equipment)
@@ -180,19 +180,19 @@ class ReservationForm(forms.ModelForm):
             duree_max = getattr(self.equipment, "max_duration_hours", 72)
             if duree_totale > timedelta(hours=duree_max):
                 raise ValidationError(
-                    f"La reservation depasse la duree maximale autorisee de {duree_max}h "
+                    f"The reservation exceeds the maximum allowed duration of {duree_max}h "
                     f"pour cet equipment (sauf demande exceptionnelle)."
                 )
 
         # 5. Exception -> justification obligatoire
         if exception_request and not justification:
-            self.add_error("justification", "Veuillez expliquer la demande d'exception.")
+            self.add_error("justification", "Please explain the exception request.")
 
         # Validation Assistance : Duree obligatoire si coche
         assistance = cleaned_data.get("assistance")
         duree_assistance = cleaned_data.get("assistance_duration_minutes")
         if assistance and (duree_assistance is None or duree_assistance <= 0):
-            self.add_error("assistance_duration_minutes", "La duree d'assistance est obligatoire si cette option est cochee.")
+            self.add_error("assistance_duration_minutes", "Assistance duration is required when assistance is requested.")
 
         # Validation : Maintenance et Enseignement sont mutuellement exclusifs
         type_maint = cleaned_data.get("is_maintenance", False)
@@ -228,7 +228,7 @@ class ReservationForm(forms.ModelForm):
                     user_profile=self.user_profile,
                     equipment=self.equipment,
                     start_date=start_date,
-                    statut__in=['upcoming', 'pending'],
+                    status__in=['upcoming', 'pending'],
                     start_time__lt=plage.end_time,
                     end_time__gt=plage.start_time,
                 )
@@ -294,7 +294,7 @@ class ReservationModificationForm(ReservationForm):
         # Restrictions si pas admin
         is_admin = False
         if self.request and self.request.user.is_authenticated:
-            is_admin = self.request.user.is_staff or (hasattr(self.request.user, 'accounts') and self.request.user.user_profile.is_platform_admin)
+            is_admin = self.request.user.is_staff or (hasattr(self.request.user, 'user_profile') and self.request.user.user_profile.is_platform_admin)
 
         if not is_admin:
             self.fields["assistance"].disabled = True

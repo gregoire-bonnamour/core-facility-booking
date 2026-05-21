@@ -1,13 +1,13 @@
-{% if user %}Bonjour {{ user.first_name }} {{ user.last_name }},{% else %}Bonjour,{% endif %}
-Ceci est un email automatique, merci de ne pas y répondre.
+{% if user %}Hello {{ user.first_name }} {{ user.last_name }},{% else %}Hello,{% endif %}
+This is an automated email, please do not reply.
 
-Merci de votre registration sur la plateforme de microscopie et cytométrie du YourFacility.
+Thank you for registering on the YourFacility Core Facility platform.
 
-Pour confirmer votre adresse email, veuillez cliquer sur le lien ci-dessous :
+To confirm your email address, please click the link below:
 
 {{ activation_url }}
 
-Si vous n’êtes pas à l’origine de cette demande, vous pouvez ignorer ce message.
+If you did not request this, you may ignore this message.
 
-Cordialement,
-L’équipe de la plateforme de microscopie et cytométrie du YourFacility
+Best regards,
+The YourFacility Core Facility Team

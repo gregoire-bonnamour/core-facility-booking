@@ -1,22 +1,22 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<h2>Détails de la booking</h2>
+<h2>Booking details</h2>
 
 <ul>
-    <li><strong>Équipement :</strong> {{ reservation.equipment.name }}</li>
-    <li><strong>Date de début :</strong> {{ reservation.start_date }}</li>
-    <li><strong>Heure de début :</strong> {{ reservation.start_time }}</li>
-    <li><strong>Date de fin :</strong> {{ reservation.end_date }}</li>
-    <li><strong>Heure de fin :</strong> {{ reservation.end_time }}</li>
-    <li><strong>Réservée par :</strong> {{ reservation.user_profile.first_name }} {{ reservation.user_profile.name }}</li>
+    <li><strong>Equipment:</strong> {{ reservation.equipment.name }}</li>
+    <li><strong>Start date:</strong> {{ reservation.start_date }}</li>
+    <li><strong>Start time:</strong> {{ reservation.start_time }}</li>
+    <li><strong>End date:</strong> {{ reservation.end_date }}</li>
+    <li><strong>End time:</strong> {{ reservation.end_time }}</li>
+    <li><strong>Booked by:</strong> {{ reservation.user_profile.first_name }} {{ reservation.user_profile.name }}</li>
 </ul>
 
 {# Lien mailto vers l'email du compte utilisateur, avec CC à l'administration et sujet pré-rempli #}
 <a href="mailto:{{ reservation.user_profile.user.email }}?cc=admin@youruniversity.ca&subject=R%C3%A9servation%20%23{{ reservation.id }}%20%E2%80%93%20{{ reservation.equipment.name }}">
-    <button>Contacter {{ reservation.user_profile.first_name }} {{ reservation.user_profile.name }}</button>
+    <button>Contact {{ reservation.user_profile.first_name }} {{ reservation.user_profile.name }}</button>
 </a>
-<p><small>ℹ️ By default l'administrateur de la plateforme est en CC de ce message.</small></p>
+<p><small>ℹ️ By default, the platform administrator is CC'd on this message.</small></p>
 
 <br>
 

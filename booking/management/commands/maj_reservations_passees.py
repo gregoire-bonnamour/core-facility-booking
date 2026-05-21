@@ -9,6 +9,6 @@ class Command(BaseCommand):
         today = timezone.localdate()
         n = (Reservation.objects
              .filter(end_date__lt=today)
-             .exclude(statut__in=['past','cancelled'])
+             .exclude(status__in=['past','cancelled'])
              .update(status='past'))
         self.stdout.write(self.style.SUCCESS(f"{n} réservation(s) mises à day_of_week"))

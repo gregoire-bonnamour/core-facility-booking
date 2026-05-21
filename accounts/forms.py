@@ -237,7 +237,7 @@ class RegistrationForm(forms.ModelForm):
             user.save()
 
         # 2) Récupération de l'UserProfile lié (créé automatiquement par le signal)
-        user_profile = getattr(user, 'accounts', None)
+        user_profile = getattr(user, 'user_profile', None)
         if user_profile is None:
             # Normalement le signal a déjà créé un UserProfile.
             # Ce fallback est là juste par sécurité.

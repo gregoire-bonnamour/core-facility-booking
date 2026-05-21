@@ -33,7 +33,7 @@ def creer_usager_associe(sender, instance, created, **kwargs):
     """
     if created:
         # On s’assure de ne pas dupliquer si déjà lié
-        if not hasattr(instance, 'accounts'):
+        if not hasattr(instance, 'user_profile'):
             UserProfile.objects.create(
                 user=instance,
                 first_name=instance.first_name or "",

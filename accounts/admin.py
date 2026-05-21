@@ -159,7 +159,7 @@ class TrainingInvitationAdmin(admin.ModelAdmin):
 
     # Au clic sur le lien dans le menu, on redirige vers la vue custom
     def changelist_view(self, request, extra_context=None):
-        url = reverse("admin_valider_formation")  # name défini dans urls.py
+        url = reverse("valider_formations")  # name défini dans urls.py
         return HttpResponseRedirect(url)
 
 

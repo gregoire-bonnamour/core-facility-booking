@@ -5,28 +5,28 @@
 
 {% if status == "ok" %}
   <div style="font-size:2.5rem;">✅</div>
-  <h2 style="color:#16a34a; margin:.5rem 0 1rem;">Merci, {{ user_profile.first_name }} !</h2>
-  <p>Votre activité sur la plateforme a bien été confirmée.<br>
-     Votre compte reste is_active — à dans 5 ans !</p>
+  <h2 style="color:#16a34a; margin:.5rem 0 1rem;">Thank you, {{ user_profile.first_name }}!</h2>
+  <p>Your activity on the platform has been confirmed.<br>
+     Your account remains active — see you in 5 years!</p>
 
 {% elif status == "desactive" %}
   <div style="font-size:2.5rem;">🔒</div>
-  <h2 style="color:#dc2626; margin:.5rem 0 1rem;">Compte désactivé</h2>
-  <p>Votre compte a été désactivé car nous n'avons pas reçu de réponse dans les délais.<br>
-     Pour le réactiver, veuillez contacter l'administrateur de la plateforme.</p>
+  <h2 style="color:#dc2626; margin:.5rem 0 1rem;">Account Deactivated</h2>
+  <p>Your account has been deactivated because we did not receive a response within the deadline.<br>
+     To reactivate it, please contact the platform administrator.</p>
 
 {% elif status == "expire" %}
   <div style="font-size:2.5rem;">⏱️</div>
-  <h2 style="color:#d97706; margin:.5rem 0 1rem;">Lien expiré</h2>
-  <p>Ce lien de confirmation est valable 30 jours et a expiré.<br>
-     Si votre compte est toujours is_active, contactez l'administrateur.</p>
+  <h2 style="color:#d97706; margin:.5rem 0 1rem;">Link Expired</h2>
+  <p>This confirmation link is valid for 30 days and has expired.<br>
+     If your account is still active, contact the administrator.</p>
 
 {% else %}
   <div style="font-size:2.5rem;">❌</div>
-  <h2 style="color:#dc2626; margin:.5rem 0 1rem;">Lien invalide</h2>
-  <p>Ce lien de confirmation est invalide ou a déjà été utilisé.</p>
+  <h2 style="color:#dc2626; margin:.5rem 0 1rem;">Invalid Link</h2>
+  <p>This confirmation link is invalid or has already been used.</p>
 {% endif %}
 
-  <a href="/" class="btn primary" style="margin-top:1.5rem; display:inline-block;">Back à l'home</a>
+  <a href="/" class="btn primary" style="margin-top:1.5rem; display:inline-block;">Back to home</a>
 </div>
 {% endblock %}

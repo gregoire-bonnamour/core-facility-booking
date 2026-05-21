@@ -32,6 +32,7 @@ from django.contrib import messages
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth.models import User
+from django.core.exceptions import ValidationError
 from django.core.mail import send_mail
 from django.db.models import Q, Sum, Count, Avg, F
 from django.db.models.functions import TruncMonth, ExtractWeekDay, ExtractHour
@@ -192,6 +193,12 @@ def reserver_equipement(request, equipement_id):
         id=equipement_id
     )
 
+    # Verifier l'autorisation (admin bypass)
+    if not is_platform_admin_plateforme(request.user):
+        if not user_profile.authorized_equipment.filter(id=equipment.id).exists():
+            messages.error(request, "You are not authorized to book this equipment.")
+            return redirect('home')
+
     # tarif (si affiché dans le template)
     assistance_rate = getattr(getattr(user_profile, 'affiliation', None), 'assistance_rate', None)
 
@@ -209,13 +216,13 @@ def reserver_equipement(request, equipement_id):
                         # Maintenance: Prénom="Système", Nom="Maintenance"
                         reservation.user_profile = UserProfile.objects.get(name="Maintenance", first_name="Système")
                     except UserProfile.DoesNotExist:
-                        messages.warning(request, "UserProfile 'Système Maintenance' introuvable. Réservation attribuée à vous-même.")
+                        messages.warning(request, "UserProfile 'System Maintenance' not found. Reservation assigned to yourself.")
                 elif form.cleaned_data.get('is_teaching'):
                     try:
                         # Enseignement: Prénom="Enseignement", Nom="Sciences Biologiques"
                         reservation.user_profile = UserProfile.objects.get(name="Sciences Biologiques", first_name="Enseignement")
                     except UserProfile.DoesNotExist:
-                        messages.warning(request, "UserProfile 'Enseignement Sciences Biologiques' introuvable. Réservation attribuée à vous-même.")
+                        messages.warning(request, "UserProfile 'Teaching Biological Sciences' not found. Reservation assigned to yourself.")
 
             # normalisation assistance
             if not reservation.assistance or reservation.assistance_duration_minutes is None:
@@ -225,7 +232,7 @@ def reserver_equipement(request, equipement_id):
                 reservation.full_clean()
             except ValidationError as e:
                 form.add_error(None, e)
-                messages.error(request, "La réservation n’a pas pu être enregistrée : vérifie dates et chevauchements.")
+                messages.error(request, "The reservation could not be saved: check dates and overlaps.")
                 return render(request, 'booking/reserver_equipement.html', {
                     'equipment': equipment,
                     'form': form,
@@ -240,18 +247,18 @@ def reserver_equipement(request, equipement_id):
                 reservation.status = 'pending'
                 if admin_emails:
                     admin_url = request.build_absolute_uri(
-                        reverse('admin:reserv_reservation_changelist') + '?status=en_attente'
+                        reverse('admin:booking_reservation_changelist') + '?status=en_attente'
                     )
                     send_mail(
-                        subject=f"[Calendrier] Demande d'exception – {reservation.equipment.name}",
+                        subject=f"[Core Facility] Exception Request – {reservation.equipment.name}",
                         message=(
-                            "Une réservation avec demande d'exception a été soumise :\n\n"
-                            f"UserProfile : {user_profile.first_name} {user_profile.name} ({user_profile.email})\n"
-                            f"Équipement : {reservation.equipment.name}\n"
-                            f"Date : {reservation.start_date} {reservation.start_time} → "
+                            "An exception request reservation has been submitted:\n\n"
+                            f"User: {user_profile.first_name} {user_profile.name} ({user_profile.email})\n"
+                            f"Equipment: {reservation.equipment.name}\n"
+                            f"Date: {reservation.start_date} {reservation.start_time} → "
                             f"{reservation.end_date} {reservation.end_time}\n\n"
-                            "Justification :\n"
-                            f"{reservation.justification or '(noe)'}\n\n"
+                            "Justification:\n"
+                            f"{reservation.justification or '(none)'}\n\n"
                             f"{admin_url}\n"
                         ),
                         from_email=settings.DEFAULT_FROM_EMAIL,
@@ -265,13 +272,13 @@ def reserver_equipement(request, equipement_id):
             if reservation.assistance and admin_emails:
                 tarif_txt = f"{assistance_rate} $/h" if assistance_rate is not None else "N/A"
                 corps = (
-                    "Une assistance a été demandée pour une réservation :\n\n"
-                    f"UserProfile : {user_profile.first_name} {user_profile.name} ({user_profile.email})\n"
-                    f"Équipement : {reservation.equipment.name}\n"
-                    f"Date : {reservation.start_date} {reservation.start_time} → "
+                    "Assistance has been requested for a reservation:\n\n"
+                    f"User: {user_profile.first_name} {user_profile.name} ({user_profile.email})\n"
+                    f"Equipment: {reservation.equipment.name}\n"
+                    f"Date: {reservation.start_date} {reservation.start_time} → "
                     f"{reservation.end_date} {reservation.end_time}\n"
-                    f"Durée assistance (min) : {reservation.assistance_duration_minutes}\n"
-                    f"Rate assistance (affiliation) : {tarif_txt}\n"
+                    f"Assistance duration (min): {reservation.assistance_duration_minutes}\n"
+                    f"Assistance rate (affiliation): {tarif_txt}\n"
                 )
                 try:
                     from icalendar import Calendar, Event
@@ -295,7 +302,7 @@ def reserver_equipement(request, equipement_id):
                     # Structure MIME pour qu'Outlook affiche les boutons Accepter/Refuser
                     # inline + method=REQUEST dans le Content-Type déclenche l'UI meeting request
                     msg = MIMEMultipart('mixed')
-                    msg['Subject'] = f"[Calendrier] Assistance demandée – {reservation.equipment.name}"
+                    msg['Subject'] = f"[Core Facility] Assistance Requested – {reservation.equipment.name}"
                     msg['From'] = settings.DEFAULT_FROM_EMAIL
                     msg['To'] = ', '.join(admin_emails)
                     msg.attach(MIMETextRaw(corps, 'plain', 'utf-8'))
@@ -312,7 +319,7 @@ def reserver_equipement(request, equipement_id):
                 except Exception:
                     # Fallback : envoi texte brut sans .ics
                     send_mail(
-                        subject=f"[Calendrier] Assistance demandée – {reservation.equipment.name}",
+                        subject=f"[Core Facility] Assistance Requested – {reservation.equipment.name}",
                         message=corps,
                         from_email=settings.DEFAULT_FROM_EMAIL,
                         recipient_list=admin_emails,
@@ -327,13 +334,13 @@ def reserver_equipement(request, equipement_id):
 
 
             messages.info(request,
-                          "Réservation enregistrée (validation requise)." if reservation.exception_request
-                          else "Réservation enregistrée.")
+                          "Reservation saved (pending validation)." if reservation.exception_request
+                          else "Reservation saved.")
             params = urlencode({'semaine': reservation.start_date.strftime("%Y-%m-%d")})
-            url = reverse('booking:calendrier_equipement', kwargs={'equipement_id': equipment.id})
+            url = reverse('booking:calendar_equipement', kwargs={'equipement_id': equipment.id})
             return redirect(f'{url}?{params}')
         else:
-            messages.error(request, "Erreur dans le formulaire.")
+            messages.error(request, "Form error.")
     
     else:
         # ---------- PRÉ-REMPLISSAGE SIMPLE & FIABLE ----------
@@ -360,7 +367,7 @@ def reserver_equipement(request, equipement_id):
         form = ReservationForm(initial=initial, user_profile=user_profile, equipment=equipment, request=request)
 
     if not equipment.is_active:
-        messages.error(request, "Cet équipement est actuellement inactif. Réservation impossible.")
+        messages.error(request, "This equipment is currently inactive. Booking not allowed.")
         return redirect('accueil')
 
     date_retour = now().date()
@@ -417,12 +424,12 @@ def calendrier_equipement(request, equipement_id):
     # Statuts visibles dans le calendrier
     reservations = (
         Reservation.objects
-        .select_related('accounts', 'equipment')
+        .select_related('user_profile', 'equipment')
         .filter(
             equipment=equipment,
             start_date__lte=dimanche + timedelta(days=1),
             end_date__gte=lundi,
-            statut__in=["upcoming", "past"],
+            status__in=["upcoming", "past"],
         )
     )
         # .exclude(status='cancelled')  # pas nécessaire avec le filtre ci-dessus, à garder si tu préfères la ceinture+bretelles
@@ -434,11 +441,11 @@ def calendrier_equipement(request, equipement_id):
     reservations_serialisees = [
         {
             'id': r.id,
-            'accounts': str(r.user_profile),
+            'user_profile': f"{r.user_profile.first_name} {r.user_profile.name}",
             'debut': r.start_date.isoformat() + 'T' + r.start_time.strftime('%H:%M'),
             'fin': r.end_date.isoformat() + 'T' + r.end_time.strftime('%H:%M'),
-            'is_maintenance': 'maintenance' in r.user_profile.name.lower() or 'maintenance' in r.user_profile.first_name.lower(),
-            'is_teaching': 'enseignement' in r.user_profile.name.lower() or 'enseignement' in r.user_profile.first_name.lower(),
+            'is_maintenance': r.is_maintenance,
+            'is_teaching': r.is_training or getattr(r, 'is_teaching', False),
         }
         for r in reservations
     ]
@@ -466,7 +473,7 @@ def calendrier_equipement(request, equipement_id):
 
     # Récupère le tarif horaire pour l'affiliation de l'user_profile connecté
     from billing.utils import get_hourly_rate
-    affiliation = request.user.user_profile.affiliation if hasattr(request.user, 'accounts') else None
+    affiliation = request.user.user_profile.affiliation if hasattr(request.user, 'user_profile') else None
     hourly_rate = get_hourly_rate(equipment, affiliation)
 
     return render(request, 'booking/calendrier_equipement.html', {
@@ -495,7 +502,7 @@ def modifier_reservation(request, reservation_id):
     dt_limite_suppression = dt_debut + timedelta(minutes=30)
 
     if not is_platform_admin and not est_createur:
-        return redirect('booking:visualiser_reservation', reservation_id=reservation.id)
+        return redirect('booking:view_reservation', reservation_id=reservation.id)
 
     modification_possible = True
     suppression_possible = True
@@ -505,8 +512,8 @@ def modifier_reservation(request, reservation_id):
             if dt_now > dt_limite_suppression:
                 suppression_possible = False
             if not suppression_possible:
-                messages.warning(request, "Cette réservation ne peut plus être modifiée ni supprimée.")
-                return redirect('booking:visualiser_reservation', reservation_id=reservation.id)
+                messages.warning(request, "This reservation can no longer be modified or deleted.")
+                return redirect('booking:view_reservation', reservation_id=reservation.id)
 
     if request.method == 'POST':
         form = ReservationModificationForm(
@@ -535,12 +542,12 @@ def modifier_reservation(request, reservation_id):
 
             modif.status = 'pending' if modif.exception_request else 'upcoming'
             modif.save()
-            messages.success(request, "Réservation modifiée avec succès.")
+            messages.success(request, "Reservation updated successfully.")
             params = urlencode({'semaine': modif.start_date.strftime("%Y-%m-%d")})
-            url = reverse('booking:calendrier_equipement', kwargs={'equipement_id': reservation.equipment.id})
+            url = reverse('booking:calendar_equipement', kwargs={'equipement_id': reservation.equipment.id})
             return redirect(f'{url}?{params}')
         else:
-            messages.error(request, "Erreur dans le formulaire.")
+            messages.error(request, "Form error.")
     else:
         form = ReservationModificationForm(
             instance=reservation,
@@ -565,28 +572,28 @@ def supprimer_reservation(request, reservation_id):
 
     user_profile = UserProfile.objects.filter(user=request.user).first()
     is_platform_admin = is_platform_admin_plateforme(request.user)
-    est_createur = (user_profile and reservation.usager_id == user_profile.id)
+    est_createur = (user_profile and reservation.user_profile_id == user_profile.id)
 
-    equip_id = reservation.equipement_id
+    equip_id = reservation.equipment_id
     semaine_retour = reservation.start_date.strftime('%Y-%m-%d')
 
     if not is_platform_admin and not est_createur:
-        messages.error(request, "Vous n'avez pas la permission d'annuler cette réservation.")
-        return redirect(reverse('booking:calendrier_equipement', kwargs={'equipement_id': equip_id}) + f"?semaine={semaine_retour}")
+        messages.error(request, "You do not have permission to cancel this reservation.")
+        return redirect(reverse('booking:calendar_equipement', kwargs={'equipement_id': equip_id}) + f"?semaine={semaine_retour}")
 
     # --- Admin = autorisation totale ---
     if not is_platform_admin:
         dt_now = timezone.now()
         dt_debut = timezone.make_aware(datetime.combine(reservation.start_date, reservation.start_time))
         if dt_now > dt_debut + timedelta(minutes=30):
-            messages.error(request, "Délai d’annulation dépassé. La réservation ne peut plus être annulée.")
-            return redirect(reverse('booking:calendrier_equipement', kwargs={'equipement_id': equip_id}) + f"?semaine={semaine_retour}")
+            messages.error(request, "Cancellation deadline passed. This reservation can no longer be cancelled.")
+            return redirect(reverse('booking:calendar_equipement', kwargs={'equipement_id': equip_id}) + f"?semaine={semaine_retour}")
 
     # --- Annulation effective ---
     Reservation.objects.filter(pk=reservation.pk).exclude(status='cancelled').update(status='cancelled')
-    messages.success(request, "Réservation annulée avec succès.")
+    messages.success(request, "Reservation cancelled successfully.")
 
-    return redirect(reverse('booking:calendrier_equipement', kwargs={'equipement_id': equip_id}) + f"?semaine={semaine_retour}")
+    return redirect(reverse('booking:calendar_equipement', kwargs={'equipement_id': equip_id}) + f"?semaine={semaine_retour}")
 
 
 @login_required
@@ -624,10 +631,10 @@ def rediriger_reservation(request, reservation_id):
     if is_platform_admin or est_createur:
         # Autorisé à accéder à modifier (au moins suppression possible)
         if is_platform_admin or dt_now < dt_limite:
-            return redirect('booking:modifier_reservation', reservation_id=reservation.id)
+            return redirect('booking:edit_reservation', reservation_id=reservation.id)
 
     # Sinon → visualisation
-    return redirect('booking:visualiser_reservation', reservation_id=reservation.id)
+    return redirect('booking:view_reservation', reservation_id=reservation.id)
 
 
 @login_required
@@ -645,7 +652,7 @@ def stats_admin(request):
     equipment_set = Equipment.objects.filter(is_active=True).order_by('name').values('id', 'name')
     affiliations = Affiliation.objects.order_by('name').values('id', 'name')
     return render(request, 'booking/stats_admin.html', {
-        'equipment': equipment_set,
+        'equipment_set': equipment_set,
         'affiliations': affiliations,
     })
 
@@ -671,12 +678,12 @@ def ajax_usagers(request):
     if not lab_ids:
         return JsonResponse({'user_profiles': []})
 
-    qs = UserProfile.objects.filter(laboratoire_id__in=lab_ids)
+    qs = UserProfile.objects.filter(laboratory_id__in=lab_ids)
     if fct_ids:
-        qs = qs.filter(fonction_id__in=fct_ids)
+        qs = qs.filter(role_id__in=fct_ids)
 
     users = (qs.order_by('name','first_name')
-               .values('id','name','first_name','laboratoire_id','fonction_id'))
+               .values('id','name','first_name','laboratory_id','role_id'))
     return JsonResponse({'user_profiles': list(users)})
 
 @login_required
@@ -733,7 +740,7 @@ def stats_export_equipement_xlsx(request):
     ws_global.title = "Résumé global"
 
     headers = [
-        "Équipement", "Réservations", "Heures totales", "Heures usage",
+        "Equipment", "Reservations", "Total hours", "Usage hours",
         "Heures assistance", "Durée moy. (h)", "Nb assistance",
         "Formations", "UserProfiles distincts"
     ]
@@ -814,7 +821,7 @@ def stats_export_equipement_xlsx(request):
         ws.append([])
         ws.append(["Date", "Heures d'usage"])
         hours_by_date = defaultdict(float)
-        equip_resas = reservations.filter(equipement_id=equip_id)
+        equip_resas = reservations.filter(equipment_id=equip_id)
         for resa in equip_resas:
             for d, h in hours_split_by_day(resa).items():
                 if d_start <= d <= d_end:
@@ -904,7 +911,7 @@ def stats_export_dimension_xlsx(request):
     ws.title = "Résumé global"
 
     headers = [
-        "Nom", "Réservations", "Heures totales", "Heures usage",
+        "Name", "Reservations", "Total hours", "Usage hours",
         "Heures assistance", "Durée moy. (h)", "Nb assistance",
         "Formations", "UserProfiles distincts"
     ]
@@ -972,7 +979,7 @@ def _filtered_reservations(filters):
         qs = qs.filter(start_date__lte=fin)
 
     if filters.get('equipment'):
-        qs = qs.filter(equipement_id__in=filters['equipment'])
+        qs = qs.filter(equipment_id__in=filters['equipment'])
     if filters.get('affiliations'):
         qs = qs.filter(user_profile__laboratory__affiliation_id__in=filters['affiliations'])
     if filters.get('laboratories'):
@@ -980,7 +987,7 @@ def _filtered_reservations(filters):
     if filters.get('roles'):
         qs = qs.filter(user_profile__role_id__in=filters['roles'])
     if filters.get('user_profiles'):
-        qs = qs.filter(usager_id__in=filters['user_profiles'])
+        qs = qs.filter(user_profile_id__in=filters['user_profiles'])
 
     return qs
 
@@ -1010,8 +1017,8 @@ def _agg_metrics(reservations):
         u,a = _minutes_usage_assistance(r)
         min_usage += u
         min_ass   += a
-        if r.usager_id:
-            users.add(r.usager_id)
+        if r.user_profile_id:
+            users.add(r.user_profile_id)
         if r.assistance:
             nb_ass += 1
         if r.is_training:
@@ -1039,7 +1046,7 @@ def _group_key_and_label(resa, level):
     Returns (id, label) selon le niveau demandé: 'equipment' | 'affiliation' | 'laboratory' | 'role' | 'accounts'.
     """
     if level == 'equipment' and resa.equipment:
-        return (resa.equipement_id, resa.equipment.name)
+        return (resa.equipment_id, resa.equipment.name)
     if level == 'affiliation' and getattr(resa.user_profile, 'laboratory', None) and resa.user_profile.laboratory.affiliation:
         aff = resa.user_profile.laboratory.affiliation
         return (aff.id, aff.name)
@@ -1136,7 +1143,7 @@ def _filtered_reservations_for_exports(filters):
         qs = qs.filter(start_date__lte=fin)
 
     if filters['equipment']:
-        qs = qs.filter(equipement_id__in=filters['equipment'])
+        qs = qs.filter(equipment_id__in=filters['equipment'])
     if filters['affiliations']:
         qs = qs.filter(user_profile__laboratory__affiliation_id__in=filters['affiliations'])
     if filters['laboratories']:
@@ -1144,7 +1151,7 @@ def _filtered_reservations_for_exports(filters):
     if filters['roles']:
         qs = qs.filter(user_profile__role_id__in=filters['roles'])
     if filters['user_profiles']:
-        qs = qs.filter(usager_id__in=filters['user_profiles'])
+        qs = qs.filter(user_profile_id__in=filters['user_profiles'])
 
     return qs
 
@@ -1192,8 +1199,8 @@ def _rows_by_dimension(qs, dimension):
         b['minutes_ass'] += ass
         if getattr(r, 'assistance', False):
             b['nb_assistance'] += 1
-        if r.usager_id:
-            b['user_profiles'].add(r.usager_id)
+        if r.user_profile_id:
+            b['user_profiles'].add(r.user_profile_id)
 
     rows = []
     for (k_id, name), b in buckets.items():
@@ -1297,12 +1304,12 @@ def stats_query(request):
         if getattr(r, 'exception_request', False):
             demandes_exception += 1
 
-        if r.usager_id:
-            usagers_distincts.add(r.usager_id)
+        if r.user_profile_id:
+            usagers_distincts.add(r.user_profile_id)
 
         # Groupes
         if r.equipment:
-            key = (r.equipement_id, r.equipment.name)
+            key = (r.equipment_id, r.equipment.name)
             par_eq[key]['reservations'] += 1
             par_eq[key]['min_usage']    += mu
             par_eq[key]['min_assist']   += ma
@@ -1404,7 +1411,7 @@ def stats_zone1(request):
     fin   = _parse(request.GET.get("end_date") or "")
 
     nb_actifs = UserProfile.objects.filter(is_active=True).count()
-    nb_labos  = Laboratory.objects.filter(user_profile__is_active=True).distinct().count()
+    nb_labos  = Laboratory.objects.filter(userprofile__is_active=True).distinct().count()
 
     qs_inscrits = UserProfile.objects.filter(terms_accepted=True)
     if debut:
@@ -1456,12 +1463,12 @@ def calendrier_global_admin_data(request):
 
     qs = (
         Reservation.objects
-        .select_related('accounts', 'equipment')
+        .select_related('user_profile', 'equipment')
         .filter(
             start_date__lte=end_date,
             end_date__gte=start_date,
         )
-        .exclude(statut__in=['cancelled'])  # on cache les annulées
+        .exclude(status__in=['cancelled'])  # on cache les annulées
         .order_by('start_date', 'start_time')
     )
 
@@ -1470,7 +1477,7 @@ def calendrier_global_admin_data(request):
         # start / end ISO local sans TZ (cohérent avec tes autres vues)
         start_iso = f"{r.start_date}T{r.start_time}"
         end_iso   = f"{r.end_date}T{r.end_time}"
-        color = _equip_color(r.equipement_id)
+        color = _equip_color(r.equipment_id)
 
         title = f"{r.user_profile.nom_complet if hasattr(r.user_profile,'nom_complet') else r.user_profile} – {r.equipment.name}"
         # Bordure selon status pour différencier rapidement
@@ -1537,7 +1544,7 @@ def stats_export_unified_xlsx(request):
         qs = qs.filter(start_date__lte=fin)
 
     if filters['equipment']:
-        qs = qs.filter(equipement_id__in=filters['equipment'])
+        qs = qs.filter(equipment_id__in=filters['equipment'])
     if filters['affiliations']:
         qs = qs.filter(user_profile__laboratory__affiliation_id__in=filters['affiliations'])
     if filters['laboratories']:
@@ -1545,7 +1552,7 @@ def stats_export_unified_xlsx(request):
     if filters['roles']:
         qs = qs.filter(user_profile__role_id__in=filters['roles'])
     if filters['user_profiles']:
-        qs = qs.filter(usager_id__in=filters['user_profiles'])
+        qs = qs.filter(user_profile_id__in=filters['user_profiles'])
 
     reservations = qs.select_related(
         'accounts', 'user_profile__laboratory', 'user_profile__laboratory__affiliation', 'equipment'
@@ -1756,7 +1763,7 @@ def stats_export_unified_xlsx(request):
     last_row = ws_data.max_row
     if last_row > 1:
         # Ligne 1 de KPIs
-        ws_dash.cell(row=4, column=1, value="Réservations").font = Font(bold=True)
+        ws_dash.cell(row=4, column=1, value="Reservations").font = Font(bold=True)
         ws_dash.cell(row=5, column=1, value=f"=COUNTA('Données Brutes'!A2:A{last_row})").font = Font(size=14, color="2F5496")
         
         ws_dash.cell(row=4, column=2, value="Heures Totales").font = Font(bold=True)

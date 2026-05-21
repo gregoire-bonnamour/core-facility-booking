@@ -80,15 +80,15 @@ class Command(BaseCommand):
                 )
 
             corps_admin = (
-                f"{len(desactives)} compte(s) desactive(s) faute de reponse a la re-verification :\n\n"
+                f"{len(desactives)} account(s) deactivated due to no response to re-verification:\n\n"
                 + "\n".join(lignes)
                 + "\n\n"
-                "Ces comptes peuvent etre reactives manuellement dans l'admin si necessaire.\n"
+                "These accounts can be manually reactivated in the admin if needed.\n"
                 "Les user_profiles concernes ont ete prevus de contacter l'administrateur s'ils "
-                "souhaitent reactiver leur compte."
+                "who wish to reactivate their account."
             )
             send_mail(
-                subject=f"[Plateforme cellulaire] {len(desactives)} compte(s) desactive(s) automatiquement",
+                subject=f"[Core Facility] {len(desactives)} account(s) automatically deactivated",
                 message=corps_admin,
                 from_email=settings.DEFAULT_FROM_EMAIL,
                 recipient_list=dests_admin,
@@ -96,5 +96,5 @@ class Command(BaseCommand):
             )
 
         self.stdout.write(self.style.SUCCESS(
-            f"Termine : {len(desactives)} compte(s) desactive(s)."
+            f"Done: {len(desactives)} account(s) deactivated."
         ))

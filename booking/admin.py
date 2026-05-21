@@ -55,7 +55,7 @@ class ReservationAdmin(admin.ModelAdmin):
         - list_filter  : filtres disponibles sur le côté
         - actions      : actions groupées (accepter/refuser)
     """
-    list_display = ('user_profile', 'equipment', 'start_date', 'end_date', 'affichage_statut')
+    list_display = ('user_profile', 'equipment', 'start_date', 'end_date', 'display_status')
     list_filter = ('status', 'user_profile', 'equipment', 'user_profile__affiliation', AssistanceFilter)
     search_fields = ("user_profile__first_name", "user_profile__name", "user_profile__email")  # barre de recherche
     actions = ['accepter_reservations', 'refuser_reservations']
@@ -78,22 +78,22 @@ class ReservationAdmin(admin.ModelAdmin):
         }),
     )
     
-    def affichage_statut(self, obj):
+    def display_status(self, obj):
         """
         Returns le libellé lisible du status (via get_status_display()).
         """
         return obj.get_status_display()
-    affichage_statut.short_description = 'Statut'
+    display_status.short_description = 'Statut'
 
     # ⬇️ Respecter la valeur choisie en admin, sans renvoyer les emails de formation
     def save_model(self, request, obj, form, change):
         obj.save(force_status=True, skip_invitations=True)
 
-    @admin.action(description="🚫 Marquer 'annulée' (sans recalcul)")
+    @admin.action(description="🚫 Mark as cancelled (no recalc)")
     def annuler_reservations(self, request, queryset):
         ids = list(queryset.values_list('pk', flat=True))
         updated = Reservation.objects.filter(pk__in=ids).exclude(status='cancelled').update(status='cancelled')
-        self.message_user(request, f"{updated} réservation(s) marquée(s) comme annulée(s).")
+        self.message_user(request, f"{updated} reservation(s) marked as cancelled.")
 
     @admin.action(description="✅ Accepter les demandes d'exception sélectionnées")
     def accepter_reservations(self, request, queryset):
@@ -113,19 +113,19 @@ class ReservationAdmin(admin.ModelAdmin):
             # Email notification
             email = reservation.user_profile.user.email
             send_mail(
-                subject="Votre réservation a été acceptée",
+                subject="Your reservation has been accepted",
                 message=(
-                    f"Bonjour,\n\nVotre demande de réservation exceptionnelle pour "
-                    f"{reservation.equipment.name} le {reservation.start_date} "
-                    f"de {reservation.start_time} à {reservation.end_time} a été acceptée.\n\n"
-                    f"Cordialement,\nL’équipe de la plateforme"
+                    f"Hello,\n\nYour exception reservation request for "
+                    f"{reservation.equipment.name} on {reservation.start_date} "
+                    f"from {reservation.start_time} to {reservation.end_time} has been accepted.\n\n"
+                    "Best regards,\nThe Core Facility Team"
                 ),
                 from_email=settings.DEFAULT_FROM_EMAIL,
                 recipient_list=[email],
                 fail_silently=True,
             )
 
-        self.message_user(request, "Les réservations ont été acceptées avec succès.")
+        self.message_user(request, "Reservations have been accepted successfully.")
 
     @admin.action(description="❌ Refuser et supprimer les demandes d'exception sélectionnées")
     def refuser_reservations(self, request, queryset):
@@ -141,12 +141,12 @@ class ReservationAdmin(admin.ModelAdmin):
             # Email notification (avant suppression)
             email = reservation.user_profile.user.email
             send_mail(
-                subject="Votre réservation a été refusée",
+                subject="Your reservation has been declined",
                 message=(
-                    f"Bonjour,\n\nVotre demande de réservation exceptionnelle pour "
-                    f"{reservation.equipment.name} le {reservation.start_date} "
-                    f"de {reservation.start_time} à {reservation.end_time} a été refusée.\n\n"
-                    f"Cordialement,\nL’équipe de la plateforme"
+                    f"Hello,\n\nYour exception reservation request for "
+                    f"{reservation.equipment.name} on {reservation.start_date} "
+                    f"from {reservation.start_time} to {reservation.end_time} has been declined.\n\n"
+                    "Best regards,\nThe Core Facility Team"
                 ),
                 from_email=settings.DEFAULT_FROM_EMAIL,
                 recipient_list=[email],
@@ -155,5 +155,5 @@ class ReservationAdmin(admin.ModelAdmin):
 
             reservation.delete()
 
-        self.message_user(request, f"{count} réservation(s) ont été refusée(s) et supprimée(s).")
+        self.message_user(request, f"{count} reservation(s) have been declined and deleted.")
 

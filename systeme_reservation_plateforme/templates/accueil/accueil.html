@@ -1,21 +1,21 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<h2>Bienvenue {{ user.username }}</h2>
+<h2>Welcome, {{ user.username }}</h2>
 
-<p>Vous êtes connecté comme : {{ user.email }}</p>
+<p>Logged in as: {{ user.email }}</p>
 
 {# --- Bloc administration visible uniquement pour les admins --- #}
 {% if is_admin %}
     <section>
         <h3>🔧 Administration</h3>
         <ul>
-			<li><a href="{% url 'admin:index' %}">⚙️ Interface Django admin</a></li>
-            <li><a href="{% url 'accounts:invite_usager' %}">📨 Invite un user_profile</a></li>
+			<li><a href="{% url 'admin:index' %}">⚙️ Django admin</a></li>
+            <li><a href="{% url 'accounts:invite_user' %}">📨 Invite a user</a></li>
             <li><a href="{% url 'booking:stats_admin' %}">📊 Statistics</a></li>
             <li><a href="{% url 'billing:page_facturation' %}">💰 Billing</a></li>
             <!-- 👉 nouveau : bouton vers le calendar global admin -->
-            <li><a href="{% url 'booking:calendar_global_admin' %}">📅 Calendar global (tous équipements)</a></li>
+            <li><a href="{% url 'booking:calendar_global_admin' %}">📅 Global calendar (all equipment)</a></li>
         </ul>
     </section>
 {% endif %}
@@ -23,26 +23,26 @@
 {# --- Alerte admin si bookings en attente de validation --- #}
 {% if user.is_staff and nb_reservations_en_attente %}
     <section class="alert-admin">
-        <h3>🚨 Bookings en attente</h3>
-        <p><a href="{% url 'admin:reserv_reservation_changelist' %}?status=en_attente">
-            {{ nb_reservations_en_attente }} booking(s) à valider
+        <h3>🚨 Pending bookings</h3>
+        <p><a href="{% url 'admin:booking_reservation_changelist' %}?status=pending">
+            {{ nb_reservations_en_attente }} pending booking(s)
         </a></p>
     </section>
 {% endif %}
 
 {# --- Accès user_profile standard --- #}
 <section>
-    <h3>🔧 Accès user_profile</h3>
+    <h3>🔧 My account</h3>
     <ul>
         <li><a href="{% url 'accounts:profil' %}">👤 My profile</a></li>
-        <li><a href="{{ MAILTO_SIGNALER_PROBLEME }}">Signaler un problème</a></li>
+        <li><a href="{{ MAILTO_SIGNALER_PROBLEME }}">Report an issue</a></li>
         <li><a href="{% url 'accounts:reglement_lecture' %}">📄 Voir le terms & conditions de la plateforme</a></li>
     </ul>
 </section>
 
 {# --- Liste des équipements accessibles (ou message si no) --- #}
 <section>
-    <h3>🗓️ Mes équipements</h3>
+    <h3>🗓️ My equipment</h3>
     <ul>
         {% for equipment in equipment_set %}
             <li>
@@ -51,7 +51,7 @@
                 </a>
             </li>
         {% empty %}
-            <li>Tocun équipement accessible.</li>
+            <li>No equipment accessible.</li>
         {% endfor %}
     </ul>
 </section>

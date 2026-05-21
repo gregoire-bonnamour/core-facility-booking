@@ -28,25 +28,25 @@ app_name = 'booking'
 urlpatterns = [
     # --- Réservations ---
     path('reserver/<int:equipement_id>/', views.reserver_equipement, name='reserver'),
-    path('calendrier/<int:equipement_id>/', views.calendrier_equipement, name='calendrier_equipement'),
+    path('calendrier/<int:equipement_id>/', views.calendrier_equipement, name='calendar_equipement'),
 
     # --- Gestion d'une réservation ---
-    path('modifier/<int:reservation_id>/', views.modifier_reservation, name='modifier_reservation'),
-    path('supprimer/<int:reservation_id>/', views.supprimer_reservation, name='supprimer_reservation'),
-    path('visualiser/<int:reservation_id>/', views.visualiser_reservation, name='visualiser_reservation'),
-    path('redirection/<int:reservation_id>/', views.rediriger_reservation, name='rediriger_reservation'),
+    path('modifier/<int:reservation_id>/', views.modifier_reservation, name='edit_reservation'),
+    path('supprimer/<int:reservation_id>/', views.supprimer_reservation, name='delete_reservation'),
+    path('visualiser/<int:reservation_id>/', views.visualiser_reservation, name='view_reservation'),
+    path('redirection/<int:reservation_id>/', views.rediriger_reservation, name='redirect_reservation'),
 
     # --- Statistiques ---
     path('stats/', views.stats_admin, name='stats_admin'),
     path('stats/query/', views.stats_query, name='stats_query'),
     path('stats/zone1/', views.stats_zone1, name='stats_zone1'),
-    path("admin/reservations/calendrier-global/", views.calendrier_global_admin, name="calendrier_global_admin"),
-    path("admin/reservations/calendrier-global/data/", views.calendrier_global_admin_data, name="calendrier_global_admin_data"),
+    path("admin/reservations/calendrier-global/", views.calendrier_global_admin, name="calendar_global_admin"),
+    path("admin/reservations/calendrier-global/data/", views.calendrier_global_admin_data, name="calendar_global_admin_data"),
     path('stats/export/unified/', views.stats_export_unified_xlsx, name='stats_export_unified_xlsx'),
     path('stats/ajax/labos/', views.ajax_labos, name='stats_ajax_labos'),
-    path('stats/ajax/user_profiles/', views.ajax_usagers, name='stats_ajax_usagers'),
-    path('stats/ajax/roles/', views.ajax_fonctions, name='stats_ajax_fonctions'),
+    path('stats/ajax/user_profiles/', views.ajax_usagers, name='stats_ajax_users'),
+    path('stats/ajax/roles/', views.ajax_fonctions, name='stats_ajax_roles'),
     
     # --- Accueil ---
-    path('', views.accueil, name='accueil'),
+    path('', views.accueil, name='home'),
 ]

@@ -54,25 +54,25 @@ class Command(BaseCommand):
 
         for u in user_profiles:
             token = signing.dumps({"usager_id": u.pk}, salt="reverification")
-            lien = site_url + reverse("accounts:confirmer_activite", kwargs={"token": token})
+            lien = site_url + reverse("accounts:confirm_activity", kwargs={"token": token})
 
             corps_usager = (
-                f"Bonjour {u.first_name},\n\n"
-                "Votre compte sur la Plateforme Cellulaire YourUniversity (YourFacility) est is_active "
+                f"Hello {u.first_name},\n\n"
+                "Your account on the YourFacility Core Facility platform is active "
                 "depuis plus de 5 ans.\n\n"
-                "Afin de maintenir notre registre a day_of_week, merci de confirmer que vous "
-                "utilisez toujours la plateforme en cliquant sur le lien ci-dessous :\n\n"
+                "In order to keep our records up to date, please confirm that you "
+                "still use the platform by clicking the link below:\n\n"
                 f"{lien}\n\n"
-                "Ce lien est valable 30 jours. Sans reponse de votre part, votre compte "
+                "This link is valid for 30 days. Without a response, your account "
                 "sera automatiquement desactive.\n\n"
-                "Si vous avez des questions, contactez l'administrateur de la plateforme.\n\n"
+                "If you have any questions, contact the platform administrator.\n\n"
                 "Bonne journee,\n"
-                "Author Author -- Plateforme Cellulaire YourUniversity (YourFacility)"
+                "Author Author -- YourFacility Core Facility"
             )
 
             try:
                 send_mail(
-                    subject="[Plateforme cellulaire] Confirmation de votre compte (>= 5 ans)",
+                    subject="[Core Facility] Account activity confirmation (>= 5 years)",
                     message=corps_usager,
                     from_email=from_email,
                     recipient_list=[u.email],
@@ -100,11 +100,11 @@ class Command(BaseCommand):
                 f"{len(contactes)} user_profile(s) ont recu un email de re-verification :\n\n"
                 + "\n".join(lignes)
                 + "\n\n"
-                "Ils ont 30 jours pour confirmer leur activite via le lien envoye.\n"
+                "They have 30 days to confirm their activity via the link sent.\n"
                 "Sans reponse, la commande 'desactiver_non_repondants' les desactivera automatiquement."
             )
             send_mail(
-                subject="[Plateforme cellulaire] Re-verification envoyee a des user_profiles",
+                subject="[Core Facility] Re-verification sent to users",
                 message=corps_admin,
                 from_email=from_email,
                 recipient_list=dests_admin,

@@ -22,6 +22,9 @@ SAFE_PREFIXES = (
     "/static/",
     "/media/",
     "/admin/login",
+    "/user_profile/reglement",
+    "/accounts/login",
+    "/accounts/logout",
 )
 
 SAFE_NAMES = {
@@ -51,10 +54,10 @@ class ReglementAcceptanceMiddleware(MiddlewareMixin):
             pass
 
         # Si déjà accepté → continuer
-        profil = getattr(getattr(user, "accounts", None), "id", None)
+        profil = getattr(getattr(user, "user_profile", None), "id", None)
         # On récupère prudemment via reverse relation si ton modèle s'appelle UserProfile
         try:
-            user_profile = getattr(user, "accounts", None)
+            user_profile = getattr(user, "user_profile", None)
             if user_profile and getattr(user_profile, "terms_accepted", False):
                 return None
         except Exception:

@@ -68,15 +68,15 @@ def creer_invitations_pour_formation(reservation, force_resend=False):
             # ✅ fail_silently=False pour détecter les problèmes SMTP
             logger.info(f"Tentative d'envoi notification (CAS 1) à {email}")
             send_mail(
-                subject=f"[Formation] Inscription confirmée – {reservation.equipment.name}",
+                subject=f"[Core Facility] Training Confirmation – {reservation.equipment.name}",
                 message=(
-                    f"Bonjour,\n\n"
-                    f"Vous avez été inscrit(e) à une formation sur l’équipement : {reservation.equipment.name}\n"
-                    f"Date : le {reservation.start_date.strftime('%Y-%m-%d')} "
-                    f"de {reservation.start_time.strftime('%H:%M')} à {reservation.end_time.strftime('%H:%M')}.\n\n"
-                    f"Vous pouvez accéder à la plateforme ici : {settings.SITE_URL}\n\n"
-                    "Cordialement,\n"
-                    "L’équipe de la plateforme"
+                    f"Hello,\n\n"
+                    f"You have been registered for a training session on: {reservation.equipment.name}\n"
+                    f"Date: {reservation.start_date.strftime('%Y-%m-%d')} "
+                    f"from {reservation.start_time.strftime('%H:%M')} to {reservation.end_time.strftime('%H:%M')}.\n\n"
+                    f"You can access the platform here: {settings.SITE_URL}\n\n"
+                    "Best regards,\n"
+                    "The platform team"
                 ),
                 from_email=settings.DEFAULT_FROM_EMAIL,
                 recipient_list=[email],
@@ -91,17 +91,17 @@ def creer_invitations_pour_formation(reservation, force_resend=False):
             # Envoi mail invitation
             logger.info(f"Tentative d'envoi invitation (CAS 2) à {email}")
             send_mail(
-                subject="Invitation à créer un compte - Plateforme Cellulaire",
+                subject="Invitation to create an account – Core Facility Booking",
                 message=(
-                    f"Bonjour,\n\n"
-                    f"Vous avez été invité à suivre une formation sur l’équipement : {reservation.equipment.name}\n"
-                    f"le {reservation.start_date.strftime('%Y-%m-%d')} à la plateforme de microscopie et cytométrie du YourFacility.\n\n"
-                    f"Pour créer votre compte, veuillez cliquer sur le lien suivant :\n"
+                    f"Hello,\n\n"
+                    f"You have been invited to attend a training session on: {reservation.equipment.name}\n"
+                    f"on {reservation.start_date.strftime('%Y-%m-%d')} at the YourFacility core facility.\n\n"
+                    f"To create your account, please click the following link:\n"
                     f"{inscription_url}\n\n"
-                    "Ceci est un email automatique – merci de ne pas y répondre.\n\n"
-                    "Si vous n’êtes pas à l’origine de cette demande, vous pouvez ignorer ce message.\n\n"
-                    "Cordialement,\n"
-                    "L’équipe de la plateforme de microscopie et cytométrie du YourFacility\n"
+                    "This is an automated email – please do not reply.\n\n"
+                    "If you did not request this, you may ignore this message.\n\n"
+                    "Best regards,\n"
+                    "The YourFacility Core Facility Team\n"
                 ),
                 from_email=settings.DEFAULT_FROM_EMAIL,
                 recipient_list=[email],
@@ -115,4 +115,4 @@ def is_platform_admin_plateforme(user):
     Returns True si l'user_profile est Super-utilisateur (Django), Staff (Django) 
     OU a la case 'Est admin' cochée sur son profil plateforme.
     """
-    return user.is_staff or user.is_superuser or (hasattr(user, 'accounts') and getattr(user.user_profile, 'is_platform_admin', False))
+    return user.is_staff or user.is_superuser or (hasattr(user, 'user_profile') and getattr(user.user_profile, 'is_platform_admin', False))
