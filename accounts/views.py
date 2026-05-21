@@ -199,7 +199,7 @@ def inviter_usager(request):
             # Enregistre l’invitation
             form.save(commit=False)
             email = form.cleaned_data['email']
-            equipment_set = form.cleaned_data['equipment']
+            equipment_set = form.cleaned_data['equipment_set']
 
             # Déduplication : on garde la plus récente
             Invitation.objects.filter(email__iexact=email).delete()
