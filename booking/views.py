@@ -1555,7 +1555,7 @@ def stats_export_unified_xlsx(request):
         qs = qs.filter(user_profile_id__in=filters['user_profiles'])
 
     reservations = qs.select_related(
-        'accounts', 'user_profile__laboratory', 'user_profile__laboratory__affiliation', 'equipment'
+        'user_profile', 'user_profile__laboratory', 'user_profile__laboratory__affiliation', 'equipment'
     ).order_by('start_date')
 
     # 2. Création du classeur
