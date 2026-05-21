@@ -24,7 +24,7 @@
     z-index: 10;
   }
 
-  .time-slot.hour {
+  .hour-cell {
     height: 60px;
     line-height: 60px;
     text-align: right;
@@ -139,11 +139,11 @@
   {% endfor %}
 
   {% for heure in heures %}
-  <div class="time-slot hour">
+  <div class="hour-cell">
     {{ heure|stringformat:"02d" }}:00
   </div>
   {% for day_of_week in jours_semaine %}
-  <div class="time-slot day-column" data-day="{{ day_of_week|date:'Y-m-d' }}" data-hour="{{ heure }}">
+  <div class="day-column" data-day="{{ day_of_week|date:'Y-m-d' }}" data-hour="{{ heure }}">
   </div>
   {% endfor %}
   {% endfor %}
