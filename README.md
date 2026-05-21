@@ -19,13 +19,22 @@ A Django-based equipment booking and management system for research core facilit
 ![Login](docs/screenshots/screenshot_login.png)
 
 ### Dashboard
-![Dashboard](docs/screenshots/screenshot_accueil.png)
+![Dashboard](docs/screenshots/screenshot_dashboard.png)
 
 ### Equipment calendar
-![Calendar](docs/screenshots/screenshot_Calendrier.png)
+![Calendar](docs/screenshots/screenshot_calendar.png)
+
+### Global calendar
+![Global calendar](docs/screenshots/screenshot_global_calendar.png)
+
+### Booking form
+![Booking](docs/screenshots/screenshot_booking.png)
 
 ### Statistics
 ![Statistics](docs/screenshots/screenshot_stats.png)
+
+### Registration
+![Registration](docs/screenshots/screenshot_registration.png)
 
 ### Admin panel
 ![Admin](docs/screenshots/screenshot_admin.png)
