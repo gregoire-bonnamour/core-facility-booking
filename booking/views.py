@@ -1492,7 +1492,7 @@ def calendrier_global_admin_data(request):
             "borderColor": borderColor,
             "extendedProps": {
                 "equipment": r.equipment.name,
-                "accounts": str(r.user_profile),
+                "user": str(r.user_profile),
                 "status": r.status,
             },
         })
@@ -1724,7 +1724,7 @@ def stats_export_unified_xlsx(request):
             data['start_date'],
             data['end_date'],
             data['equipment'],
-            data['accounts'],
+            data['user'],
             data['laboratory'],
             data['affiliation'],
             data['type'],
