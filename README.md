@@ -8,7 +8,7 @@ A Django-based equipment booking and management system for research core facilit
 - User management: invitation-based registration, access control per equipment
 - Billing and usage tracking (PDF invoices via WeasyPrint, Excel export)
 - Admin dashboard with reservation statistics
-- French interface with bilingual elements (registration, platform rules available in English)
+- Fully English interface
 - Maintenance scheduling and usage reporting
 - Assistance request notifications with iCalendar (.ics) attachment for one-click calendar import
 - News feed for facility announcements

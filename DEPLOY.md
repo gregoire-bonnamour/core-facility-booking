@@ -89,7 +89,7 @@ python manage.py createsuperuser
 
 ## 5. Automatic update of past reservations
 
-The `maj_reservations_passees` command marks expired reservations as past (`statut=passee`).
+The `maj_reservations_passees` command marks expired reservations as `status='past'`.
 
 ### Run manually
 ```bash

@@ -1,4 +1,4 @@
-# Copyright (c) 2025 Author Author
+# Copyright (c) 2025 Gregoire Bonnamour
 # Licensed under the Creative Commons Attribution-NonCommercial 4.0 International License (CC BY-NC 4.0)
 # See the LICENSE file or https://creativecommons.org/licenses/by-nc/4.0/legalcode for details.
 
@@ -6,7 +6,7 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
-# Active le venv si tu en as un
+# Activate virtual environment if present
 if [ -d ".venv" ]; then
   # shellcheck disable=SC1091
   source .venv/bin/activate
