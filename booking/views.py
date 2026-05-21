@@ -1640,7 +1640,7 @@ def stats_export_unified_xlsx(request):
         # Type de réservation (exclusif)
         if r.is_training:
             reservation_type = "Training"
-            data_by_type['Formation'] += duration_h
+            data_by_type['Training'] += duration_h
             _form_pks_dash.append(r.pk)
         elif r.assistance:
             reservation_type = "Assistance"
