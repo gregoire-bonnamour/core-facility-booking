@@ -3,109 +3,15 @@
 {% block page_title %}Platform Rules{% endblock %}
 
 {% block content %}
-<div style="display:flex; gap:.5rem; justify-content:flex-end; margin-bottom:.5rem;">
-  <!-- FR -->
-  <a class="btn {% if request.GET.lang != 'en' %}primary{% endif %}"
-    href="{% url 'accounts:reglement_lecture' %}?lang=fr">
-    FR
-  </a>
-  <!-- EN -->
-  <a class="btn {% if request.GET.lang == 'en' %}primary{% endif %}"
-    href="{% url 'accounts:reglement_lecture' %}?lang=en">
-    EN
-  </a>
+<div style="max-width:860px;margin:auto;">
+  <div style="margin-bottom:1rem;">
+    <a class="btn {% if request.GET.lang != 'en' %}primary{% endif %}"
+       href="{% url 'accounts:reglement_lecture' %}?lang=fr">FR</a>
+    <a class="btn {% if request.GET.lang == 'en' %}primary{% endif %}"
+       href="{% url 'accounts:reglement_lecture' %}?lang=en">EN</a>
+  </div>
+
+  <h3>Platform Rules</h3>
+  <p>Add your facility's rules and regulations here.</p>
 </div>
-
-<div class="card">
-  <h2>Terms of Use – Cytometry & Microscopy Core Facility</h2>
-
-  <!-- 1 -->
-  <section class="prose" style="margin-top:1rem;">
-    <h3>1) Scientific publications (acknowledgment, information, and co-authorship)</h3>
-    <ul>
-      <li>Any scientific publication arising from data acquired on the core facility or from support provided by the
-        facility must include an <strong>acknowledgment</strong>.</li>
-      <li>The facility staff must be <strong>kept informed</strong> of publications related to work performed at the
-        facility (ideally <em>before submission</em> to validate the acknowledgment and, if needed, <em>upon
-          acceptance</em> for our records).</li>
-      <li>If specific <strong>grants/funding numbers</strong> support the instruments, they must be mentioned (the
-        facility can provide the proper codes).</li>
-      <li>If support goes beyond routine (experimental design, acquisition/expert settings, analysis/interpretation,
-        writing), <strong>co-authorship</strong> should be discussed and agreed upon with the facility team <em>before submission</em>.
-      </li>
-    </ul>
-    <blockquote>
-      <em>“We acknowledge <strong>Tothor Tothor (YourUniversity)</strong> for training and technical/scientific assistance,
-        and the <strong>YourFacility</strong> core facility for access to the equipment.”</em>
-    </blockquote>
-  </section>
-
-  <!-- 2 -->
-  <section class="prose" style="margin-top:1rem;">
-    <h3>2) Proper use and care of equipment</h3>
-    <ul>
-      <li><strong>Mandatory training</strong> before any use; access may be restricted based on competency level.</li>
-      <li>Use only <strong>approved consumables</strong> validated by the facility; do not use incompatible products.
-      </li>
-      <li><strong>Cleaning</strong> and restoring the setup at the end of the session (best practices covered during
-        training).</li>
-      <li><strong>Immediate reporting</strong> of any incident, anomaly, breakage, or maintenance alert via “Report a
-        problem”.</li>
-    </ul>
-    <p><strong>Forbidden:</strong></p>
-    <ul>
-      <li>Eating or drinking near instruments.</li>
-      <li>Changing <strong>protected settings</strong> or bypassing access controls.</li>
-      <li>Installing/using <strong>unauthorized software</strong> on acquisition stations.</li>
-      <li>Storing <strong>data</strong> long-term on acquisition PCs (export them at the end of your session).</li>
-    </ul>
-    <p><em>Repair costs due to proven negligence may be charged to the responsible research unit.</em></p>
-  </section>
-
-  <!-- 3 -->
-  <section class="prose" style="margin-top:1rem;">
-    <h3>3) Bookings, delays, and assistance</h3>
-    <ul>
-      <li><strong>Modify/Cancel</strong>: allowed <strong>up to 30 minutes after the start</strong> of the booking. Past
-        this delay, <strong>the booking is fully charged</strong>.</li>
-      <li><strong>Assistance</strong>: provided <em>subject to staff availability</em>. Please plan ahead.</li>
-    </ul>
-  </section>
-
-  <!-- 4 -->
-  <section class="prose" style="margin-top:1rem;">
-    <h3>4) Data, security, and confidentiality</h3>
-    <ul>
-      <li>Export your data at the end of the session to your institutional storage.</li>
-      <li>Comply with YourUniversity policies (security, confidentiality, ethics).</li>
-      <li><strong>Institutional email address:</strong> You must provide an institutional or professional e‑mail address
-        (e.g., admin@youruniversity.ca). It will be used only for reservation‑related notifications.</li>
-      <li><strong>Contactability:</strong> By accepting the regulation, you consent to being contacted at this address
-        by platform staff and other users.</li>
-    </ul>
-  </section>
-
-  <!-- 5 -->
-  <section class="prose" style="margin-top:1rem;">
-    <h3>5) Graduated sanctions</h3>
-    <ol>
-      <li>Written reminder.</li>
-      <li>Warning and/or invoicing (no-show, damage, lack of cleaning).</li>
-      <li>Temporary suspension of access.</li>
-      <li>Access removal and notification to the lab management.</li>
-    </ol>
-  </section>
-
-  <h3>6) Contacts</h3>
-  <ul>
-    <li>Support / incident: <strong>“Report a problem”</strong> button (home page).</li>
-    <li>Manager: <strong>Tothor Tothor</strong> – <a
-        href="mailto:admin@youruniversity.ca">admin@youruniversity.ca</a></li>
-    <li>YourFacility: <a href="https://www.youruniversity.ca/plateformes/analyses-cellulaires-et-imagerie/" target="_blank"
-        rel="noopener">Official website</a></li>
-  </ul>
-</div>
-
-<footer>
-</footer>
 {% endblock %}
