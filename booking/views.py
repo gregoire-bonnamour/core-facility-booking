@@ -189,7 +189,7 @@ def reserver_equipement(request, equipement_id):
 
     # charge l’équipement
     equipment = get_object_or_404(
-        Equipment.objects.only("id", "name", "is_active").prefetch_related("creneaux"),
+        Equipment.objects.only("id", "name", "is_active").prefetch_related("time_slots"),
         id=equipement_id
     )
 
@@ -401,7 +401,7 @@ def calendrier_equipement(request, equipement_id):
         - Le calcul du lundi de la semaine suit la convention ISO (weekday() : lundi=0).
     """
     equipment = get_object_or_404(
-        Equipment.objects.only("id","name").prefetch_related("creneaux"),
+        Equipment.objects.only("id","name").prefetch_related("time_slots"),
         id=equipement_id
     )
 
@@ -451,14 +451,14 @@ def calendrier_equipement(request, equipement_id):
     ]
 
     # Sérialisation des créneaux de l’équipement
-    creneaux = equipment.creneaux.all()
-    creneaux_serialises = [
+    time_slots = equipment.time_slots.all()
+    time_slots_data = [
         {
             'day_of_week': c.day_of_week,
             'start_time': c.start_time.strftime('%H:%M'),
             'end_time': c.end_time.strftime('%H:%M'),
         }
-        for c in creneaux
+        for c in time_slots
     ]
 
     debug_counts = (Reservation.objects
@@ -477,7 +477,7 @@ def calendrier_equipement(request, equipement_id):
     hourly_rate = get_hourly_rate(equipment, affiliation)
 
     return render(request, 'booking/calendrier_equipement.html', {
-        'creneaux_json': creneaux_serialises,
+        'time_slots_json': time_slots_data,
         'equipment': equipment,
         'jours_semaine': jours_semaine,
         'jours_semaine_json': jours_semaine_str,
@@ -672,7 +672,7 @@ def ajax_labos(request):
 
 @login_required
 @user_passes_test(is_platform_admin_plateforme)
-def ajax_usagers(request):
+def ajax_users(request):
     lab_ids = [int(x) for x in request.GET.get('labos','').split(',') if x.strip().isdigit()]
     fct_ids = [int(x) for x in request.GET.get('roles','').split(',') if x.strip().isdigit()]
     if not lab_ids:
@@ -690,13 +690,13 @@ def ajax_usagers(request):
 @user_passes_test(is_platform_admin_plateforme)
 def ajax_fonctions(request):
     ids = request.GET.get('labos', '')
-    labo_ids = [int(x) for x in ids.split(',') if x.strip().isdigit()]
-    if not labo_ids:
+    lab_ids = [int(x) for x in ids.split(',') if x.strip().isdigit()]
+    if not lab_ids:
         return JsonResponse({'roles': []})
 
     # Roles réellement présentes pour les user_profiles des labos cochés
     roles = (Role.objects
-                 .filter(user_profile__laboratory_id__in=labo_ids)
+                 .filter(user_profile__laboratory_id__in=lab_ids)
                  .distinct()
                  .order_by('name')
                  .values('id', 'name'))
@@ -742,16 +742,16 @@ def stats_export_equipement_xlsx(request):
     headers = [
         "Equipment", "Reservations", "Total hours", "Usage hours",
         "Heures assistance", "Durée moy. (h)", "Nb assistance",
-        "Formations", "UserProfiles distincts"
+        "Training sessions", "Distinct users"
     ]
     ws_global.append(headers)
     for r in rows:
         ws_global.append([
-            r['name'], r['reservations'], r['heures_totales'],
-            r['heures_usage'], r['heures_assistance'],
-            r['duree_moy_heures'], r['nb_assistance'],
+            r['name'], r['reservations'], r['total_hours'],
+            r['usage_hours'], r['assistance_hours'],
+            r['avg_duration_hours'], r['assistance_count'],
             r['nb_formations'],
-            r['usagers_distincts']
+            r['distinct_users']
         ])
 
     # ---------- Helpers ----------
@@ -810,11 +810,11 @@ def stats_export_equipement_xlsx(request):
         # recap
         ws.append(headers)
         ws.append([
-            r['name'], r['reservations'], r['heures_totales'],
-            r['heures_usage'], r['heures_assistance'],
-            r['duree_moy_heures'], r['nb_assistance'],
+            r['name'], r['reservations'], r['total_hours'],
+            r['usage_hours'], r['assistance_hours'],
+            r['avg_duration_hours'], r['assistance_count'],
             r['nb_formations'],
-            r['usagers_distincts']
+            r['distinct_users']
         ])
 
         # tableau unique
@@ -913,17 +913,17 @@ def stats_export_dimension_xlsx(request):
     headers = [
         "Name", "Reservations", "Total hours", "Usage hours",
         "Heures assistance", "Durée moy. (h)", "Nb assistance",
-        "Formations", "UserProfiles distincts"
+        "Training sessions", "Distinct users"
     ]
     ws.append(headers)
 
     for r in rows:
         ws.append([
-            r['name'], r['reservations'], r['heures_totales'],
-            r['heures_usage'], r['heures_assistance'],
-            r['duree_moy_heures'], r['nb_assistance'],
+            r['name'], r['reservations'], r['total_hours'],
+            r['usage_hours'], r['assistance_hours'],
+            r['avg_duration_hours'], r['assistance_count'],
             r['nb_formations'],
-            r['usagers_distincts']
+            r['distinct_users']
         ])
 
     response = HttpResponse(
@@ -1032,13 +1032,13 @@ def _agg_metrics(reservations):
     total_min = min_usage + min_ass
     return {
         'reservations': n,
-        'heures_totales': round(total_min/60.0, 2),
-        'heures_usage': round(min_usage/60.0, 2),
-        'heures_assistance': round(min_ass/60.0, 2),
-        'duree_moy_heures': round((total_min/n)/60.0, 2) if n else 0.0,
-        'nb_assistance': nb_ass,
+        'total_hours': round(total_min/60.0, 2),
+        'usage_hours': round(min_usage/60.0, 2),
+        'assistance_hours': round(min_ass/60.0, 2),
+        'avg_duration_hours': round((total_min/n)/60.0, 2) if n else 0.0,
+        'assistance_count': nb_ass,
         'nb_formations': nb_form,
-        'usagers_distincts': len(users),
+        'distinct_users': len(users),
     }
 
 def _group_key_and_label(resa, level):
@@ -1082,7 +1082,7 @@ def _group_aggregate(reservations, level):
             **m
         })
     # tri par heures totales desc puis nb réservations
-    rows.sort(key=lambda x: (-x['heures_totales'], -x['reservations']))
+    rows.sort(key=lambda x: (-x['total_hours'], -x['reservations']))
     return rows
 
 def _last_selected_level(filters):
@@ -1160,15 +1160,15 @@ def _rows_by_dimension(qs, dimension):
     """
     dimension ∈ {"equipment","affiliation","laboratory","role","accounts"}
     Return: list[dict] avec clés:
-      name, reservations, heures_usage, heures_assistance, heures_totales,
-      duree_moy_heures, nb_assistance, usagers_distincts
+      name, reservations, usage_hours, assistance_hours, total_hours,
+      avg_duration_hours, assistance_count, distinct_users
     """
     from collections import defaultdict
     buckets = defaultdict(lambda: {
         'reservations': 0,
         'minutes_usage': 0,
         'minutes_ass': 0,
-        'nb_assistance': 0,
+        'assistance_count': 0,
         'user_profiles': set(),
     })
 
@@ -1198,7 +1198,7 @@ def _rows_by_dimension(qs, dimension):
         b['minutes_usage'] += usage
         b['minutes_ass'] += ass
         if getattr(r, 'assistance', False):
-            b['nb_assistance'] += 1
+            b['assistance_count'] += 1
         if r.user_profile_id:
             b['user_profiles'].add(r.user_profile_id)
 
@@ -1208,15 +1208,15 @@ def _rows_by_dimension(qs, dimension):
         rows.append({
             'name': name,
             'reservations': b['reservations'],
-            'heures_usage': round(b['minutes_usage'] / 60.0, 2),
-            'heures_assistance': round(b['minutes_ass'] / 60.0, 2),
-            'heures_totales': round(total_min / 60.0, 2),
-            'duree_moy_heures': round((total_min / b['reservations']) / 60.0, 2) if b['reservations'] else 0,
-            'nb_assistance': b['nb_assistance'],
-            'usagers_distincts': len(b['user_profiles']),
+            'usage_hours': round(b['minutes_usage'] / 60.0, 2),
+            'assistance_hours': round(b['minutes_ass'] / 60.0, 2),
+            'total_hours': round(total_min / 60.0, 2),
+            'avg_duration_hours': round((total_min / b['reservations']) / 60.0, 2) if b['reservations'] else 0,
+            'assistance_count': b['assistance_count'],
+            'distinct_users': len(b['user_profiles']),
         })
     # tri : heures totales desc, puis réservations desc
-    rows.sort(key=lambda x: (-x['heures_totales'], -x['reservations'], x['name']))
+    rows.sort(key=lambda x: (-x['total_hours'], -x['reservations'], x['name']))
     return rows
 
 # --- EXPORT PRINCIPAL ---
@@ -1279,8 +1279,8 @@ def stats_query(request):
     total_reservations = len(resas)
     total_minutes_usage = 0
     total_minutes_assist = 0
-    nb_assistance = 0
-    usagers_distincts = set()
+    nb_assistance_count = 0
+    distinct_users = set()
     demandes_exception = 0
 
     # Groupes
@@ -1296,7 +1296,7 @@ def stats_query(request):
         total_minutes_assist += ma
 
         if getattr(r, 'assistance', False):
-            nb_assistance += 1
+            nb_assistance_count += 1
 
         if getattr(r, 'is_training', False):
             continue
@@ -1305,7 +1305,7 @@ def stats_query(request):
             demandes_exception += 1
 
         if r.user_profile_id:
-            usagers_distincts.add(r.user_profile_id)
+            distinct_users.add(r.user_profile_id)
 
         # Groupes
         if r.equipment:
@@ -1342,12 +1342,12 @@ def stats_query(request):
                 'id': id_,
                 'name': name,
                 'reservations': v['reservations'],
-                'heures_usage': round(v['min_usage'] / 60.0, 2),
-                'heures_assistance': round(v['min_assist'] / 60.0, 2),
-                'heures_totales': round(tot / 60.0, 2),
-                'duree_moy_heures': round(avg / 60.0, 2),
+                'usage_hours': round(v['min_usage'] / 60.0, 2),
+                'assistance_hours': round(v['min_assist'] / 60.0, 2),
+                'total_hours': round(tot / 60.0, 2),
+                'avg_duration_hours': round(avg / 60.0, 2),
             })
-        items.sort(key=lambda x: (-x['heures_totales'], -x['reservations'], x['name']))
+        items.sort(key=lambda x: (-x['total_hours'], -x['reservations'], x['name']))
         return items
 
     tables = {
@@ -1368,12 +1368,12 @@ def stats_query(request):
 
     kpis = {
         'reservations': total_reservations,
-        'heures_totales': round((total_minutes_usage + total_minutes_assist)/60.0, 2),
-        'heures_usage': round(total_minutes_usage/60.0, 2),
-        'heures_assistance': round(total_minutes_assist/60.0, 2),
-        'nb_assistance': nb_assistance,
+        'total_hours': round((total_minutes_usage + total_minutes_assist)/60.0, 2),
+        'usage_hours': round(total_minutes_usage/60.0, 2),
+        'assistance_hours': round(total_minutes_assist/60.0, 2),
+        'assistance_count': nb_assistance_count,
         'nb_formations': nb_form,
-        'usagers_distincts': len(usagers_distincts),
+        'distinct_users': len(distinct_users),
         'demandes_exception': demandes_exception,
         'periode': {
             'debut': dd.isoformat() if dd else '',
@@ -1421,8 +1421,8 @@ def stats_zone1(request):
     nb_inscrits = qs_inscrits.count()
 
     return JsonResponse({
-        "usagers_actifs":    nb_actifs,
-        "labos_representes": nb_labos,
+        "active_users":    nb_actifs,
+        "labs_represented": nb_labos,
         "nouveaux_inscrits": nb_inscrits,
     })
 
@@ -1589,18 +1589,18 @@ def stats_export_unified_xlsx(request):
     from billing.utils import decouper_reservation
     
     # Dictionnaires agrégés
-    data_by_affiliation = {}  # affiliation_nom -> total_heures
-    data_by_labo = {}         # lab_name -> total_heures
-    data_by_usager = {}       # usager_nom -> total_heures
-    data_by_type = {'Formation': 0.0, 'Assistance': 0.0, 'Usage': 0.0}
-    data_by_nature = {'Recherche': 0.0, 'Maintenance': 0.0, 'Enseignement': 0.0}
+    data_by_affiliation = {}  # affiliation_nom -> total_hours
+    data_by_lab = {}         # lab_name -> total_hours
+    data_by_user = {}       # user_name -> total_hours
+    data_by_type = {'Training': 0.0, 'Assistance': 0.0, 'Usage': 0.0}
+    data_by_nature = {'Research': 0.0, 'Maintenance': 0.0, 'Teaching': 0.0}
 
     
     # Métriques globales
-    total_heures = 0.0
-    total_heures_assistance = 0.0
+    total_hours = 0.0
+    total_hours_assistance = 0.0
     _form_pks_dash = []
-    nb_assistances = 0
+    assistance_count = 0
     
     # Heatmap: (jour_idx, heure) -> set(num_semaine)
     semaines_occupees = {}
@@ -1629,51 +1629,51 @@ def stats_export_unified_xlsx(request):
     for r in reservations:
         # Calcul durée et coût via facturation
         segment = decouper_reservation(r)
-        duree_h = float(segment.get("usage_heures", 0)) + float(segment.get("assistance_heures", 0))
+        duration_h = float(segment.get("usage_heures", 0)) + float(segment.get("assistance_heures", 0))
         heures_assist = float(segment.get("assistance_heures", 0))
         cout = float(segment.get("usage_cout", 0)) + float(segment.get("assistance_cout", 0)) + float(segment.get("formation_cout", 0))
         
         # Métriques globales
-        total_heures += duree_h
-        total_heures_assistance += heures_assist
+        total_hours += duration_h
+        total_hours_assistance += heures_assist
         
         # Type de réservation (exclusif)
         if r.is_training:
-            type_resa = "Formation"
-            data_by_type['Formation'] += duree_h
+            reservation_type = "Training"
+            data_by_type['Formation'] += duration_h
             _form_pks_dash.append(r.pk)
         elif r.assistance:
-            type_resa = "Assistance"
-            data_by_type['Assistance'] += duree_h
-            nb_assistances += 1
+            reservation_type = "Assistance"
+            data_by_type['Assistance'] += duration_h
+            assistance_count += 1
         else:
-            type_resa = "Usage"
-            data_by_type['Usage'] += duree_h
+            reservation_type = "Usage"
+            data_by_type['Usage'] += duration_h
         
         # Affiliation
-        aff_nom = "Unknown"
+        affiliation_name = "Unknown"
         if r.user_profile and r.user_profile.laboratory and r.user_profile.laboratory.affiliation:
-            aff_nom = r.user_profile.laboratory.affiliation.name
-        data_by_affiliation[aff_nom] = data_by_affiliation.get(aff_nom, 0.0) + duree_h
+            affiliation_name = r.user_profile.laboratory.affiliation.name
+        data_by_affiliation[affiliation_name] = data_by_affiliation.get(affiliation_name, 0.0) + duration_h
         
         # Laboratory
         lab_name = "Unknown"
         if r.user_profile and r.user_profile.laboratory:
             lab_name = r.user_profile.laboratory.name
-        data_by_labo[lab_name] = data_by_labo.get(lab_name, 0.0) + duree_h
+        data_by_lab[lab_name] = data_by_lab.get(lab_name, 0.0) + duration_h
         
         if r.user_profile:
-            usager_nom = f"{r.user_profile.first_name} {r.user_profile.name}"
-        data_by_usager[usager_nom] = data_by_usager.get(usager_nom, 0.0) + duree_h
+            user_name = f"{r.user_profile.first_name} {r.user_profile.name}"
+        data_by_user[user_name] = data_by_user.get(user_name, 0.0) + duration_h
 
         # Nature (Standard / Maintenance / Enseignement)
         # Basé sur l'identité de l'user_profile (cf. PROJECT_CONTEXT.md)
         if r.user_profile and r.user_profile.first_name == "Système" and r.user_profile.name == "Maintenance":
-            data_by_nature['Maintenance'] += duree_h
+            data_by_nature['Maintenance'] += duration_h
         elif r.user_profile and r.user_profile.first_name == "Enseignement" and r.user_profile.name == "Sciences Biologiques":
-            data_by_nature['Enseignement'] += duree_h
+            data_by_nature['Teaching'] += duration_h
         else:
-            data_by_nature['Recherche'] += duree_h
+            data_by_nature['Research'] += duration_h
         
         
         # Heatmap: marquer TOUTES les heures occupées par cette réservation
@@ -1702,11 +1702,11 @@ def stats_export_unified_xlsx(request):
             'start_date': r.start_date,
             'end_date': r.end_date,
             'equipment': r.equipment.name,
-            'accounts': usager_nom,
+            'user': user_name,
             'laboratory': lab_name,
-            'affiliation': aff_nom,
-            'type': type_resa,
-            'duree_h': duree_h,
+            'affiliation': affiliation_name,
+            'type': reservation_type,
+            'duration_h': duration_h,
             'cout': cout
         })
     
@@ -1728,7 +1728,7 @@ def stats_export_unified_xlsx(request):
             data['laboratory'],
             data['affiliation'],
             data['type'],
-            round(data['duree_h'], 2),
+            round(data['duration_h'], 2),
             round(data['cout'], 2)
         ]
         ws_data.append(row)
@@ -1775,23 +1775,23 @@ def stats_export_unified_xlsx(request):
         ws_dash.cell(row=5, column=3).number_format = '#,##0.00 $'
         
         ws_dash.cell(row=4, column=4, value="UserProfiles Distincts").font = Font(bold=True)
-        nb_usagers = reservations.values('accounts').distinct().count()
+        nb_usagers = reservations.values('user_profile').distinct().count()
         ws_dash.cell(row=5, column=4, value=nb_usagers).font = Font(size=14, color="2F5496")
         
         # Ligne 2 de KPIs (NOUVEAUX)
         ws_dash.cell(row=7, column=1, value="Durée Moy/Résa (h)").font = Font(bold=True)
-        duree_moyenne = total_heures / len(reservation_data) if len(reservation_data) > 0 else 0
-        ws_dash.cell(row=8, column=1, value=round(duree_moyenne, 2)).font = Font(size=14, color="2F5496")
+        avg_duration = total_hours / len(reservation_data) if len(reservation_data) > 0 else 0
+        ws_dash.cell(row=8, column=1, value=round(avg_duration, 2)).font = Font(size=14, color="2F5496")
         ws_dash.cell(row=8, column=1).number_format = '0.00'
         
-        ws_dash.cell(row=7, column=2, value="Formations").font = Font(bold=True)
+        ws_dash.cell(row=7, column=2, value="Training sessions").font = Font(bold=True)
         ws_dash.cell(row=8, column=2, value=nb_formations).font = Font(size=14, color="2F5496")
         
         ws_dash.cell(row=7, column=3, value="Assistances").font = Font(bold=True)
-        ws_dash.cell(row=8, column=3, value=nb_assistances).font = Font(size=14, color="2F5496")
+        ws_dash.cell(row=8, column=3, value=assistance_count).font = Font(size=14, color="2F5496")
         
-        ws_dash.cell(row=7, column=4, value="% H Assistance").font = Font(bold=True)
-        pct_assistance = (total_heures_assistance / total_heures * 100) if total_heures > 0 else 0
+        ws_dash.cell(row=7, column=4, value="% Assistance Hours").font = Font(bold=True)
+        pct_assistance = (total_hours_assistance / total_hours * 100) if total_hours > 0 else 0
         ws_dash.cell(row=8, column=4, value=round(pct_assistance, 1)).font = Font(size=14, color="2F5496")
         ws_dash.cell(row=8, column=4).number_format = '0.0"%"'
     else:
@@ -1869,8 +1869,8 @@ def stats_export_unified_xlsx(request):
     
     # Utiliser les données agrégées
     row_idx = data_start_row + 1
-    for aff_nom, heures in sorted(data_by_affiliation.items(), key=lambda x: -x[1]):
-        ws_dash.cell(row=row_idx, column=col_aff, value=aff_nom)
+    for affiliation_name, heures in sorted(data_by_affiliation.items(), key=lambda x: -x[1]):
+        ws_dash.cell(row=row_idx, column=col_aff, value=affiliation_name)
         c = ws_dash.cell(row=row_idx, column=col_aff+1, value=heures)
         c.number_format = '#,##0.00"h"'  # Format personnalisé pour afficher "h"
         row_idx += 1
@@ -1900,12 +1900,12 @@ def stats_export_unified_xlsx(request):
     ws_dash.cell(row=data_start_row, column=col_lab+1, value="Heures")
     
     # Trier et prendre top 5
-    sorted_labos = sorted(data_by_labo.items(), key=lambda x: -x[1])
-    top5_labos = sorted_labos[:5]
-    autres_heures = sum(h for _, h in sorted_labos[5:])
+    sorted_labs = sorted(data_by_lab.items(), key=lambda x: -x[1])
+    top5_labs = sorted_labs[:5]
+    autres_heures = sum(h for _, h in sorted_labs[5:])
     
     row_idx = data_start_row + 1
-    for lab_name, heures in top5_labos:
+    for lab_name, heures in top5_labs:
         ws_dash.cell(row=row_idx, column=col_lab, value=lab_name)
         c = ws_dash.cell(row=row_idx, column=col_lab+1, value=heures)
         c.number_format = '#,##0.00"h"'
@@ -1942,20 +1942,20 @@ def stats_export_unified_xlsx(request):
     ws_dash.cell(row=data_start_row, column=col_user+1, value="Heures")
     
     # Trier et prendre top 10
-    sorted_usagers = sorted(data_by_usager.items(), key=lambda x: -x[1])
-    top10_usagers = sorted_usagers[:10]
-    autres_heures_usagers = sum(h for _, h in sorted_usagers[10:])
+    sorted_users = sorted(data_by_user.items(), key=lambda x: -x[1])
+    top10_users = sorted_users[:10]
+    other_user_hours = sum(h for _, h in sorted_users[10:])
     
     row_idx = data_start_row + 1
-    for usager_nom, heures in top10_usagers:
-        ws_dash.cell(row=row_idx, column=col_user, value=usager_nom)
+    for user_name, heures in top10_users:
+        ws_dash.cell(row=row_idx, column=col_user, value=user_name)
         c = ws_dash.cell(row=row_idx, column=col_user+1, value=heures)
         c.number_format = '#,##0.00"h"'
         row_idx += 1
     
-    if autres_heures_usagers > 0:
+    if other_user_hours > 0:
         ws_dash.cell(row=row_idx, column=col_user, value="Autres")
-        c = ws_dash.cell(row=row_idx, column=col_user+1, value=autres_heures_usagers)
+        c = ws_dash.cell(row=row_idx, column=col_user+1, value=other_user_hours)
         c.number_format = '#,##0.00"h"'
         row_idx += 1
     
@@ -2018,8 +2018,8 @@ def stats_export_unified_xlsx(request):
     
     # Utiliser les données agrégées
     row_idx = data_start_row + 1
-    for nat_nom, heures in sorted(data_by_nature.items(), key=lambda x: -x[1]):
-        ws_dash.cell(row=row_idx, column=col_nature, value=nat_nom)
+    for nature_name, heures in sorted(data_by_nature.items(), key=lambda x: -x[1]):
+        ws_dash.cell(row=row_idx, column=col_nature, value=nature_name)
         c = ws_dash.cell(row=row_idx, column=col_nature+1, value=heures)
         c.number_format = '#,##0.00"h"'
         row_idx += 1
@@ -2060,7 +2060,7 @@ def stats_export_unified_xlsx(request):
         data_by_day = {}
         for data in reservation_data:
             day_of_week = data['start_date']
-            data_by_day[day_of_week] = data_by_day.get(day_of_week, 0.0) + data['duree_h']
+            data_by_day[day_of_week] = data_by_day.get(day_of_week, 0.0) + data['duration_h']
         
         row_idx = data_start_row + 1
         for day_of_week in sorted(data_by_day.keys()):
@@ -2071,22 +2071,22 @@ def stats_export_unified_xlsx(request):
         chart_title = "Évolution Journalière (Heures)"
     elif periode_jours < 365:
         # Par mois
-        ws_dash.cell(row=data_start_row, column=col_evo, value="Mois")
-        ws_dash.cell(row=data_start_row, column=col_evo+1, value="Heures")
+        ws_dash.cell(row=data_start_row, column=col_evo, value="Month")
+        ws_dash.cell(row=data_start_row, column=col_evo+1, value="Hours")
         
         # Agréger par mois
         data_by_month = {}
         for data in reservation_data:
-            mois = data['start_date'].replace(day=1)
-            data_by_month[mois] = data_by_month.get(mois, 0.0) + data['duree_h']
+            month_key = data['start_date'].replace(day=1)
+            data_by_month[month_key] = data_by_month.get(month_key, 0.0) + data['duration_h']
         
         row_idx = data_start_row + 1
-        for mois in sorted(data_by_month.keys()):
-            ws_dash.cell(row=row_idx, column=col_evo, value=mois.strftime('%Y-%m'))
-            ws_dash.cell(row=row_idx, column=col_evo+1, value=round(data_by_month[mois], 2))
+        for month_key in sorted(data_by_month.keys()):
+            ws_dash.cell(row=row_idx, column=col_evo, value=month_key.strftime('%Y-%m'))
+            ws_dash.cell(row=row_idx, column=col_evo+1, value=round(data_by_month[month_key], 2))
             row_idx += 1
         
-        chart_title = "Évolution Mensuelle (Heures)"
+        chart_title = "Monthly Evolution (Hours)"
     else:
         # Par trimestre
         ws_dash.cell(row=data_start_row, column=col_evo, value="Trimestre")
@@ -2096,7 +2096,7 @@ def stats_export_unified_xlsx(request):
         data_by_quarter = {}
         for data in reservation_data:
             quarter = (data['start_date'].year, (data['start_date'].month - 1) // 3 + 1)
-            data_by_quarter[quarter] = data_by_quarter.get(quarter, 0.0) + data['duree_h']
+            data_by_quarter[quarter] = data_by_quarter.get(quarter, 0.0) + data['duration_h']
         
         row_idx = data_start_row + 1
         for (year, q) in sorted(data_by_quarter.keys()):

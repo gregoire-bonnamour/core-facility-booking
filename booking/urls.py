@@ -44,7 +44,7 @@ urlpatterns = [
     path("admin/reservations/calendrier-global/data/", views.calendrier_global_admin_data, name="calendar_global_admin_data"),
     path('stats/export/unified/', views.stats_export_unified_xlsx, name='stats_export_unified_xlsx'),
     path('stats/ajax/labos/', views.ajax_labos, name='stats_ajax_labos'),
-    path('stats/ajax/user_profiles/', views.ajax_usagers, name='stats_ajax_users'),
+    path('stats/ajax/user_profiles/', views.ajax_users, name='stats_ajax_users'),
     path('stats/ajax/roles/', views.ajax_fonctions, name='stats_ajax_roles'),
     
     # --- Accueil ---

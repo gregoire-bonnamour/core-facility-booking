@@ -221,8 +221,8 @@ document.addEventListener('DOMContentLoaded', () => {
     fetch(`${URL_Z1}?${params.toString()}`)
       .then(r => r.json())
       .then(data => {
-        document.getElementById('z1-user_profiles-actifs').textContent = data.usagers_actifs ?? '—';
-        document.getElementById('z1-labos').textContent          = data.labos_representes ?? '—';
+        document.getElementById('z1-user_profiles-actifs').textContent = data.active_users ?? '—';
+        document.getElementById('z1-labos').textContent          = data.labs_represented ?? '—';
         document.getElementById('z1-inscrits').textContent       = data.nouveaux_inscrits ?? '—';
         const lbl = (d1 || d2) ? `${d1 || '…'} → ${d2 || '…'}` : 'all periods';
         document.getElementById('z1-inscrits-periode').textContent = lbl;
@@ -247,8 +247,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const k = data.kpis;
         document.getElementById('z2-reservations').textContent = k.reservations;
-        document.getElementById('z2-heures').textContent       = k.heures_usage + ' h';
-        document.getElementById('z2-user_profiles').textContent      = k.usagers_distincts;
+        document.getElementById('z2-heures').textContent       = k.usage_hours + ' h';
+        document.getElementById('z2-user_profiles').textContent      = k.distinct_users;
         document.getElementById('z2-formations').textContent   = k.nb_formations;
 
         // Camembert user_profiles
@@ -257,7 +257,7 @@ document.addEventListener('DOMContentLoaded', () => {
           chartUserProfilees = renderPie(
             'chart-user_profiles', chartUserProfilees,
             top5u.map(u => u.name),
-            top5u.map(u => u.heures_usage)
+            top5u.map(u => u.usage_hours)
           );
         }
 
@@ -267,7 +267,7 @@ document.addEventListener('DOMContentLoaded', () => {
           chartLabos = renderPie(
             'chart-labos', chartLabos,
             top5l.map(l => l.name),
-            top5l.map(l => l.heures_usage)
+            top5l.map(l => l.usage_hours)
           );
         }
 
@@ -280,10 +280,10 @@ document.addEventListener('DOMContentLoaded', () => {
             <tr>
               <td>${e.name}</td>
               <td>${e.reservations}</td>
-              <td>${e.heures_usage}</td>
-              <td>${e.heures_assistance}</td>
-              <td>${e.heures_totales}</td>
-              <td>${e.duree_moy_heures} h</td>
+              <td>${e.usage_hours}</td>
+              <td>${e.assistance_hours}</td>
+              <td>${e.total_hours}</td>
+              <td>${e.avg_duration_hours} h</td>
             </tr>
           `).join('');
           wrap.style.display = '';

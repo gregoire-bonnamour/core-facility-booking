@@ -53,7 +53,7 @@ class ReservationForm(forms.ModelForm):
     )
     is_teaching = forms.BooleanField(
         required=False,
-        label="Reservation Enseignement",
+        label="Teaching Reservation",
         widget=forms.CheckboxInput(attrs={"class": "form-check-input"}),
         help_text="Reservation will be assigned to the system 'Teaching' user profile"
     )
@@ -199,7 +199,7 @@ class ReservationForm(forms.ModelForm):
         type_enseign = cleaned_data.get("is_teaching", False)
         if type_maint and type_enseign:
             raise ValidationError(
-                "Une reservation ne peut pas etre a la fois Maintenance et Enseignement. "
+                "A reservation cannot be both Maintenance and Teaching at the same time. "
                 "Veuillez ne cocher qu'une seule option."
             )
 
@@ -207,30 +207,30 @@ class ReservationForm(forms.ModelForm):
             return cleaned_data  # on bypass les regles optionalles (creneaux, plages)
 
         # 6. Respect des creneaux autorises
-        creneaux = TimeSlot.objects.filter(equipment=self.equipment, day_of_week=start_date.weekday())
-        if creneaux.exists():
+        time_slots = TimeSlot.objects.filter(equipment=self.equipment, day_of_week=start_date.weekday())
+        if time_slots.exists():
             touche, respecte = False, False
-            for c in creneaux:
+            for c in time_slots:
                 if (start_time < c.end_time and end_time > c.start_time):
                     touche = True
                     if c.start_time <= start_time and c.end_time >= end_time:
                         respecte = True
                         break
             if touche and not respecte:
-                raise ValidationError("Reservation hors des creneaux autorises pour ce day_of_week.")
+                raise ValidationError("Reservation is outside the authorized time slots for this day.")
 
         # 7. Limites cumulees
-        plages = UsageQuota.objects.filter(equipment=self.equipment, day_of_week=start_date.weekday())
-        for plage in plages:
-            if plage.start_time <= start_time < plage.end_time or plage.start_time < end_time <= plage.end_time:
+        quotas = UsageQuota.objects.filter(equipment=self.equipment, day_of_week=start_date.weekday())
+        for quota in quotas:
+            if quota.start_time <= start_time < quota.end_time or quota.start_time < end_time <= quota.end_time:
                 total = timedelta()
                 reservations = Reservation.objects.filter(
                     user_profile=self.user_profile,
                     equipment=self.equipment,
                     start_date=start_date,
                     status__in=['upcoming', 'pending'],
-                    start_time__lt=plage.end_time,
-                    end_time__gt=plage.start_time,
+                    start_time__lt=quota.end_time,
+                    end_time__gt=quota.start_time,
                 )
                 if self.instance.pk:
                     reservations = reservations.exclude(pk=self.instance.pk)
@@ -239,10 +239,10 @@ class ReservationForm(forms.ModelForm):
                     total += datetime.combine(start_date, r.end_time) - datetime.combine(start_date, r.start_time)
 
                 total += dt_fin - dt_debut
-                if total > timedelta(minutes=plage.max_duration_minutes):
+                if total > timedelta(minutes=quota.max_duration_minutes):
                     raise ValidationError(
-                        f"Duree totale ({total}) > limite {plage.max_duration_minutes} min "
-                        f"dans la plage {plage.start_time}-{plage.end_time}"
+                        f"Total duration ({total}) exceeds the {quota.max_duration_minutes} min limit "
+                        f"for the window {quota.start_time}-{quota.end_time}"
                     )
 
     def save(self, commit=True):

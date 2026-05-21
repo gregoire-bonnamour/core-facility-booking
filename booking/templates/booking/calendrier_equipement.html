@@ -91,7 +91,7 @@
     /* Teal foncé */
   }
 
-  .creneau {
+  .time-slot {
     position: absolute;
     left: 0;
     right: 0;
@@ -151,7 +151,7 @@
 
 {{ reservations_json|json_script:"reservations-json" }}
 {{ jours_semaine_json|json_script:"jours-json" }}
-{{ creneaux_json|json_script:"creneaux-json" }}
+{{ time_slots_json|json_script:"time-slots-json" }}
 
 <script>
   const reserverBase = "{% url 'booking:reserver' equipment.id %}";
@@ -181,12 +181,12 @@
   window.addEventListener("DOMContentLoaded", () => {
     const reservationsEl = document.getElementById("reservations-json");
     const joursEl = document.getElementById("jours-json");
-    const creneauxEl = document.getElementById("creneaux-json");
+    const timeSlotsEl = document.getElementById("time-slots-json");
 
     if (!reservationsEl || !joursEl) return;
     const reservations = JSON.parse(reservationsEl.textContent || "[]");
     const jours = JSON.parse(joursEl.textContent || "[]");
-    const creneaux = JSON.parse(creneauxEl?.textContent || "[]");
+    const timeSlots = JSON.parse(timeSlotsEl?.textContent || "[]");
 
     reservations.forEach(resa => {
       const dtStart = new Date(resa.debut);
@@ -218,23 +218,23 @@
       }
     });
 
-    creneaux.forEach(cr => {
+    timeSlots.forEach(cr => {
       const idx = parseInt(cr.day_of_week, 10);
       const dayStr = jours[idx];
       if (!dayStr) return;
       const [hD, mD] = cr.start_time.split(':').map(Number);
       const [hF, mF] = cr.end_time.split(':').map(Number);
-      renderDayBlock(dayStr, hD * 60 + (mD || 0), hF * 60 + (mF || 0), "creneau", `${cr.start_time} – ${cr.end_time}`);
+      renderDayBlock(dayStr, hD * 60 + (mD || 0), hF * 60 + (mF || 0), "time-slot", `${cr.start_time} – ${cr.end_time}`);
     });
 
     document.querySelector(".calendar-container")?.addEventListener("click", (e) => {
       if (e.target.closest(".reservation")) return;
 
       let day_of_week, heure;
-      const creneau = e.target.closest(".creneau");
+      const timeSlot = e.target.closest(".time-slot");
 
-      if (creneau) {
-        const cell = creneau.closest(".day-column");
+      if (timeSlot) {
+        const cell = timeSlot.closest(".day-column");
         if (!cell) return;
 
         day_of_week = cell.dataset.day;

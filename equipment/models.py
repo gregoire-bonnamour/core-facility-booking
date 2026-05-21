@@ -55,7 +55,7 @@ class Equipment(models.Model):
 # -----------------------
 # Constantes communes
 # -----------------------
-JOURS_SEMAINE = [
+DAYS_OF_WEEK = [
     (0, 'Monday'),
     (1, 'Tuesday'),
     (2, 'Wednesday'),
@@ -83,15 +83,15 @@ class TimeSlot(models.Model):
     equipment = models.ForeignKey(
         'Equipment',
         on_delete=models.CASCADE,
-        related_name='creneaux',
-        help_text="Équipement concerné par ce créneau."
+        related_name='time_slots',
+        help_text="Equipment this time slot belongs to."
     )
     day_of_week = models.IntegerField(
-        choices=JOURS_SEMAINE,
-        help_text="Jour de la semaine concerné (0 = Lundi, 6 = Dimanche)."
+        choices=DAYS_OF_WEEK,
+        help_text="Day of the week (0 = Monday, 6 = Sunday)."
     )
-    start_time = models.TimeField(help_text="Heure de début du créneau (ex: 08:00).")
-    end_time = models.TimeField(help_text="Heure de fin du créneau (ex: 12:00).")
+    start_time = models.TimeField(help_text="Slot start time (e.g. 08:00).")
+    end_time = models.TimeField(help_text="Slot end time (e.g. 12:00).")
 
     def __str__(self):
         return f"{self.get_day_of_week_display()} {self.start_time.strftime('%H:%M')}–{self.end_time.strftime('%H:%M')} ({self.equipment.name})"
@@ -121,14 +121,14 @@ class UsageQuota(models.Model):
     equipment = models.ForeignKey(
         'Equipment',
         on_delete=models.CASCADE,
-        related_name='plages_limite',
-        help_text="Équipement concerné par cette plage de limitation."
+        related_name='usage_quotas',
+        help_text="Equipment this usage quota applies to."
     )
-    day_of_week = models.IntegerField(choices=JOURS_SEMAINE, help_text="Jour de la semaine (0 = Lundi, etc.).")
-    start_time = models.TimeField(help_text="Début de la plage horaire contrôlée.")
-    end_time = models.TimeField(help_text="Fin de la plage horaire contrôlée.")
+    day_of_week = models.IntegerField(choices=DAYS_OF_WEEK, help_text="Day of the week (0 = Monday, etc.).")
+    start_time = models.TimeField(help_text="Start of the controlled time window.")
+    end_time = models.TimeField(help_text="End of the controlled time window.")
     max_duration_minutes = models.PositiveIntegerField(
-        help_text="Durée maximale cumulée autorisée par user_profile dans cette plage (en minutes)."
+        help_text="Maximum cumulative duration allowed per user within this window (in minutes)."
     )
 
     def __str__(self):
