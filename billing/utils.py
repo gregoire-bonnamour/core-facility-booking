@@ -428,7 +428,7 @@ def generer_pdfs_par_labo(groups_by_lab, start_date=None, end_date=None):
 
             usagers_context.append({
                 "user_profile": user_profile,
-                "equipment": equipements_context,
+                "equipment_set": equipements_context,
                 "total_usager": round(total_usager, 2),
             })
 
@@ -438,7 +438,7 @@ def generer_pdfs_par_labo(groups_by_lab, start_date=None, end_date=None):
             "start_date": start_date,
             "end_date": end_date,
             "user_profiles": usagers_context,
-            "total_laboratoire": round(total_labo, 2),
+            "total_laboratory": round(total_labo, 2),
             "logo_path": f"file://{settings.BASE_DIR}/billing/static/billing/images/YourUniversity.png",
         }
 
