@@ -56,13 +56,13 @@ class Equipment(models.Model):
 # Constantes communes
 # -----------------------
 JOURS_SEMAINE = [
-    (0, 'Lundi'),
-    (1, 'Mardi'),
-    (2, 'Mercredi'),
-    (3, 'Jeudi'),
-    (4, 'Vendredi'),
-    (5, 'Samedi'),
-    (6, 'Dimanche'),
+    (0, 'Monday'),
+    (1, 'Tuesday'),
+    (2, 'Wednesday'),
+    (3, 'Thursday'),
+    (4, 'Friday'),
+    (5, 'Saturday'),
+    (6, 'Sunday'),
 ]
 
 
@@ -94,11 +94,11 @@ class TimeSlot(models.Model):
     end_time = models.TimeField(help_text="Heure de fin du créneau (ex: 12:00).")
 
     def __str__(self):
-        return f"{self.get_jour_display()} {self.start_time.strftime('%H:%M')}–{self.end_time.strftime('%H:%M')} ({self.equipment.name})"
+        return f"{self.get_day_of_week_display()} {self.start_time.strftime('%H:%M')}–{self.end_time.strftime('%H:%M')} ({self.equipment.name})"
 
     class Meta:
-        verbose_name = "Créneau horaire"
-        verbose_name_plural = "Créneaux horaires"
+        verbose_name = "Time Slot"
+        verbose_name_plural = "Time Slots"
         ordering = ['equipment', 'day_of_week', 'start_time']
 
 
@@ -132,11 +132,11 @@ class UsageQuota(models.Model):
     )
 
     def __str__(self):
-        return f"{self.get_jour_display()} {self.start_time.strftime('%H:%M')}–{self.end_time.strftime('%H:%M')} ({self.max_duration_minutes} min)"
+        return f"{self.get_day_of_week_display()} {self.start_time.strftime('%H:%M')}–{self.end_time.strftime('%H:%M')} ({self.max_duration_minutes} min)"
 
     class Meta:
-        verbose_name = "Plage limitée"
-        verbose_name_plural = "Plages limitées"
+        verbose_name = "Usage Quota"
+        verbose_name_plural = "Usage Quotas"
         ordering = ['equipment', 'day_of_week', 'start_time']
 
 class Rate(models.Model):
