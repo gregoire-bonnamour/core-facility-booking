@@ -190,7 +190,7 @@ def inviter_usager(request):
                 _envoyer_email_invitation(request, invitation, rappel=True)
                 messages.success(request, f"Reminder sent successfully to {invitation.email}.")
             except (IndexError, ValueError, Invitation.DoesNotExist):
-                messages.error(request, "Erreur lors de la relance.")
+                messages.error(request, "Error sending the reminder.")
             return redirect('accounts:invite_user')
 
         # --- CAS 1 : NOUVELLE INVITATION ---
@@ -321,9 +321,9 @@ def valider_formations(request):
         if action == "delete":
             deleted, _ = Invitation.objects.filter(id__in=ids, validated_at__isnull=True).delete()
             if deleted:
-                messages.success(request, f"{deleted} invitation(s) supprimée(s).")
+                messages.success(request, f"{deleted} invitation(s) deleted.")
             else:
-                messages.info(request, "None invitation supprimée (déjà validée ?).")
+                messages.info(request, "No invitations deleted (already validated?).")
             return redirect(request.path)
 
         # 2) VALIDER LA SÉLECTION
@@ -345,9 +345,9 @@ def valider_formations(request):
             ok += 1
 
         if ok:
-            messages.success(request, f"{ok} formation(s) validée(s).")
+            messages.success(request, f"{ok} training session(s) validated.")
         if skip:
-            messages.warning(request, f"{skip} non validée(s).")
+            messages.warning(request, f"{skip} skipped (already validated).")
         for e in errors:
             messages.info(request, f"• {e}")
 
@@ -445,8 +445,8 @@ except Exception:
     HTML = None  # au cas où WeasyPrint n’est pas installé dans l’environnement
 
 REGLEMENT_POINTS = [
-    "Publications scientifiques (acknowledgment, information et co-signature).",
-    "Respect et bon usage des équipements (formation, consommables, nettoyage, signalement incident).",
+    "Scientific publications (acknowledgment, information, and co-authorship).",
+    "Responsible use of equipment (training, consumables, cleaning, incident reporting).",
     "Reservations, delays and assistance (modification/deletion window and billing).",
     "Données, sécurité et confidentialité (export, politiques YourUniversity).",
     "Sanctions graduées (rappel → avertissement → suspension → retrait d’accès).",

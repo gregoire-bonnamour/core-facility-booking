@@ -10,7 +10,7 @@ CSRF_TRUSTED_ORIGINS = ["http://127.0.0.1", "http://localhost"]
 # Emails 
 EMAIL_BACKEND = "django.core.mail.backends.filebased.EmailBackend"
 EMAIL_FILE_PATH = BASE_DIR / "sent_emails"   # -> C:\...\src\sent_emails
-DEFAULT_FROM_EMAIL = "Plateforme Réservation <no-reply@example.com>"
+DEFAULT_FROM_EMAIL = "Booking Platform <no-reply@example.com>"
 EMAIL_SUBJECT_PREFIX = "[Django] "
 
 # Confort dev

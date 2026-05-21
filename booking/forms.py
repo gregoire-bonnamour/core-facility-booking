@@ -94,7 +94,7 @@ class ReservationForm(forms.ModelForm):
             "trained_emails": forms.Textarea(attrs={"class": "form-control", "rows": 2}),
         }
         help_texts = {
-            "is_training": "Cochez si cette reservation est une formation (facturation au tarif fixe).",
+            "is_training": "Check if this reservation is a training session (billed at flat rate).",
             "trained_emails": "Saisissez les emails des participants (separes par des virgules, points-virgules ou sauts de ligne).",
         }
 

@@ -83,7 +83,7 @@ class ReservationAdmin(admin.ModelAdmin):
         Returns le libellé lisible du status (via get_status_display()).
         """
         return obj.get_status_display()
-    display_status.short_description = 'Statut'
+    display_status.short_description = 'Status'
 
     # ⬇️ Respecter la valeur choisie en admin, sans renvoyer les emails de formation
     def save_model(self, request, obj, form, change):

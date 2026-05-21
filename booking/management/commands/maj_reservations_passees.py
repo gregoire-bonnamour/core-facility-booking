@@ -11,4 +11,4 @@ class Command(BaseCommand):
              .filter(end_date__lt=today)
              .exclude(status__in=['past','cancelled'])
              .update(status='past'))
-        self.stdout.write(self.style.SUCCESS(f"{n} réservation(s) mises à day_of_week"))
+        self.stdout.write(self.style.SUCCESS(f"{n} reservation(s) updated to 'past'"))

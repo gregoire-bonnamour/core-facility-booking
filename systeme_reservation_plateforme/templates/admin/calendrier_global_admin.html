@@ -46,7 +46,7 @@
         headerToolbar: { left: 'prev,next today', center: 'title', right: 'dayGridMonth,timeGridWeek,timeGridDay' },
         events: {
           url: "{% url 'booking:calendar_global_admin_data' %}",  // génère /reserv/admin/...
-          failure: function() { alert('Erreur de chargement des bookings.'); }
+          failure: function() { alert('Error loading bookings.'); }
         },
         eventDidMount: function(info) {
           const p = info.event.extendedProps || {};

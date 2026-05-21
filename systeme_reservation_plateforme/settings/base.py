@@ -119,7 +119,7 @@ LOGOUT_REDIRECT_URL = "/accounts/login/"
 
 # --- Email (by default sûr: filebased) ---
 EMAIL_BACKEND = os.getenv("EMAIL_BACKEND", "django.core.mail.backends.filebased.EmailBackend")
-DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL", "Plateforme Réservation <no-reply@example.com>")
+DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL", "Booking Platform <no-reply@example.com>")
 SERVER_EMAIL = os.getenv("SERVER_EMAIL", "no-reply@example.com")
 if EMAIL_BACKEND.endswith("filebased.EmailBackend"):
     EMAIL_FILE_PATH = os.getenv("EMAIL_FILE_PATH", str(BASE_DIR / "sent_emails"))
