@@ -85,7 +85,9 @@ class Laboratory(models.Model):
     )
 
     class Meta:
-        unique_together = ('name', 'affiliation')  # Prevents doublons de lab pour une même affiliation
+        unique_together = (("name", "affiliation"))  # Prevents doublons de lab pour une même affiliation
+        verbose_name = "Laboratory"
+        verbose_name_plural = "Laboratories"
 
     def __str__(self):
         return f"{self.name} ({self.affiliation.name})"
