@@ -37,8 +37,13 @@ class EmailAuthBackend(ModelBackend):
         UserModel = get_user_model()
 
         # Rate limiting par IP
-        ip = (request.META.get('REMOTE_ADDR', 'unknown')
-              if request else 'unknown')
+        # Derriere un reverse proxy (nginx), REMOTE_ADDR vaut l'IP du proxy
+        # (souvent 127.0.0.1), pas celle du vrai visiteur. On lit donc
+        # X-Real-IP en priorite, avec repli sur REMOTE_ADDR hors proxy.
+        ip = (
+            (request.META.get('HTTP_X_REAL_IP') or request.META.get('REMOTE_ADDR', 'unknown'))
+            if request else 'unknown'
+        )
         cache_key = f'login_attempts_{ip}'
         attempts = cache.get(cache_key, 0)
         if attempts >= RATE_LIMIT_ATTEMPTS:
