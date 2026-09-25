@@ -52,6 +52,13 @@
           <a href="{% url 'booking:calendar_equipement' equipment.id %}?semaine={{ lundi|date:'Y-m-d' }}">
             📅 {{ equipment.name }}
           </a>
+          {% if is_admin and equipment.contact_emails %}
+          <button type="button"
+             class="contact-usagers-discret"
+             data-emails="{{ equipment.contact_emails }}"
+             title="Copy this equipment's users' emails"
+             onclick="contacterUsagersEquipement(this)">✉️</button>
+          {% endif %}
         </li>
         {% empty %}
         <li>No equipment accessible.</li>
@@ -87,7 +94,57 @@
 
 </div>
 
+<style>
+.contact-usagers-discret {
+  margin-left: 6px;
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  text-decoration: none;
+  opacity: 0.45;
+  font-size: 0.85em;
+  transition: opacity 0.15s ease;
+  vertical-align: middle;
+}
+.contact-usagers-discret:hover {
+  opacity: 0.9;
+}
+</style>
+
 <script>
+function contacterUsagersEquipement(btn) {
+  var emails = btn.getAttribute('data-emails') || '';
+  var nb = emails ? emails.split(';').length : 0;
+
+  function afterCopy(ok) {
+    if (ok) {
+      alert("Emails copied (" + nb + " recipient(s)) — paste them (Ctrl+V) into the BCC field.");
+    } else {
+      // Automatic copy failed: show the list for manual copy.
+      window.prompt("Automatic copy failed. Copy the list below (Ctrl+C):", emails);
+    }
+  }
+
+  if (navigator.clipboard && window.isSecureContext) {
+    navigator.clipboard.writeText(emails).then(
+      function () { afterCopy(true); },
+      function () { afterCopy(false); }
+    );
+  } else {
+    var ta = document.createElement('textarea');
+    ta.value = emails;
+    ta.style.position = 'fixed';
+    ta.style.left = '-9999px';
+    document.body.appendChild(ta);
+    ta.select();
+    var ok = false;
+    try { ok = document.execCommand('copy'); } catch (e) { ok = false; }
+    document.body.removeChild(ta);
+    afterCopy(ok);
+  }
+}
+
 (function () {
   function syncNewsHeight() {
     var main = document.querySelector('.home-main');

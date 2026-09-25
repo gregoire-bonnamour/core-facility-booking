@@ -20,7 +20,7 @@ from booking.models import Reservation
 def accueil(request):
     """
     Vue principale de la plateforme (page d’accueil).
-    
+
     Affiche un tableau de bord différent selon le rôle :
     - UserProfile : liste de ses équipements autorisés
     - Admin  : accès à l’administration + alertes réservations en attente
@@ -41,7 +41,32 @@ def accueil(request):
         equipment_set = user_profile.authorized_equipment.all()
     except UserProfile.DoesNotExist:
         # Si no profil user_profile n’est lié au compte (cas exceptionnel)
-        pass  
+        pass
+
+    # Pour les admins : bouton "contacter les usagers" par équipement.
+    # Attributs posés directement sur les instances Equipment pour un accès simple
+    # en template (équivalent à un dict, mais {{ equipment.contact_emails }} marche
+    # nativement alors qu'un lookup par clé variable ne marche pas dans le moteur de
+    # template Django).
+    # Note : on ne construit pas de mailto:...bcc=... ici — un CCI avec beaucoup
+    # d'usagers dépasse la limite de longueur d'URL d'Outlook (desktop ou web,
+    # erreur AADSTS90015 côté Outlook web). Le JS du template copie plutôt la
+    # liste dans le presse-papier (l'admin colle ensuite dans son client).
+    # Séparateur ';' : Outlook attend des adresses séparées par des
+    # points-virgules pour un collage direct dans un champ À/CCI (la virgule
+    # n'est pas reconnue comme séparateur par défaut).
+    if is_platform_admin:
+        for eq in equipment_set:
+            emails = list(
+                eq.authorized_user_profiles
+                .filter(is_active=True)
+                .exclude(email='')
+                .values_list('email', flat=True)
+            )
+            if emails:
+                eq.contact_emails = '; '.join(emails)
+            else:
+                eq.contact_emails = None
 
     # Calcule le lundi de la semaine courante (utile pour affichage du calendrier)
     lundi = date.today() - timedelta(days=date.today().weekday())
